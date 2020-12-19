@@ -1,0 +1,1 @@
+<div dir="ltr">這是一個文本字符串<br>זהו מחרוזת טקסט.<br clear="all"><div><br></div><div dir="ltr" class="gmail_signature" data-smartmail="gmail_signature"><div dir="ltr"><div><div dir="ltr"><div><div dir="ltr"><div dir="ltr"><div style="font-size:12.8px">This is your third encoding.... maybe?</div></div></div></div></div></div></div></div></div>
