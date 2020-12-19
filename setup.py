@@ -11,7 +11,7 @@ setuptools.setup(
     description="A library for extracting HTML content from RTF encapsulated HTML as commonly found in the exchange MSG email format.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/seamustuohy/RTF_De-Encapsulator",
+    url="https://github.com/seamustuohy/RTFDE",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
