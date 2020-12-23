@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="RTFDE",
-    version="0.0.1",
+    version="0.0.2",
     author="seamus tuohy",
     author_email="code@seamustuohy.com",
     description="A library for extracting HTML content from RTF encapsulated HTML as commonly found in the exchange MSG email format.",
@@ -23,7 +23,7 @@ setuptools.setup(
         "Topic :: Communications :: Email :: Filters"
     ],
     python_requires='>=3.6',
-    install_requires=['lark-parser>=0.11', 'oletools>=0.5'],
+    install_requires=['lark-parser>=0.11', 'oletools>=0.56'],
     extras_require={'msg_parse': ['extract_msg>=0.27'],
                     'dev': ['lxml>=4.6']}
 )
