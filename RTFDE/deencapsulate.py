@@ -78,7 +78,7 @@ class DeEncapsulator():
 start : OPENPAREN document CLOSEPAREN
 
 document: (CONTROLWORD | CONTROLSYMBOL | TEXT | group | " " | RTFESCAPE)+
-group: OPENPAREN (CONTROLWORD | CONTROLSYMBOL | TEXT | group | RTFESCAPE)* CLOSEPAREN
+group: OPENPAREN (CONTROLWORD | CONTROLSYMBOL | TEXT | group | RTFESCAPE | " ")* CLOSEPAREN
 
 // Text is given priority over control terms with TERM.PRIORITY = 2
 // This is used to ensure that escaped \ AND { AND } are not matched in others
