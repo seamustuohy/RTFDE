@@ -11,6 +11,8 @@ import unittest
 from os.path import join
 from RTFDE.exceptions import MalformedRtf, MalformedEncapsulatedRtf, NotEncapsulatedRtf
 from RTFDE.deencapsulate import DeEncapsulator
+from RTFDE.utils import encode_escaped_control_chars
+
 from tests.test_utils import DATA_BASE_DIR
 
 class TestParseRtf(unittest.TestCase):
@@ -34,7 +36,7 @@ Ensure that:
         rtf = self.replace_from_header(template_path, ctrl_words)
         output = self.run_parsing(rtf)
         ctrl_wds = output._get_header_control_words_before_first_group()
-        ctrl_wds =[i.value for i in ctrl_wds]
+        ctrl_wds =[i.value.strip() for i in ctrl_wds]
         correct_ctrl = ['\\rtf1', '\\ansi', '\\ansicpg1252', '\\deff0', '\\deff0', '\\deff0',
                         '\\deff0', '\\deff0', '\\deff0', '\\deff0', '\\deff0', '\\deff0',
                         '\\deff0', '\\deff0', '\\deff0', '\\deff0', '\\deff0', '\\deff0',
@@ -46,7 +48,7 @@ Ensure that:
         rtf = self.replace_from_header(template_path, ctrl_words)
         output = self.run_parsing(rtf)
         ctrl_wds = output._get_header_control_words_before_first_group()
-        ctrl_wds = [i.value for i in ctrl_wds]
+        ctrl_wds = [i.value.strip() for i in ctrl_wds]
         correct_ctrl = ['\\rtf1', '\\ansi', '\\ansicpg1252', '\\deff0', '\\deff0', '\\deff0', '\\deff0', '\\deff0', '\\fromhtml1', '\\deff0']
         self.assertEqual(ctrl_wds, correct_ctrl)
 
@@ -184,7 +186,6 @@ Ensure that:
         self.check_deencapsulate_validity(rtf,
                                           expect_error=None,
                                           name="working fromheaderhtml")
-
 
     def test_from_header_text(self):
         """Check that a basic fromtext header works."""
@@ -326,6 +327,18 @@ Ensure that:
                                           expect_error=MalformedEncapsulatedRtf,
                                           name="multiple FROM headers means malformed")
 
+    def test_parse_tilde_control_chars(self):
+        """Correctly parse control chars
+        """
+        path =  join(DATA_BASE_DIR,
+                     "rtf_parsing",
+                     "control_chars.rtf")
+        if path is not None:
+            with open(path, 'r') as fp:
+                rtf = fp.read()
+        self.check_deencapsulate_validity(rtf,
+                                          expect_error=None,
+                                          name="Parse the tilde the \~ command char.")
 
     def replace_from_header(self, path, replacement,
                             rep_str="REPLACE_FROM_HEADER_HERE",
@@ -341,7 +354,8 @@ Ensure that:
     def run_parsing(self, rtf):
         output = DeEncapsulator(rtf)
         output.stripped_rtf = output._strip_htmlrtf_sections()
-        output.simplified_rtf = output._simplify_text_for_parsing()
+        _simp = encode_escaped_control_chars(output.stripped_rtf)
+        output.simplified_rtf = _simp
         output.doc_tree = output._parse_rtf()
         return output
 

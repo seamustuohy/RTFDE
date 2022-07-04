@@ -19,7 +19,11 @@ from lark.tree import Tree
 from lark.lexer import Token
 from oletools.common import codepages
 
-from RTFDE.transformers import RTFUnicodeDecoder, StripNonVisibleRTFGroups, RTFCleaner
+from RTFDE.transformers import RTFUnicodeDecoder,  RTFCleaner, StripControlWords
+from RTFDE.transformers import StripNonVisibleRTFGroups
+from RTFDE.utils import encode_escaped_control_chars, print_to_tmp_file
+
+from RTFDE.grammar import make_concise_grammar
 
 # For catching exceptions
 from RTFDE.exceptions import NotEncapsulatedRtf, MalformedEncapsulatedRtf, MalformedRtf
@@ -66,39 +70,18 @@ class DeEncapsulator():
         self.text_codec = None
         self._catch_common_validation_issues(raw_rtf)
         if isinstance(raw_rtf, bytes):
+            self.raw_rtf_bytes = raw_rtf
             self.raw_rtf = raw_rtf.decode()
         elif isinstance(raw_rtf, str):
+            self.raw_rtf_bytes = raw_rtf.encode()
             self.raw_rtf = raw_rtf
         else:
             raise TypeError("DeEncapssulator only accepts RTF files in string or byte-string formats")
         if grammar is not None:
             self._grammar = grammar
         else:
-            self._grammar = r"""
-start : OPENPAREN document CLOSEPAREN
+            self._grammar = make_concise_grammar()
 
-document: (CONTROLWORD | CONTROLSYMBOL | TEXT | group | " " | RTFESCAPE)+
-group: OPENPAREN (CONTROLWORD | CONTROLSYMBOL | TEXT | group | RTFESCAPE)* CLOSEPAREN
-
-// Text is given priority over control terms with TERM.PRIORITY = 2
-// This is used to ensure that escaped \ AND { AND } are not matched in others
-TEXT.2: /\\\\/ | /\\[{}]/+ | /[^\\{}]/+
-CONTROLWORD: /(?<!\\)\\/ /[a-zA-Z]/+ /[0-9\-]/*
-CONTROLSYMBOL: /(?<!\\)\\/ "|" | "~" | "-" | "_" | ":" | "\*" | "\\{" | "\\}"
-
-// Increased priority of escape chars to make unescaping easier
-// Multiple char acceptance is important here because if you just catch one escape at a time you mess up multi-byte values.
-RTFESCAPE.3: ("\\'" /[0-9A-Fa-f]/~2)+ | ("\\u" /[-]*[0-9]+\s?\??/)+
-
-OPENPAREN:  "{"
-CLOSEPAREN: "}"
-
-%import common.ESCAPED_STRING
-%import common.SIGNED_NUMBER
-
-%import common.WS
-%ignore WS
-"""
     @staticmethod
     def _catch_common_validation_issues(raw_rtf):
         """Checks for likely common valid input mistakes that may occur when folks try to use this library and raises exceptions to try and help identify them."""
@@ -111,14 +94,6 @@ CLOSEPAREN: "}"
         if (raw_rtf == b"") or (raw_rtf == ""):
             raise MalformedRtf("Data passed as raw RTF file is an empty string.")
 
-    def _simplify_text_for_parsing(self):
-        """Replaces control chars within the text with their RTF encoded versions \\'HH.
-        """
-        cleaned = self.stripped_rtf.replace('\\\\', "\\'5c")
-        cleaned = cleaned.replace('\\{', "\\'7b")
-        cleaned = cleaned.replace('\\}', "\\'7d")
-        return cleaned
-
 
     def deencapsulate(self):
         """De-encapsulate the RTF content loaded into the De-Encapsulator.
@@ -126,12 +101,17 @@ CLOSEPAREN: "}"
         Once you have loaded in the raw rtf this function will set the properties containing the encapsulated content. The `content` property will store the content no matter what format it is in. The `html` and `text` properties will be populated based on the type of content that is extracted. (self.html will be populated if it is html and self.text if it is plain text.)
         """
         self.stripped_rtf = self._strip_htmlrtf_sections()
-        self.simplified_rtf = self._simplify_text_for_parsing()
+
+        self.simplified_rtf = encode_escaped_control_chars(self.stripped_rtf)
+        # print(self.simplified_rtf)
         self.doc_tree = self._parse_rtf()
+        # print(self.doc_tree)
         self._validate_encapsulation()
         self.charset = self._get_charset()
         self.text_codec = self._get_python_codec()
+
         self.content = self._deencapsulate_from_tree()
+        # print(self.content)
         self.content_type = self.get_content_type()
         if self.content_type == 'html':
             self.html = self.content
@@ -162,11 +142,9 @@ CLOSEPAREN: "}"
         """Parse RTF file's header and document and extract the objects within the RTF into a Tree."""
         parser = Lark(self._grammar, parser='lalr')
         self.full_tree = parser.parse(self.simplified_rtf)
-        # An RTF file has the following syntax: '{' <header & document>'}'
-        # We only need the header and document so we only extract the 1st obj.
-        return self.full_tree.children[1]
+        return self.full_tree.children[0]
 
-    def _strip_htmlrtf_sections(self) -> Tree:
+    def _strip_htmlrtf_sections(self) -> str:
         """Strip out \\htmlrtf tagged sections which need to be ignored in the de-encapsulation and are difficult to extract after it has been converted into a tree.
 
         The \\htmlrtf keyword toggles pieces of RTF to be ignored during reverse RTF->HTML conversion. Lack of a parameter turns it on, parameter 0 turns it off. But, these are not always included in a consistent way. They can appear withing and across groups in the stream. So, they need to be extracted before the stream is tokenized and placed into a tree.
@@ -178,14 +156,11 @@ CLOSEPAREN: "}"
         """De-encapsulates HTML from document tree into final content.
         """
         decoded_tree = RTFUnicodeDecoder().visit_topdown(self.doc_tree)
-
+        decoded_tree = StripControlWords().transform(decoded_tree)
         stripper = StripNonVisibleRTFGroups()
         stripped_tree = stripper.transform(decoded_tree)
-
         cleaner = RTFCleaner(rtf_codec=self.text_codec)
         cleaned_text = cleaner.transform(stripped_tree)
-        # The conversion process inserts spaces on newlines where there were none
-        cleaned_text = re.sub(r'[\r\n][\s\r\n]{2,}', '\n', cleaned_text)
         return cleaned_text
 
 
@@ -241,6 +216,8 @@ CLOSEPAREN: "}"
                 if codepage_num in allowed_codepage_nums:
                     return codepage_num
                 else:
+                    # Note: If support for a specific codepage ever becomes an issue we can look at add support using the actual code-pages.
+                    # Conversion tables for codepages can be retrieved from here: https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/
                     raise MalformedRtf("Unsupported unicode codepage number `{}` found in the header".format(codepage_num))
 
         log.debug("No unicode codepage number found in the header. The following headers were checked: {0}".format(main_headers))
@@ -264,14 +241,15 @@ CLOSEPAREN: "}"
                     "fonttbl":False,
                     "malformed":False}
         # The de-encapsulating RTF reader SHOULD inspect no more than the first 10 RTF tokens (that is, begin group marks and control words) in the input RTF document, in sequence, starting from the beginning of the RTF document. This means more than just control words.
-        first_ten_tokens = self.doc_tree.children[:10]
+        decoded_tree = StripControlWords().transform(self.doc_tree)
+        first_ten_tokens = decoded_tree.children[:10]
         operating_tokens = []
         found_token = None
         for token in first_ten_tokens:
             if isinstance(token, Token):
                 operating_tokens.append(token)
             else:
-                operating_tokens += [i for i in token.scan_values(lambda t: t.type in ('CONTROLWORD'))]
+                operating_tokens += [i for i in token.scan_values(lambda t: t.type == 'CONTROLWORD')]
         log.debug("Header tokens being evaluated: {0}".format(operating_tokens))
 
         for token in operating_tokens:
@@ -309,7 +287,7 @@ CLOSEPAREN: "}"
         fonttbl_cw = "\\fonttbl"
         maltype = []
         if token.type == "CONTROLWORD":
-            if token.value in from_cws:
+            if token.value.strip() in from_cws:
                 if cw_found['from'] is True:
                     cw_found["malformed"] = True
                     log.debug("Multiple FROM HTML/TXT tokens found in the header. This encapsulated RTF is malformed.")
@@ -320,9 +298,9 @@ CLOSEPAREN: "}"
                     log.debug("FROMHTML/TEXT control word found before rtf1 control word. That's not allowed in the RTF spec.")
                     cw_found['from'] = True
                     cw_found["malformed"] = True
-            elif token.value == rtf1_cw:
+            elif token.value.strip() == rtf1_cw:
                 cw_found['rtf1'] = True
-            elif token.value == fonttbl_cw:
+            elif token.value.strip() == fonttbl_cw:
                 cw_found['fonttbl'] = True
                 if cw_found['from'] != True:
                     log.debug("\\fonttbl code word found before FROMTML/TEXT was defined. This is not allowed for encapsulated HTML/TEXT. So... this is not encapsulated HTML/TEXT or it was badly encapsulated.")
