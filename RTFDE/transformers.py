@@ -15,9 +15,21 @@
 
 import re
 from lark.visitors import Transformer, Visitor_Recursive, v_args
+from lark.visitors import Visitor_Recursive, Discard
 from lark.tree import Tree
 from lark.lexer import Token
 
+from lark.exceptions import VisitError
+
+class StripControlWords(Transformer):
+    """Visits each control word and strips the whitespace from around it.
+    """
+
+    def CONTROLWORD(self, token):
+        """Strips the whitespace from around it the control word.
+        """
+        tok = token.update(value=token.value.strip())
+        return tok
 
 class RTFUnicodeDecoder(Visitor_Recursive):
     """Visits each Token in provided RTF Trees and decodes any/all unicode characters which it finds.
@@ -80,24 +92,43 @@ class StripNonVisibleRTFGroups(Transformer):
         Parameters:
             tree: (Tree): An RTF Tree object which needs its values decoded.
         """
-        args = tree.children
-        first_control = self._first_controlword(args)
+        children = tree.children
+        first_child = children[0]
+
+        known_control_groups = ["htmltag_group"]
+        if isinstance(first_child, Tree):
+            if first_child.data in known_control_groups:
+                return tree
+        known_non_visible_control_groups = ["mhtmltag_group"]
+        if isinstance(first_child, Tree):
+            if first_child.data in known_non_visible_control_groups:
+                return ""
+
+        # process known non-visible groups
         non_visible_control_words = ["\\context", "\\colortbl", "\\fonttbl"]
-        if args == []:
-            return ''
-        # "Ignore all groups with the RTF ignore control symbol that are not used in RTF<->HTML conversions"
-        # See:  https://docs.microsoft.com/en-us/openspecs/exchange_server_protocols/ms-oxrtfex/752835a4-ad5e-49e3-acce-6b654b828de5
-        if isinstance(args[1], Token) and args[1].value == "\\*":
-            if not first_control.startswith("\\htmltag"):
-                return ""
-        # Currently deleting all groups that don't have an htmltag.
-        elif args[1].type == "CONTROLWORD":
-            if not first_control.startswith("\\htmltag"):
-                return ""
-        # Removing known non-visible objects
-        # TODO: Add more based on research you haven't done yet
-        elif first_control in non_visible_control_words:
+        first_control = self._first_controlword(children)
+        if first_control in non_visible_control_words:
             return ""
+
+        # Process star escaped groups
+        # NOTE: `understood_commands` is where we can include commands we decide to actively process during deencapsulation in the future.
+        understood_commands = []
+        is_star_escaped = None
+        if isinstance(first_child, Tree):
+            first_item = first_child.children[0]
+            if isinstance(first_item, Token):
+                if first_item.type == "STAR_ESCAPE":
+                    is_star_escaped = True
+        control_word = None
+        if is_star_escaped is True:
+            first_token = children[1]
+            if isinstance(first_token, Token):
+                if first_token.type == "CONTROLWORD":
+                    control_word = first_token
+                    if control_word in understood_commands:
+                        return tree
+                    else:
+                        return ""
         return tree
 
     @staticmethod
@@ -126,9 +157,34 @@ class RTFCleaner(Transformer):
         else:
             self.rtf_codec = rtf_codec
 
-    def group(self, args):
-        """Join the strings in all groups."""
+    def start(self, args):
         return "".join(args)
+
+    def string(self, strings):
+        """
+        Join the strings in all groups.
+        """
+        return "".join(strings)
+
+    def STRING(self, string):
+        """Convert all objects with strings into strings
+        """
+        if string.value is not None:
+            return string.value
+        else:
+            return ""
+
+    def group(self, grp):
+        """
+        Join the strings in all groups.
+        """
+        _new_children = []
+        for i in grp:
+            if isinstance(i, type(Discard)):
+                pass
+            else:
+                _new_children.append(i)
+        return "".join(_new_children)
 
     def document(self, args):
         """Join the final set of strings to make the final html string."""
@@ -142,6 +198,56 @@ class RTFCleaner(Transformer):
         """Delete all closed parens."""
         return ""
 
+    def mhtmltag_group(self, tree):
+        """Process MHTMLTAG groups
+
+        Currently discarding because they don't need to be processed.
+        """
+        return Discard
+
+    def htmltag_group(self, strings):
+        """HTMLTAG processing.
+
+        Takes any string values within an HTMLTAG and returns them.
+        """
+        return "".join(strings)
+
+    def HTMLTAG(self, tag):
+        return ""
+
+    def STAR_ESCAPE(self, char):
+        # '\\*': ''
+        return ""
+
+    def control_symbol(self, symbols):
+        return "".join(symbols)
+
+    def NONBREAKING_SPACE(self, args):
+        # '\\~': '\u00A0',
+        return u'\u00A0'
+
+    def NONBREAKING_HYPHEN(self, args):
+        # '\\_': '\u00AD'
+        return u'\u00AD'
+
+    def OPTIONAL_HYPHEN(self, args):
+        # '\\-': '\u2027'
+        return u'\u2027'
+
+    def FORMULA_CHARACTER(self, args):
+        """Convert a formula character into an empty string.
+
+        If we are encountering formula characters the scope has grown too inclusive. This was only used by Word 5.1 for the Macintosh as the beginning delimiter for a string of formula typesetting commands.
+        """
+        return ""
+
+    def INDEX_SUBENTRY(self, args):
+        """Process index subentry items
+
+        Discard index sub-entries. Because, we don't care about indexes when de-encapsulating at this time.
+        """
+        return ""
+
     def CONTROLSYMBOL(self, args):
         """Convert encoded chars which are mis-categorized as control symbols into their respective chars. Delete all the other ones.
         """
@@ -149,8 +255,6 @@ class RTFCleaner(Transformer):
             '\\{': '\x7B',
             '\\}': '\x7D',
             '\\\\': '\x5C',
-            '\\~': '\u00A0',
-            '\\_': '\u00AD'
         }
         replacement = symbols.get(args.value, None)
         # If this is simply a character to replace then return the value
@@ -187,34 +291,9 @@ class RTFCleaner(Transformer):
             hexstring = args.value.replace("\\'", "")
             hex_bytes = bytes.fromhex(hexstring)
             decoded = hex_bytes.decode(self.rtf_codec)
-
             return decoded
         # \\u RTFEscapes need to have the \ucN value identified in order to do byte manipulation before being converted. So, we converted those previously in RTFUnicodeDecoder.
         else:
             # We should have handled all escaped chars by here
             # We can simply insert the values from \u RTF Escapes now
             return args.value
-
-    def TEXT(self, args):
-        """Converts escaped values in text and then return the text as a raw string."""
-        escapes = {
-            '\\par': '\n',
-            '\\tab': '\t',
-            '\\line': '\n',
-            '\\lquote': '\u2018;',
-            '\\rquote': '\u2019;',
-            '\\ldblquote': '\u201C;',
-            '\\rdblquote': '\u201D;',
-            '\\bullet': '\u2022;',
-            '\\endash': '\u2013;',
-            '\\emdash': '\u2014;',
-            '\\{': '\x7B',
-            '\\}': '\x7D',
-            '\\\\': '\x5C',
-            '\\~': '\u00A0',
-            '\\_': '\u00AD'
-        }
-        text = args.value
-        for match,rep in escapes.items():
-            text = text.replace(match, rep)
-        return text
