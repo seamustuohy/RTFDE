@@ -22,7 +22,7 @@ https://github.com/seamustuohy/RTF_De-Encapsulator
 
 __author__ = 'seamus tuohy'
 __date__ = '2020-12-05'
-__version__ = '0.00.1'
+__version__ = '0.1.0'
 
 import logging
 from logging import NullHandler
