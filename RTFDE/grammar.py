@@ -13,6 +13,20 @@
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE. See the included LICENSE file for details.
 
+
+# TODO: Remove
+HTMLRTF_GRAMMAR = """
+start : obj+
+obj : HTMLRTF | OTHER | WS
+%import common.DIGIT
+%import common.LETTER
+%import common.WS
+_SPACE_DELETE : " "
+HTMLRTF : "\\htmlrtf" DIGIT~0..3
+OTHER : /((?!\\\\htmlrtf).)+/s
+"""
+
+
 GRAMMAR = {
     "imports": r"""
 %import common.ESCAPED_STRING
@@ -29,15 +43,22 @@ GRAMMAR = {
                     | control_symbol
                     | string
                     | group
+                    | HTMLRTF
+                    | hexarray
                     | _SPACE_DELETE
-                    | RTFESCAPE)+""",
+                    | SPACE_SAVE
+                    | UNICODE)+""",
     "group": r"""_LBRACE (CONTROLWORD
                         | control_symbol
                         | string
                         | htmltag_group
                         | mhtmltag_group
                         | group
-                        | RTFESCAPE
+                        | SPACE_SAVE
+                        | _SPACE_DELETE
+                        | HTMLRTF
+                        | UNICODE
+                        | hexarray
                         | NEWLINE )* _RBRACE""",
     "htmltag_group": r"STAR_ESCAPE HTMLTAG ( string | group )*",
     "HTMLTAG": r'"\\htmltag" DIGIT~0..3 _SPACE_DELETE?',
@@ -59,7 +80,10 @@ GRAMMAR = {
     "STRING": r'/.+?/',
     "?string": r"STRING+ SPACE_SAVE?",
     "_QUESTION_MARK": r'"?"',
-    "RTFESCAPE" : r"""("\\'" /[0-9A-Fa-f]/~2)+ | ("\\u" /[-]*[0-9]+/)+ _SPACE_DELETE? _QUESTION_MARK?"""
+    "UNICODE" : r"""("\\u" /[-]*[0-9]+/)+""",
+    "HEXENCODED": """("\\'" /[0-9A-Fa-f]/~2)""",
+    "hexarray": "HEXENCODED+",
+    "HTMLRTF": r'"\\htmlrtf" DIGIT~0..3 _SPACE_DELETE?',
    }
 
 
@@ -73,13 +97,14 @@ GRAMMAR = {
 # // 2 = Specific instances of objects (i.e. HTMLTAG, MHTMLTAG, etc.)
 
 PRIORITY_LEVELS = {
-    "_LBRACE": ".1",
-    "_RBRACE": ".1",
+    "_LBRACE": ".2",
+    "_RBRACE": ".2",
     "BACKSLASH" : ".1",
     "start" : ".1",
     "document": ".1",
     "group": ".1",
     "htmltag_group" : ".2",
+    "HTMLRTF" : ".2",
     "HTMLTAG" : ".2",
     "MHTMLTAG" : ".2",
     "mhtmltag_group" : ".2",
@@ -99,7 +124,9 @@ PRIORITY_LEVELS = {
     "STRING" : ".0",
     "_QUESTION_MARK": ".1",
     "?string" : ".0",
-    "RTFESCAPE" : ".2",
+    "UNICODE" : ".2",
+    "HEXENCODED" : ".1",
+    "hexarray" : ".2",
 }
 
 def make_concise_grammar():
@@ -247,7 +274,7 @@ control_symbol: {control_symbol}
 // If the flag is "\htmlrtf" or "\htmlrtf1" then do not process anything else until you encounter "\htmlrtf0" which will toggle this off again.
 // A de-encapsulating RTF reader MUST support the HTMLRTF control word within nested groups. The state of the HTMLRTF control word MUST transfer when entering groups and be restored when exiting groups.
 // This means that you can only turn this off on it's own level (turning it off in an object nested within it does nothing). And, if the object it's in ends then it doesn't transfer up the tree to objects that contain it. So, if you don't find a closing "\htmlrtf0" you can delete from the opening "\htmlrtf" all the way until the end of the current object, but not above.
-// HTMLRTF : {HTMLRTF}
+HTMLRTF : {HTMLRTF}
 
 // The HTMLTAG destination group encapsulates HTML fragments that cannot be directly represented in RTF
 htmltag_group: {htmltag_group}
@@ -273,8 +300,19 @@ mhtmltag_group: {mhtmltag_group}
 // Increased priority of escape chars to make unescaping easier
 // Multiple char acceptance is important here because if you just catch one escape at a time you mess up multi-byte values.
 _QUESTION_MARK: {_QUESTION_MARK}
-RTFESCAPE : {RTFESCAPE}
 
+// TODO Define these objects
+
+// RTFESCAPE no longer used
+// RTFESCAPE : {RTFESCAPE}
+
+// UNICODE unicode chars
+UNICODE : {UNICODE}
+
+// Hex chars [HEXENCODED] are stored in an array [hexarray]
+// We often need to parse hex chars as a set so this is the easiest way
+HEXENCODED : {HEXENCODED}
+hexarray : {hexarray}
 
     """.format(**GRAMMAR)
     return grammar
@@ -282,5 +320,4 @@ RTFESCAPE : {RTFESCAPE}
 
 if __name__ == '__main__':
     # print(make_literate_grammar())
-
     print(make_concise_grammar())

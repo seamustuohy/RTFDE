@@ -34,7 +34,7 @@ pip3 install RTFDE
 ```python
 from RTFDE.deencapsulate import DeEncapsulator
 
-with open('rtf_file', 'r') as fp:
+with open('rtf_file', 'rb') as fp:
     raw_rtf  = fp.read()
     rtf_obj = DeEncapsulator(raw_rtf)
     rtf_obj.deencapsulate()
@@ -43,6 +43,38 @@ with open('rtf_file', 'r') as fp:
     else:
         print(rtf_obj.text)
 ```
+
+
+
+# Enabling Logging
+
+Any logging (including how verbose the logging is) can be handled by configuring logging. You can enable RTFDE's logging at the highest level by getting and setting the "RTFDE" logger.
+
+```
+log = logging.getLogger("RTFDE")
+log.setLevel(logging.INFO)
+```
+
+
+
+
+
+
+To see how to enable more in-depth logging for debugging check out the CONTRIBUTING.md file.
+
+
+# Now, get the log that you want
+# The main logger is simply called RTFDE. That will get you all the *normal* logs.
+requests_log = logging.getLogger("RTFDE")
+requests_log.setLevel(logging.DEBUG)
+requests_log.propagate = True
+
+
+
+
+
+```
+
 
 # Contribute
 

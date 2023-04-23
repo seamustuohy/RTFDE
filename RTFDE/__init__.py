@@ -25,14 +25,11 @@ __date__ = '2020-12-05'
 __version__ = '0.00.1'
 
 import logging
+from logging import NullHandler
 
-FORMAT = "%(levelname)s [%(filename)s:%(lineno)s - %(funcName)s() ] %(message)s"
-formatter = logging.Formatter(FORMAT)
-default_handler = logging.StreamHandler()
-default_handler.setFormatter(formatter)
+logging.getLogger(__name__).addHandler(NullHandler())
+logging.getLogger(__name__ + ".tree_logger").addHandler(NullHandler())
 
-logger = logging.getLogger(__name__)
-logger.addHandler(default_handler)
-logger.setLevel(logging.WARNING)
+
 
 from RTFDE.deencapsulate import DeEncapsulator

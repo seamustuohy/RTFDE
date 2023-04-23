@@ -13,11 +13,18 @@
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE. See the included LICENSE file for details.
 
+import os, sys
+sys.path.append('/home/s2e/code/RTFDE')
+
+
 import argparse
 from RTFDE.deencapsulate import DeEncapsulator
 import logging
 logging.basicConfig(level=logging.ERROR)
 log = logging.getLogger(__name__)
+from os import walk
+import os
+
 
 try:
     import extract_msg
@@ -28,6 +35,9 @@ except ModuleNotFoundError as _e:
 def main():
     args = parse_arguments()
     set_logging(args.verbose, args.debug)
+    if args.show_folder_msg_stats is not None:
+        show_folder_msg_stats(args.show_folder_msg_stats)
+        return
     msg_path = args.msg_path
     with extract_msg.openMsg(msg_path) as msg:
         attachments = None
@@ -40,12 +50,31 @@ def main():
         else:
             log.debug("{0} attachments found in msg.".format(len(attachments)))
         raw_rtf = msg.rtfBody
-        if args.extract_raw:
+        # print(raw_rtf.decode())
+        if args.extract_raw is True:
             if args.outfile:
                 with open(args.outfile, 'wb') as fp:
                     fp.write(raw_rtf)
+                with open(args.outfile + ".compressed", 'wb') as fp:
+                    fp.write(msg.compressedRtf)
             else:
                 print(raw_rtf.decode())
+            if args.extract_all is True:
+                # Get the raw HTML and text body (don't de-encapsulate RTF if it exists)
+                _html_body = msg._ensureSet('_htmlBody', '__substg1.0_10130102', False)
+                _text_body = msg._ensureSet('_body', '__substg1.0_1000')
+                others = {"html":_html_body,
+                          "txt": _text_body}
+                for item_type, item in others.items():
+                    if item is not None:
+                        if args.outfile:
+                            outname = "{0}.{1}".format(args.outfile, item_type)
+                            with open(outname, 'wb') as fp:
+                                if item_type == "txt":
+                                    item = item.encode()
+                                fp.write(item)
+                        else:
+                            print(item)
         else:
             rtf_obj = DeEncapsulator(raw_rtf.decode())
             rtf_obj.deencapsulate()
@@ -53,6 +82,30 @@ def main():
                 print(rtf_obj.html)
             else:
                 print(rtf_obj.text)
+
+def show_folder_msg_stats(folder_path):
+    for (dirpath, dirnames, filenames) in walk(folder_path):
+        for f in filenames:
+            print("processing {0}".format(f))
+            if not f.endswith('.msg'):
+                continue
+            else:
+                abf = os.path.join(os.path.abspath(dirpath), f)
+                parts = get_body_parts(abf)
+                for k,v in parts.items():
+                    if v:
+                        print(k,"True")
+                    else:
+                        print(k,"False")
+
+def get_body_parts(msg_path):
+    parts = {}
+    with extract_msg.openMsg(msg_path) as msg:
+        parts["html"] = msg._ensureSet('_htmlBody', '__substg1.0_10130102', False)
+        parts["plain"] = msg._ensureSet('_body', '__substg1.0_1000')
+        parts["rtf"] = msg._ensureSet('_compressedRtf', '__substg1.0_10090102', False)
+    return parts
+
 
 def get_attachments(msg):
     """
@@ -102,8 +155,13 @@ def parse_arguments():
     parser.add_argument("--extract_raw", "-r",
                         help="Only extract raw rtf encapsulated HTML file from msg.",
                         action='store_true')
+    parser.add_argument("--extract_all", "-a",
+                        help="Extract HTML and Plain Text alongside RTF from msg.",
+                        action='store_true')
     parser.add_argument("--outfile", "-o",
                         help="Write the output instead of piping it out.")
+    parser.add_argument("--show_folder_msg_stats", "-S",
+                        help="Process a folder of msg items printing which ones have different elements.")
     args = parser.parse_args()
     return args
 
