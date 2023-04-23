@@ -31,7 +31,8 @@ set -x
 
 
 main() {
-    pdoc --output-dir docs RTFDE
+    pdoc --force --output-dir docs RTFDE
+    pdoc --force --html --output-dir docs RTFDE
 }
 
 

@@ -347,7 +347,7 @@ Returns:
     def validate_rtf_doc_header(doc_tree: Tree):
         """Check if doc starts with a valid RTF header `\\rtf1`.
 
-        "Before the de-encapsulating RTF reader tries to recognize the encapsulation, the reader SHOULD ensure that the document has a valid RTF document heading according to [MSFT-RTF] (that is, it starts with the character sequence "{\rtf1")." - MS-OXRTFEX
+        "Before the de-encapsulating RTF reader tries to recognize the encapsulation, the reader SHOULD ensure that the document has a valid RTF document heading according to [MSFT-RTF] (that is, it starts with the character sequence "{\\rtf1")." - MS-OXRTFEX
 
 Raises:
         MalformedRtf: The .rtf headers do not include \\rtf1.
@@ -373,7 +373,7 @@ Raises:
             raise TypeError("Data passed as file pointer. DeEncapsulator only accepts strings and byte-strings.")
         if raw_rtf is None:
             raise TypeError("Data passed as raw RTF file is a null object `None` keyword.")
-        if raw_rtf[:8] == b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
+        if raw_rtf[:8] == b"=\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
             raise TypeError("Data passed is a full MSG object. You must extract the encapsulated RTF body first.")
         if raw_rtf in (b'', ''):
             raise MalformedRtf("Data passed as raw RTF file is an empty string.")

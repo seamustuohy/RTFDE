@@ -62,17 +62,12 @@ log.setLevel(logging.INFO)
 
 To see how to enable more in-depth logging for debugging check out the CONTRIBUTING.md file.
 
-
+```
 # Now, get the log that you want
 # The main logger is simply called RTFDE. That will get you all the *normal* logs.
 requests_log = logging.getLogger("RTFDE")
 requests_log.setLevel(logging.DEBUG)
 requests_log.propagate = True
-
-
-
-
-
 ```
 
 

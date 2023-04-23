@@ -67,7 +67,7 @@ Classes
     `validate_rtf_doc_header(doc_tree: lark.tree.Tree)`
     :   Check if doc starts with a valid RTF header `\rtf1`.
         
-                "Before the de-encapsulating RTF reader tries to recognize the encapsulation, the reader SHOULD ensure that the document has a valid RTF document heading according to [MSFT-RTF] (that is, it starts with the character sequence "{tf1")." - MS-OXRTFEX
+                "Before the de-encapsulating RTF reader tries to recognize the encapsulation, the reader SHOULD ensure that the document has a valid RTF document heading according to [MSFT-RTF] (that is, it starts with the character sequence "{\rtf1")." - MS-OXRTFEX
         
         Raises:
                 MalformedRtf: The .rtf headers do not include \rtf1.

@@ -1,0 +1,1350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>RTFDE.deencapsulate API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>RTFDE.deencapsulate</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# This file is part of RTFDE, a RTF De-Encapsulator.
+# Copyright © 2020 seamus tuohy, &lt;code@seamustuohy.com&gt;
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the included LICENSE file for details.
+
+from typing import Union, AnyStr, Tuple, Dict, Any
+from io import BufferedReader
+
+from lark import Lark
+from lark.tree import Tree
+from lark.lexer import Token
+
+from RTFDE.transformers import RTFCleaner, StripControlWords
+from RTFDE.transformers import StripNonVisibleRTFGroups
+from RTFDE.transformers import StripUnusedSpecialCharacters
+from RTFDE.utils import encode_escaped_control_chars
+from RTFDE.utils import log_validators, log_transformations
+from RTFDE.transformers import get_stripped_HTMLRTF_values, DeleteTokensFromTree
+from RTFDE.grammar import make_concise_grammar
+from RTFDE.text_extraction import TextDecoder
+from RTFDE.text_extraction import validate_ansi_cpg
+
+# For catching exceptions
+from RTFDE.exceptions import NotEncapsulatedRtf, MalformedEncapsulatedRtf, MalformedRtf
+
+import logging
+log = logging.getLogger(&#34;RTFDE&#34;)
+
+class DeEncapsulator():
+    &#34;&#34;&#34;De-Encapsulating RTF converter of HTML/TEXT found in .msg files.
+
+De-encapsulation enables previously encapsulated HTML and plain text content to be extracted and rendered as HTML and plain text instead of the encapsulating RTF content. After de-encapsulation, the HTML and plain text should differ only minimally from the original HTML or plain text content.
+
+
+Parameters:
+    raw_rtf: (str): It&#39;s the raw RTF string.
+    grammar: (str): OPTIONAL - Lark parsing grammar which defines the RTF language. https://github.com/lark-parser/lark If you think my grammar is shoddy this is your chance to test out a better one and make a pull request.
+
+Attributes:
+    content: The deencapsulated content no matter what format it is in. Populated by the `deencapsulate` function.
+    html: The deencapsulated content IF it is HTML content. Populated by the `set_content` function.
+    text: The deencapsulated content IF it is plain text content. Populated by the `set_content` function.
+    content_type: The type of content encapsulated in .rtf data (html or text). Populated by the `get_content_type` function.
+    full_tree: The full .rtf object parsed into an object Tree using the grammar. Populated by the `parse_rtf` function.
+    doc_tree: The `document` portion of the .rtf full_tree object.
+    raw_rtf: The raw encapsulated .rtf data in string format.
+    grammar: The Lark parsing grammer used to parse the .rtf data.
+    content_type_token: The .rtf header token identifying the content type. (\\fromhtml1 OR \\fromtext)
+    parser: The lark parser. Should not need to be manipulated directly. But, useful for debugging and saving the parsed object.
+    &#34;&#34;&#34;
+
+    def __init__(self, raw_rtf:AnyStr, grammar: Union[str,None] = None):
+        &#34;&#34;&#34;Load in the Encapsulated test and setup the grammar used to parse the encapsulated RTF.
+
+NOTE: This does not do the parsing in the init so that you can initiate the object and do the parsing step by step.
+
+Parameters:
+        raw_rtf: (str): It&#39;s the raw RTF string.
+        grammar: (str): OPTIONAL - Lark parsing grammar which defines the RTF language. https://github.com/lark-parser/lark If you think my grammar is shoddy this is your chance to test out a better one and make a pull request.
+
+Raises:
+        TypeError: The raw_rtf data passed is not the correct type of data (string/byte string).
+&#34;&#34;&#34;
+        self.content: str
+        self.content_type: str
+        self.content_type_token: str
+        self.parser: Any
+
+        self.html: str
+        self.text: str
+        self.simplified_rtf: AnyStr
+        self.full_tree: Tree
+        self.doc_tree: Tree
+        self.catch_common_validation_issues(raw_rtf)
+        if isinstance(raw_rtf, bytes):
+            # Remove any null bytes at end of file.
+            raw_rtf = raw_rtf.rstrip(b&#39;\x00&#39;)
+            # Remove any windows newlines
+            raw_rtf = raw_rtf.replace(b&#39;\r\n&#39;,b&#39;\n&#39;)
+            raw_rtf = raw_rtf.replace(b&#39;\r&#39;,b&#39;\n&#39;)
+            self.raw_rtf: str = raw_rtf.decode()
+        elif isinstance(raw_rtf, str):
+            # Remove any windows newlines
+            self.raw_rtf = self.raw_rtf.replace(r&#39;\\r\\n&#39;,r&#39;\\n&#39;)
+            self.raw_rtf = self.raw_rtf.replace(r&#39;\\r&#39;,r&#39;\\n&#39;)
+            self.raw_rtf = raw_rtf
+        else:
+            raise TypeError(&#34;DeEncapssulator only accepts RTF files in string or byte-string formats&#34;)
+        if grammar is not None:
+            self.grammar: str = grammar
+        else:
+            self.grammar = make_concise_grammar()
+
+    def deencapsulate(self):
+        &#34;&#34;&#34;De-encapsulate the RTF content loaded into the De-Encapsulator.
+
+Once you have loaded in the raw rtf this function will set the properties containing the encapsulated content. The `content` property will store the content no matter what format it is in. The `html` and `text` properties will be populated based on the type of content that is extracted. (self.html will be populated if it is html and self.text if it is plain text.)
+        &#34;&#34;&#34;
+        escaped_rtf = encode_escaped_control_chars(self.raw_rtf)
+        log_transformations(escaped_rtf)
+        self.parse_rtf(escaped_rtf)
+        Decoder = TextDecoder()
+        Decoder.update_children(self.full_tree)
+        self.get_doc_tree()
+        self.validate_encapsulation()
+        # remove htmlrtf escaped values
+        htmlrtf_stripped = self.strip_htmlrtf_tokens()
+        # Strips whitespace from control words
+        control_stripped = StripControlWords().transform(htmlrtf_stripped)
+        # Strip unused control chars
+        special_stripper = StripUnusedSpecialCharacters()
+        non_special_tree = special_stripper.transform(control_stripped)
+        # Strip out non-visible RTF groups
+        stripper = StripNonVisibleRTFGroups()
+        stripped_tree = stripper.transform(non_special_tree)
+        # Converts any remaining tokens
+        cleaner = RTFCleaner(visit_tokens=True)
+        cleaned_text = cleaner.transform(stripped_tree)
+
+        self.content = cleaned_text
+        self.set_content() # Populates self.html || self.text
+
+    def validate_charset(self, fallback_to_default:bool =False) -&gt; str:
+        &#34;&#34;&#34;Validate and return the RTF charset keyword from the RTF streams header.
+
+Args:
+        fallback_to_default (bool): Allows you to force the use of the default charset &#34;\\ansi&#34; if one is not found.
+
+Raises:
+        MalformedRtf: RTF stream does not include charset control word.
+
+Returns:
+        The RTF charset keyword from the RTF streams header.
+&#34;&#34;&#34;
+        main_headers = self.get_header_control_words_before_first_group()
+
+        for token in main_headers:
+            if token in [&#34;\\ansi&#34;, &#34;\\mac&#34;, &#34;\\pc&#34;, &#34;\\pca&#34;]:
+                return token
+
+        log.debug(&#34;Acceptable charset not found as the second token in the RTF stream. The control word for the character set must precede any plain text or any table control words. So, if this stream doesn&#39;t have one it is malformed or corrupted.&#34;)
+        if fallback_to_default is False:
+            raise MalformedRtf(&#34;RTF stream does not include charset control word.&#34;)
+
+        log.warning(&#34;The fallback_to_default option on _get_charset is considered DANGEROUS if used on possibly malicious samples. Make sure you know what you are doing before using it.&#34;)
+        log.info(&#34;Attempting to decode RTF using the default charset ansi. This is not recommended and could have unforeseen consequences for the resulting file and your systems security.&#34;)
+        log.debug(&#34;You have a malformed RTF stream. Are you sure you really want to be parsing it? It might not just be corrupted. It could be maliciously constructed.&#34;)
+        return &#34;\\ansi&#34;
+
+    def set_content(self):
+        &#34;&#34;&#34;Populate the html or text content based on the content type. Populates self.html and/or self.text variables.&#34;&#34;&#34;
+        self.content_type = self.get_content_type()
+        if self.content_type == &#39;html&#39;:
+            self.html = self.content
+        else:
+            self.text = self.content
+
+    def get_doc_tree(self):
+        &#34;&#34;&#34;Extract the document portion of the .rtf full_tree object. Populates the classes doc_tree attribute.
+
+Raises:
+        ValueError: The .rtf document object is missing or mis-located in the .rtf&#39;s full_tree object.
+&#34;&#34;&#34;
+        if self.full_tree.children[1].data == &#34;document&#34;:
+            self.doc_tree = self.full_tree.children[1]
+        else:
+            raise ValueError(&#34;Document object in the wrong place after parsing.&#34;)
+
+    def get_content_type(self):
+        &#34;&#34;&#34;Provide the type of content encapsulated in RTF.
+
+NOTE: This function will only work after the header validation has completed. Header validation also extracts the content type of the encapsulated data.
+
+Raises:
+        NotEncapsulatedRtf: The .rtf object is missing an encapsulated content type header. Which means that it is likely just a regular .rtf file.
+&#34;&#34;&#34;
+        if self.content_type_token is None:
+            self.validate_FROM_in_doc_header()
+        elif self.content_type_token == &#39;\\fromhtml1&#39;:
+            return &#39;html&#39;
+        elif self.content_type_token == &#39;\\fromtext&#39;:
+            return &#34;text&#34;
+
+        raise NotEncapsulatedRtf(&#34;Data is missing encapsulated content type header (the FROM header).&#34;)
+
+    def validate_encapsulation(self):
+        &#34;&#34;&#34;Runs simple tests to validate that the file in question is an rtf document which contains encapsulation.&#34;&#34;&#34;
+        self.validate_rtf_doc_header(self.doc_tree)
+        self.validate_charset()
+        self.validate_FROM_in_doc_header()
+        ansicpg = self.get_ansicpg_header()
+        if ansicpg is not None: # ansicpg is not manditory
+            validate_ansi_cpg(ansicpg.value)
+
+    def get_ansicpg_header(self) -&gt; Union[Token,None]:
+        &#34;&#34;&#34;Extract the ansicpg control word from the .rtf header.
+
+Returns:
+        A lark CONTROLWORD Token with the `\\ansicpg` value. Returns None if the `\\ansicpg` control word is not included as this is only required if there is Unicode which needs to be converted to ANSI within a .rtf file.
+&#34;&#34;&#34;
+        headers = self.get_header_control_words_before_first_group()
+        for item in headers:
+            if item.value.startswith(&#39;\\ansicpg&#39;):
+                return item
+        return None
+
+    def parse_rtf(self, rtf: str):
+        &#34;&#34;&#34;Parse RTF file&#39;s header and document and extract the objects within the RTF into a Tree. Populates the self.full_tree attribute.
+
+Args:
+        rtf: The .rtf string to parse with the projects lark grammar.
+&#34;&#34;&#34;
+        # Uncomment Lark debug argument if you want to enable logging.
+        # Note, this not enable ALL lark debug logging.
+        # To do that we would not be able to use the Lark convinence class which we are using here.
+        self.parser = Lark(self.grammar,
+                           parser=&#39;lalr&#39;,
+                           keep_all_tokens=True,
+                           # debug=True,
+                           propagate_positions=True)
+        self.full_tree = self.parser.parse(rtf)
+        log_transformations(self.full_tree)
+
+
+    def strip_htmlrtf_tokens(self) -&gt; Tree:
+        &#34;&#34;&#34;Strip tokens from with htmlrtf regions of the doc_tree as they were not part of the original HTML content.
+
+Returns:
+        .rtf doc_tree stripped of all non-original tokens.
+&#34;&#34;&#34;
+        # remove htmlrtf escaped values
+        delete_generator = get_stripped_HTMLRTF_values(self.doc_tree)
+        tokens_to_delete = list(delete_generator)
+        deleter = DeleteTokensFromTree(tokens_to_delete)
+        htmlrtf_cleaned_tree = deleter.transform(self.doc_tree)
+        return htmlrtf_cleaned_tree
+
+
+    def get_header_control_words_before_first_group(self) -&gt; list:
+        &#34;&#34;&#34;Extracts all the control words in the first 20 tokens of the document or all the tokens which occur before the first group (whichever comes first.)
+
+This is used to extract initial header values for validation functions.
+
+Returns:
+        A list containing the header tokens in the .rtf data.
+        &#34;&#34;&#34;
+        initial_control_words = []
+        for token in self.doc_tree.children[:20]:
+            if isinstance(token, Token):
+                initial_control_words.append(token)
+            else:
+                return initial_control_words
+        return initial_control_words
+
+
+    def validate_FROM_in_doc_header(self):
+        &#34;&#34;&#34;Inspect the header to identify what type of content (html/plain text) is encapsulated within the document.
+
+NOTE: The de-encapsulating RTF reader inspects no more than the first 10 RTF tokens (that is, begin group marks and control words) in the input RTF document, in sequence, starting from the beginning of the RTF document. If one of the control words is the FROMHTML control word, the de-encapsulating RTF reader will conclude that the RTF document contains an encapsulated HTML document and stop further inspection. If one of the control words is the FROMTEXT control word, the de-encapsulating RTF reader concludes that the RTF document was produced from a plain text document and stops further inspection. - MS-OXRTFEX
+
+Raises:
+        MalformedEncapsulatedRtf: The .rtf headers are malformed.
+        NotEncapsulatedRtf: The .rtf object is missing an encapsulated content type header. Which means that it is likely just a regular .rtf file.
+        &#34;&#34;&#34;
+        cw_found = {&#34;rtf1&#34;:False,
+                    &#34;from&#34;:False,
+                    &#34;fonttbl&#34;:False,
+                    &#34;malformed&#34;:False}
+        # The de-encapsulating RTF reader SHOULD inspect no more than the first 10 RTF tokens (that is, begin group marks and control words) in the input RTF document, in sequence, starting from the beginning of the RTF document. This means more than just control words.
+        decoded_tree = StripControlWords().transform(self.doc_tree)
+        first_ten_tokens = decoded_tree.children[:10]
+        operating_tokens = []
+        found_token = None
+        for token in first_ten_tokens:
+            if isinstance(token, Token):
+                operating_tokens.append(token)
+            else:
+                operating_tokens += list(token.scan_values(lambda t: t.type == &#39;CONTROLWORD&#39;))
+        log_validators(f&#34;Header tokens being evaluated: {operating_tokens}&#34;)
+
+        for token in operating_tokens:
+            cw_found,found_token = self.check_from_token(token=token, cw_found=cw_found)
+            if cw_found[&#39;from&#39;] is True and cw_found[&#34;malformed&#34;] is True:
+                raise MalformedEncapsulatedRtf(&#34;RTF file looks like is was supposed to be encapsulated HTML/TEXT but the headers are malformed. Turn on debugging to see specific information&#34;)
+            # Save content type token available for id-ing type of content later
+            if found_token is not None:
+                self.content_type_token = found_token
+
+        if cw_found[&#39;from&#39;] is False:
+            log.debug(&#34;FROMHTML/TEXT control word not found in first 10 RTF tokens. This is not an HTML/TEXT encapsulated RTF document.&#34;)
+            raise NotEncapsulatedRtf(&#34;FROMHTML/TEXT control word not found.&#34;)
+
+    @staticmethod
+    def check_from_token(token:Token, cw_found:dict) -&gt; Tuple[Dict,Union[None,str]] :
+        &#34;&#34;&#34;Checks if fromhtml1 or fromtext tokens are in the proper place in the header based on the state passed to it by the validate_FROM_in_doc_header function.
+
+Args:
+        token: The token to check for in the cw_found state dictionary.
+        cw_found: The state dictionary which is used to track the position of the from token within the header.
+
+        `cw_found = {&#34;rtf1&#34;:&lt;BOOL&gt;, &#34;from&#34;:&lt;BOOL&gt;, &#34;fonttbl&#34;:&lt;BOOL&gt;, &#34;malformed&#34;:&lt;BOOL&gt;}`
+
+
+Returns:
+        cw_found: Updated state dictionary
+        found_token: The content_type_token found in the header.
+
+        &#34;&#34;&#34;
+        from_cws = [&#39;\\fromhtml1&#39;, &#39;\\fromtext&#39;]
+        # This control word MUST appear before the \fonttbl control word and after the \rtf1 control word, as specified in [MSFT-RTF].
+        rtf1_cw = &#34;\\rtf1&#34;
+        found_token = None
+        fonttbl_cw = &#34;\\fonttbl&#34;
+        if token.type == &#34;CONTROLWORD&#34;:
+            if token.value.strip() in from_cws:
+                if cw_found[&#39;from&#39;] is True:
+                    cw_found[&#34;malformed&#34;] = True
+                    log.debug(&#34;Multiple FROM HTML/TXT tokens found in the header. This encapsulated RTF is malformed.&#34;)
+                if cw_found[&#39;rtf1&#39;] is True:
+                    cw_found[&#39;from&#39;] = True
+                    found_token = token.value
+                else:
+                    log.debug(&#34;FROMHTML/TEXT control word found before rtf1 control word. That&#39;s not allowed in the RTF spec.&#34;)
+                    cw_found[&#39;from&#39;] = True
+                    cw_found[&#34;malformed&#34;] = True
+            elif token.value.strip() == rtf1_cw:
+                cw_found[&#39;rtf1&#39;] = True
+            elif token.value.strip() == fonttbl_cw:
+                cw_found[&#39;fonttbl&#39;] = True
+                if cw_found[&#39;from&#39;] is not True:
+                    log.debug(&#34;\\fonttbl code word found before FROMTML/TEXT was defined. This is not allowed for encapsulated HTML/TEXT. So... this is not encapsulated HTML/TEXT or it was badly encapsulated.&#34;)
+                    cw_found[&#34;malformed&#34;] = True
+        return cw_found, found_token
+
+
+    @staticmethod
+    def validate_rtf_doc_header(doc_tree: Tree):
+        &#34;&#34;&#34;Check if doc starts with a valid RTF header `\\rtf1`.
+
+        &#34;Before the de-encapsulating RTF reader tries to recognize the encapsulation, the reader SHOULD ensure that the document has a valid RTF document heading according to [MSFT-RTF] (that is, it starts with the character sequence &#34;{\\rtf1&#34;).&#34; - MS-OXRTFEX
+
+Raises:
+        MalformedRtf: The .rtf headers do not include \\rtf1.
+&#34;&#34;&#34;
+        first_token = doc_tree.children[0].value
+        if first_token != &#34;\\rtf1&#34;:
+            log.debug(&#34;RTF stream does not contain valid valid RTF document heading. The file must start with \&#34;{\\rtf1\&#34;&#34;)
+            log_validators(f&#34;First child object in document tree is: {first_token!r}&#34;)
+            raise MalformedRtf(&#34;RTF stream does not start with {\\rtf1&#34;)
+
+    @staticmethod
+    def catch_common_validation_issues(raw_rtf: AnyStr):
+        &#34;&#34;&#34;Checks for likely common valid input mistakes that may occur when folks try to use this library and raises exceptions to try and help identify them.
+
+Args:
+        raw_rtf: A raw .rtf string or byte-string.
+
+Raises:
+        TypeError: The data passed is the wrong type of data.
+        MalformedRtf: The data passed is not a correctly formatted .rtf string.
+&#34;&#34;&#34;
+        if isinstance(raw_rtf, BufferedReader):
+            raise TypeError(&#34;Data passed as file pointer. DeEncapsulator only accepts strings and byte-strings.&#34;)
+        if raw_rtf is None:
+            raise TypeError(&#34;Data passed as raw RTF file is a null object `None` keyword.&#34;)
+        if raw_rtf[:8] == b&#34;=\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1&#34;:
+            raise TypeError(&#34;Data passed is a full MSG object. You must extract the encapsulated RTF body first.&#34;)
+        if raw_rtf in (b&#39;&#39;, &#39;&#39;):
+            raise MalformedRtf(&#34;Data passed as raw RTF file is an empty string.&#34;)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="RTFDE.deencapsulate.DeEncapsulator"><code class="flex name class">
+<span>class <span class="ident">DeEncapsulator</span></span>
+<span>(</span><span>raw_rtf: ~AnyStr, grammar: Optional[str] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>De-Encapsulating RTF converter of HTML/TEXT found in .msg files.</p>
+<p>De-encapsulation enables previously encapsulated HTML and plain text content to be extracted and rendered as HTML and plain text instead of the encapsulating RTF content. After de-encapsulation, the HTML and plain text should differ only minimally from the original HTML or plain text content.</p>
+<h2 id="parameters">Parameters</h2>
+<p>raw_rtf: (str): It's the raw RTF string.
+grammar: (str): OPTIONAL - Lark parsing grammar which defines the RTF language. <a href="https://github.com/lark-parser/lark">https://github.com/lark-parser/lark</a> If you think my grammar is shoddy this is your chance to test out a better one and make a pull request.</p>
+<h2 id="attributes">Attributes</h2>
+<dl>
+<dt><strong><code>content</code></strong></dt>
+<dd>The deencapsulated content no matter what format it is in. Populated by the <code>deencapsulate</code> function.</dd>
+<dt><strong><code>html</code></strong></dt>
+<dd>The deencapsulated content IF it is HTML content. Populated by the <code>set_content</code> function.</dd>
+<dt><strong><code>text</code></strong></dt>
+<dd>The deencapsulated content IF it is plain text content. Populated by the <code>set_content</code> function.</dd>
+<dt><strong><code>content_type</code></strong></dt>
+<dd>The type of content encapsulated in .rtf data (html or text). Populated by the <code>get_content_type</code> function.</dd>
+<dt><strong><code>full_tree</code></strong></dt>
+<dd>The full .rtf object parsed into an object Tree using the grammar. Populated by the <code>parse_rtf</code> function.</dd>
+<dt><strong><code>doc_tree</code></strong></dt>
+<dd>The <code>document</code> portion of the .rtf full_tree object.</dd>
+<dt><strong><code>raw_rtf</code></strong></dt>
+<dd>The raw encapsulated .rtf data in string format.</dd>
+<dt><strong><code>grammar</code></strong></dt>
+<dd>The Lark parsing grammer used to parse the .rtf data.</dd>
+<dt><strong><code>content_type_token</code></strong></dt>
+<dd>The .rtf header token identifying the content type. (\fromhtml1 OR \fromtext)</dd>
+<dt><strong><code>parser</code></strong></dt>
+<dd>The lark parser. Should not need to be manipulated directly. But, useful for debugging and saving the parsed object.</dd>
+</dl>
+<p>Load in the Encapsulated test and setup the grammar used to parse the encapsulated RTF.</p>
+<p>NOTE: This does not do the parsing in the init so that you can initiate the object and do the parsing step by step.</p>
+<h2 id="parameters_1">Parameters</h2>
+<p>raw_rtf: (str): It's the raw RTF string.
+grammar: (str): OPTIONAL - Lark parsing grammar which defines the RTF language. <a href="https://github.com/lark-parser/lark">https://github.com/lark-parser/lark</a> If you think my grammar is shoddy this is your chance to test out a better one and make a pull request.</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>TypeError</code></dt>
+<dd>The raw_rtf data passed is not the correct type of data (string/byte string).</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class DeEncapsulator():
+    &#34;&#34;&#34;De-Encapsulating RTF converter of HTML/TEXT found in .msg files.
+
+De-encapsulation enables previously encapsulated HTML and plain text content to be extracted and rendered as HTML and plain text instead of the encapsulating RTF content. After de-encapsulation, the HTML and plain text should differ only minimally from the original HTML or plain text content.
+
+
+Parameters:
+    raw_rtf: (str): It&#39;s the raw RTF string.
+    grammar: (str): OPTIONAL - Lark parsing grammar which defines the RTF language. https://github.com/lark-parser/lark If you think my grammar is shoddy this is your chance to test out a better one and make a pull request.
+
+Attributes:
+    content: The deencapsulated content no matter what format it is in. Populated by the `deencapsulate` function.
+    html: The deencapsulated content IF it is HTML content. Populated by the `set_content` function.
+    text: The deencapsulated content IF it is plain text content. Populated by the `set_content` function.
+    content_type: The type of content encapsulated in .rtf data (html or text). Populated by the `get_content_type` function.
+    full_tree: The full .rtf object parsed into an object Tree using the grammar. Populated by the `parse_rtf` function.
+    doc_tree: The `document` portion of the .rtf full_tree object.
+    raw_rtf: The raw encapsulated .rtf data in string format.
+    grammar: The Lark parsing grammer used to parse the .rtf data.
+    content_type_token: The .rtf header token identifying the content type. (\\fromhtml1 OR \\fromtext)
+    parser: The lark parser. Should not need to be manipulated directly. But, useful for debugging and saving the parsed object.
+    &#34;&#34;&#34;
+
+    def __init__(self, raw_rtf:AnyStr, grammar: Union[str,None] = None):
+        &#34;&#34;&#34;Load in the Encapsulated test and setup the grammar used to parse the encapsulated RTF.
+
+NOTE: This does not do the parsing in the init so that you can initiate the object and do the parsing step by step.
+
+Parameters:
+        raw_rtf: (str): It&#39;s the raw RTF string.
+        grammar: (str): OPTIONAL - Lark parsing grammar which defines the RTF language. https://github.com/lark-parser/lark If you think my grammar is shoddy this is your chance to test out a better one and make a pull request.
+
+Raises:
+        TypeError: The raw_rtf data passed is not the correct type of data (string/byte string).
+&#34;&#34;&#34;
+        self.content: str
+        self.content_type: str
+        self.content_type_token: str
+        self.parser: Any
+
+        self.html: str
+        self.text: str
+        self.simplified_rtf: AnyStr
+        self.full_tree: Tree
+        self.doc_tree: Tree
+        self.catch_common_validation_issues(raw_rtf)
+        if isinstance(raw_rtf, bytes):
+            # Remove any null bytes at end of file.
+            raw_rtf = raw_rtf.rstrip(b&#39;\x00&#39;)
+            # Remove any windows newlines
+            raw_rtf = raw_rtf.replace(b&#39;\r\n&#39;,b&#39;\n&#39;)
+            raw_rtf = raw_rtf.replace(b&#39;\r&#39;,b&#39;\n&#39;)
+            self.raw_rtf: str = raw_rtf.decode()
+        elif isinstance(raw_rtf, str):
+            # Remove any windows newlines
+            self.raw_rtf = self.raw_rtf.replace(r&#39;\\r\\n&#39;,r&#39;\\n&#39;)
+            self.raw_rtf = self.raw_rtf.replace(r&#39;\\r&#39;,r&#39;\\n&#39;)
+            self.raw_rtf = raw_rtf
+        else:
+            raise TypeError(&#34;DeEncapssulator only accepts RTF files in string or byte-string formats&#34;)
+        if grammar is not None:
+            self.grammar: str = grammar
+        else:
+            self.grammar = make_concise_grammar()
+
+    def deencapsulate(self):
+        &#34;&#34;&#34;De-encapsulate the RTF content loaded into the De-Encapsulator.
+
+Once you have loaded in the raw rtf this function will set the properties containing the encapsulated content. The `content` property will store the content no matter what format it is in. The `html` and `text` properties will be populated based on the type of content that is extracted. (self.html will be populated if it is html and self.text if it is plain text.)
+        &#34;&#34;&#34;
+        escaped_rtf = encode_escaped_control_chars(self.raw_rtf)
+        log_transformations(escaped_rtf)
+        self.parse_rtf(escaped_rtf)
+        Decoder = TextDecoder()
+        Decoder.update_children(self.full_tree)
+        self.get_doc_tree()
+        self.validate_encapsulation()
+        # remove htmlrtf escaped values
+        htmlrtf_stripped = self.strip_htmlrtf_tokens()
+        # Strips whitespace from control words
+        control_stripped = StripControlWords().transform(htmlrtf_stripped)
+        # Strip unused control chars
+        special_stripper = StripUnusedSpecialCharacters()
+        non_special_tree = special_stripper.transform(control_stripped)
+        # Strip out non-visible RTF groups
+        stripper = StripNonVisibleRTFGroups()
+        stripped_tree = stripper.transform(non_special_tree)
+        # Converts any remaining tokens
+        cleaner = RTFCleaner(visit_tokens=True)
+        cleaned_text = cleaner.transform(stripped_tree)
+
+        self.content = cleaned_text
+        self.set_content() # Populates self.html || self.text
+
+    def validate_charset(self, fallback_to_default:bool =False) -&gt; str:
+        &#34;&#34;&#34;Validate and return the RTF charset keyword from the RTF streams header.
+
+Args:
+        fallback_to_default (bool): Allows you to force the use of the default charset &#34;\\ansi&#34; if one is not found.
+
+Raises:
+        MalformedRtf: RTF stream does not include charset control word.
+
+Returns:
+        The RTF charset keyword from the RTF streams header.
+&#34;&#34;&#34;
+        main_headers = self.get_header_control_words_before_first_group()
+
+        for token in main_headers:
+            if token in [&#34;\\ansi&#34;, &#34;\\mac&#34;, &#34;\\pc&#34;, &#34;\\pca&#34;]:
+                return token
+
+        log.debug(&#34;Acceptable charset not found as the second token in the RTF stream. The control word for the character set must precede any plain text or any table control words. So, if this stream doesn&#39;t have one it is malformed or corrupted.&#34;)
+        if fallback_to_default is False:
+            raise MalformedRtf(&#34;RTF stream does not include charset control word.&#34;)
+
+        log.warning(&#34;The fallback_to_default option on _get_charset is considered DANGEROUS if used on possibly malicious samples. Make sure you know what you are doing before using it.&#34;)
+        log.info(&#34;Attempting to decode RTF using the default charset ansi. This is not recommended and could have unforeseen consequences for the resulting file and your systems security.&#34;)
+        log.debug(&#34;You have a malformed RTF stream. Are you sure you really want to be parsing it? It might not just be corrupted. It could be maliciously constructed.&#34;)
+        return &#34;\\ansi&#34;
+
+    def set_content(self):
+        &#34;&#34;&#34;Populate the html or text content based on the content type. Populates self.html and/or self.text variables.&#34;&#34;&#34;
+        self.content_type = self.get_content_type()
+        if self.content_type == &#39;html&#39;:
+            self.html = self.content
+        else:
+            self.text = self.content
+
+    def get_doc_tree(self):
+        &#34;&#34;&#34;Extract the document portion of the .rtf full_tree object. Populates the classes doc_tree attribute.
+
+Raises:
+        ValueError: The .rtf document object is missing or mis-located in the .rtf&#39;s full_tree object.
+&#34;&#34;&#34;
+        if self.full_tree.children[1].data == &#34;document&#34;:
+            self.doc_tree = self.full_tree.children[1]
+        else:
+            raise ValueError(&#34;Document object in the wrong place after parsing.&#34;)
+
+    def get_content_type(self):
+        &#34;&#34;&#34;Provide the type of content encapsulated in RTF.
+
+NOTE: This function will only work after the header validation has completed. Header validation also extracts the content type of the encapsulated data.
+
+Raises:
+        NotEncapsulatedRtf: The .rtf object is missing an encapsulated content type header. Which means that it is likely just a regular .rtf file.
+&#34;&#34;&#34;
+        if self.content_type_token is None:
+            self.validate_FROM_in_doc_header()
+        elif self.content_type_token == &#39;\\fromhtml1&#39;:
+            return &#39;html&#39;
+        elif self.content_type_token == &#39;\\fromtext&#39;:
+            return &#34;text&#34;
+
+        raise NotEncapsulatedRtf(&#34;Data is missing encapsulated content type header (the FROM header).&#34;)
+
+    def validate_encapsulation(self):
+        &#34;&#34;&#34;Runs simple tests to validate that the file in question is an rtf document which contains encapsulation.&#34;&#34;&#34;
+        self.validate_rtf_doc_header(self.doc_tree)
+        self.validate_charset()
+        self.validate_FROM_in_doc_header()
+        ansicpg = self.get_ansicpg_header()
+        if ansicpg is not None: # ansicpg is not manditory
+            validate_ansi_cpg(ansicpg.value)
+
+    def get_ansicpg_header(self) -&gt; Union[Token,None]:
+        &#34;&#34;&#34;Extract the ansicpg control word from the .rtf header.
+
+Returns:
+        A lark CONTROLWORD Token with the `\\ansicpg` value. Returns None if the `\\ansicpg` control word is not included as this is only required if there is Unicode which needs to be converted to ANSI within a .rtf file.
+&#34;&#34;&#34;
+        headers = self.get_header_control_words_before_first_group()
+        for item in headers:
+            if item.value.startswith(&#39;\\ansicpg&#39;):
+                return item
+        return None
+
+    def parse_rtf(self, rtf: str):
+        &#34;&#34;&#34;Parse RTF file&#39;s header and document and extract the objects within the RTF into a Tree. Populates the self.full_tree attribute.
+
+Args:
+        rtf: The .rtf string to parse with the projects lark grammar.
+&#34;&#34;&#34;
+        # Uncomment Lark debug argument if you want to enable logging.
+        # Note, this not enable ALL lark debug logging.
+        # To do that we would not be able to use the Lark convinence class which we are using here.
+        self.parser = Lark(self.grammar,
+                           parser=&#39;lalr&#39;,
+                           keep_all_tokens=True,
+                           # debug=True,
+                           propagate_positions=True)
+        self.full_tree = self.parser.parse(rtf)
+        log_transformations(self.full_tree)
+
+
+    def strip_htmlrtf_tokens(self) -&gt; Tree:
+        &#34;&#34;&#34;Strip tokens from with htmlrtf regions of the doc_tree as they were not part of the original HTML content.
+
+Returns:
+        .rtf doc_tree stripped of all non-original tokens.
+&#34;&#34;&#34;
+        # remove htmlrtf escaped values
+        delete_generator = get_stripped_HTMLRTF_values(self.doc_tree)
+        tokens_to_delete = list(delete_generator)
+        deleter = DeleteTokensFromTree(tokens_to_delete)
+        htmlrtf_cleaned_tree = deleter.transform(self.doc_tree)
+        return htmlrtf_cleaned_tree
+
+
+    def get_header_control_words_before_first_group(self) -&gt; list:
+        &#34;&#34;&#34;Extracts all the control words in the first 20 tokens of the document or all the tokens which occur before the first group (whichever comes first.)
+
+This is used to extract initial header values for validation functions.
+
+Returns:
+        A list containing the header tokens in the .rtf data.
+        &#34;&#34;&#34;
+        initial_control_words = []
+        for token in self.doc_tree.children[:20]:
+            if isinstance(token, Token):
+                initial_control_words.append(token)
+            else:
+                return initial_control_words
+        return initial_control_words
+
+
+    def validate_FROM_in_doc_header(self):
+        &#34;&#34;&#34;Inspect the header to identify what type of content (html/plain text) is encapsulated within the document.
+
+NOTE: The de-encapsulating RTF reader inspects no more than the first 10 RTF tokens (that is, begin group marks and control words) in the input RTF document, in sequence, starting from the beginning of the RTF document. If one of the control words is the FROMHTML control word, the de-encapsulating RTF reader will conclude that the RTF document contains an encapsulated HTML document and stop further inspection. If one of the control words is the FROMTEXT control word, the de-encapsulating RTF reader concludes that the RTF document was produced from a plain text document and stops further inspection. - MS-OXRTFEX
+
+Raises:
+        MalformedEncapsulatedRtf: The .rtf headers are malformed.
+        NotEncapsulatedRtf: The .rtf object is missing an encapsulated content type header. Which means that it is likely just a regular .rtf file.
+        &#34;&#34;&#34;
+        cw_found = {&#34;rtf1&#34;:False,
+                    &#34;from&#34;:False,
+                    &#34;fonttbl&#34;:False,
+                    &#34;malformed&#34;:False}
+        # The de-encapsulating RTF reader SHOULD inspect no more than the first 10 RTF tokens (that is, begin group marks and control words) in the input RTF document, in sequence, starting from the beginning of the RTF document. This means more than just control words.
+        decoded_tree = StripControlWords().transform(self.doc_tree)
+        first_ten_tokens = decoded_tree.children[:10]
+        operating_tokens = []
+        found_token = None
+        for token in first_ten_tokens:
+            if isinstance(token, Token):
+                operating_tokens.append(token)
+            else:
+                operating_tokens += list(token.scan_values(lambda t: t.type == &#39;CONTROLWORD&#39;))
+        log_validators(f&#34;Header tokens being evaluated: {operating_tokens}&#34;)
+
+        for token in operating_tokens:
+            cw_found,found_token = self.check_from_token(token=token, cw_found=cw_found)
+            if cw_found[&#39;from&#39;] is True and cw_found[&#34;malformed&#34;] is True:
+                raise MalformedEncapsulatedRtf(&#34;RTF file looks like is was supposed to be encapsulated HTML/TEXT but the headers are malformed. Turn on debugging to see specific information&#34;)
+            # Save content type token available for id-ing type of content later
+            if found_token is not None:
+                self.content_type_token = found_token
+
+        if cw_found[&#39;from&#39;] is False:
+            log.debug(&#34;FROMHTML/TEXT control word not found in first 10 RTF tokens. This is not an HTML/TEXT encapsulated RTF document.&#34;)
+            raise NotEncapsulatedRtf(&#34;FROMHTML/TEXT control word not found.&#34;)
+
+    @staticmethod
+    def check_from_token(token:Token, cw_found:dict) -&gt; Tuple[Dict,Union[None,str]] :
+        &#34;&#34;&#34;Checks if fromhtml1 or fromtext tokens are in the proper place in the header based on the state passed to it by the validate_FROM_in_doc_header function.
+
+Args:
+        token: The token to check for in the cw_found state dictionary.
+        cw_found: The state dictionary which is used to track the position of the from token within the header.
+
+        `cw_found = {&#34;rtf1&#34;:&lt;BOOL&gt;, &#34;from&#34;:&lt;BOOL&gt;, &#34;fonttbl&#34;:&lt;BOOL&gt;, &#34;malformed&#34;:&lt;BOOL&gt;}`
+
+
+Returns:
+        cw_found: Updated state dictionary
+        found_token: The content_type_token found in the header.
+
+        &#34;&#34;&#34;
+        from_cws = [&#39;\\fromhtml1&#39;, &#39;\\fromtext&#39;]
+        # This control word MUST appear before the \fonttbl control word and after the \rtf1 control word, as specified in [MSFT-RTF].
+        rtf1_cw = &#34;\\rtf1&#34;
+        found_token = None
+        fonttbl_cw = &#34;\\fonttbl&#34;
+        if token.type == &#34;CONTROLWORD&#34;:
+            if token.value.strip() in from_cws:
+                if cw_found[&#39;from&#39;] is True:
+                    cw_found[&#34;malformed&#34;] = True
+                    log.debug(&#34;Multiple FROM HTML/TXT tokens found in the header. This encapsulated RTF is malformed.&#34;)
+                if cw_found[&#39;rtf1&#39;] is True:
+                    cw_found[&#39;from&#39;] = True
+                    found_token = token.value
+                else:
+                    log.debug(&#34;FROMHTML/TEXT control word found before rtf1 control word. That&#39;s not allowed in the RTF spec.&#34;)
+                    cw_found[&#39;from&#39;] = True
+                    cw_found[&#34;malformed&#34;] = True
+            elif token.value.strip() == rtf1_cw:
+                cw_found[&#39;rtf1&#39;] = True
+            elif token.value.strip() == fonttbl_cw:
+                cw_found[&#39;fonttbl&#39;] = True
+                if cw_found[&#39;from&#39;] is not True:
+                    log.debug(&#34;\\fonttbl code word found before FROMTML/TEXT was defined. This is not allowed for encapsulated HTML/TEXT. So... this is not encapsulated HTML/TEXT or it was badly encapsulated.&#34;)
+                    cw_found[&#34;malformed&#34;] = True
+        return cw_found, found_token
+
+
+    @staticmethod
+    def validate_rtf_doc_header(doc_tree: Tree):
+        &#34;&#34;&#34;Check if doc starts with a valid RTF header `\\rtf1`.
+
+        &#34;Before the de-encapsulating RTF reader tries to recognize the encapsulation, the reader SHOULD ensure that the document has a valid RTF document heading according to [MSFT-RTF] (that is, it starts with the character sequence &#34;{\\rtf1&#34;).&#34; - MS-OXRTFEX
+
+Raises:
+        MalformedRtf: The .rtf headers do not include \\rtf1.
+&#34;&#34;&#34;
+        first_token = doc_tree.children[0].value
+        if first_token != &#34;\\rtf1&#34;:
+            log.debug(&#34;RTF stream does not contain valid valid RTF document heading. The file must start with \&#34;{\\rtf1\&#34;&#34;)
+            log_validators(f&#34;First child object in document tree is: {first_token!r}&#34;)
+            raise MalformedRtf(&#34;RTF stream does not start with {\\rtf1&#34;)
+
+    @staticmethod
+    def catch_common_validation_issues(raw_rtf: AnyStr):
+        &#34;&#34;&#34;Checks for likely common valid input mistakes that may occur when folks try to use this library and raises exceptions to try and help identify them.
+
+Args:
+        raw_rtf: A raw .rtf string or byte-string.
+
+Raises:
+        TypeError: The data passed is the wrong type of data.
+        MalformedRtf: The data passed is not a correctly formatted .rtf string.
+&#34;&#34;&#34;
+        if isinstance(raw_rtf, BufferedReader):
+            raise TypeError(&#34;Data passed as file pointer. DeEncapsulator only accepts strings and byte-strings.&#34;)
+        if raw_rtf is None:
+            raise TypeError(&#34;Data passed as raw RTF file is a null object `None` keyword.&#34;)
+        if raw_rtf[:8] == b&#34;=\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1&#34;:
+            raise TypeError(&#34;Data passed is a full MSG object. You must extract the encapsulated RTF body first.&#34;)
+        if raw_rtf in (b&#39;&#39;, &#39;&#39;):
+            raise MalformedRtf(&#34;Data passed as raw RTF file is an empty string.&#34;)</code></pre>
+</details>
+<h3>Static methods</h3>
+<dl>
+<dt id="RTFDE.deencapsulate.DeEncapsulator.catch_common_validation_issues"><code class="name flex">
+<span>def <span class="ident">catch_common_validation_issues</span></span>(<span>raw_rtf: ~AnyStr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks for likely common valid input mistakes that may occur when folks try to use this library and raises exceptions to try and help identify them.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>raw_rtf</code></strong></dt>
+<dd>A raw .rtf string or byte-string.</dd>
+</dl>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>TypeError</code></dt>
+<dd>The data passed is the wrong type of data.</dd>
+<dt><code>MalformedRtf</code></dt>
+<dd>The data passed is not a correctly formatted .rtf string.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">    @staticmethod
+    def catch_common_validation_issues(raw_rtf: AnyStr):
+        &#34;&#34;&#34;Checks for likely common valid input mistakes that may occur when folks try to use this library and raises exceptions to try and help identify them.
+
+Args:
+        raw_rtf: A raw .rtf string or byte-string.
+
+Raises:
+        TypeError: The data passed is the wrong type of data.
+        MalformedRtf: The data passed is not a correctly formatted .rtf string.
+&#34;&#34;&#34;
+        if isinstance(raw_rtf, BufferedReader):
+            raise TypeError(&#34;Data passed as file pointer. DeEncapsulator only accepts strings and byte-strings.&#34;)
+        if raw_rtf is None:
+            raise TypeError(&#34;Data passed as raw RTF file is a null object `None` keyword.&#34;)
+        if raw_rtf[:8] == b&#34;=\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1&#34;:
+            raise TypeError(&#34;Data passed is a full MSG object. You must extract the encapsulated RTF body first.&#34;)
+        if raw_rtf in (b&#39;&#39;, &#39;&#39;):
+            raise MalformedRtf(&#34;Data passed as raw RTF file is an empty string.&#34;)</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.deencapsulate.DeEncapsulator.check_from_token"><code class="name flex">
+<span>def <span class="ident">check_from_token</span></span>(<span>token: lark.lexer.Token, cw_found: dict) ‑> Tuple[Dict, Optional[None]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if fromhtml1 or fromtext tokens are in the proper place in the header based on the state passed to it by the validate_FROM_in_doc_header function.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>token</code></strong></dt>
+<dd>The token to check for in the cw_found state dictionary.</dd>
+<dt><strong><code>cw_found</code></strong></dt>
+<dd>The state dictionary which is used to track the position of the from token within the header.</dd>
+</dl>
+<p><code>cw_found = {"rtf1":&lt;BOOL&gt;, "from":&lt;BOOL&gt;, "fonttbl":&lt;BOOL&gt;, "malformed":&lt;BOOL&gt;}</code></p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>cw_found</code></dt>
+<dd>Updated state dictionary</dd>
+<dt><code>found_token</code></dt>
+<dd>The content_type_token found in the header.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">    @staticmethod
+    def check_from_token(token:Token, cw_found:dict) -&gt; Tuple[Dict,Union[None,str]] :
+        &#34;&#34;&#34;Checks if fromhtml1 or fromtext tokens are in the proper place in the header based on the state passed to it by the validate_FROM_in_doc_header function.
+
+Args:
+        token: The token to check for in the cw_found state dictionary.
+        cw_found: The state dictionary which is used to track the position of the from token within the header.
+
+        `cw_found = {&#34;rtf1&#34;:&lt;BOOL&gt;, &#34;from&#34;:&lt;BOOL&gt;, &#34;fonttbl&#34;:&lt;BOOL&gt;, &#34;malformed&#34;:&lt;BOOL&gt;}`
+
+
+Returns:
+        cw_found: Updated state dictionary
+        found_token: The content_type_token found in the header.
+
+        &#34;&#34;&#34;
+        from_cws = [&#39;\\fromhtml1&#39;, &#39;\\fromtext&#39;]
+        # This control word MUST appear before the \fonttbl control word and after the \rtf1 control word, as specified in [MSFT-RTF].
+        rtf1_cw = &#34;\\rtf1&#34;
+        found_token = None
+        fonttbl_cw = &#34;\\fonttbl&#34;
+        if token.type == &#34;CONTROLWORD&#34;:
+            if token.value.strip() in from_cws:
+                if cw_found[&#39;from&#39;] is True:
+                    cw_found[&#34;malformed&#34;] = True
+                    log.debug(&#34;Multiple FROM HTML/TXT tokens found in the header. This encapsulated RTF is malformed.&#34;)
+                if cw_found[&#39;rtf1&#39;] is True:
+                    cw_found[&#39;from&#39;] = True
+                    found_token = token.value
+                else:
+                    log.debug(&#34;FROMHTML/TEXT control word found before rtf1 control word. That&#39;s not allowed in the RTF spec.&#34;)
+                    cw_found[&#39;from&#39;] = True
+                    cw_found[&#34;malformed&#34;] = True
+            elif token.value.strip() == rtf1_cw:
+                cw_found[&#39;rtf1&#39;] = True
+            elif token.value.strip() == fonttbl_cw:
+                cw_found[&#39;fonttbl&#39;] = True
+                if cw_found[&#39;from&#39;] is not True:
+                    log.debug(&#34;\\fonttbl code word found before FROMTML/TEXT was defined. This is not allowed for encapsulated HTML/TEXT. So... this is not encapsulated HTML/TEXT or it was badly encapsulated.&#34;)
+                    cw_found[&#34;malformed&#34;] = True
+        return cw_found, found_token</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.deencapsulate.DeEncapsulator.validate_rtf_doc_header"><code class="name flex">
+<span>def <span class="ident">validate_rtf_doc_header</span></span>(<span>doc_tree: lark.tree.Tree)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if doc starts with a valid RTF header <code>\rtf1</code>.</p>
+<pre><code>    "Before the de-encapsulating RTF reader tries to recognize the encapsulation, the reader SHOULD ensure that the document has a valid RTF document heading according to [MSFT-RTF] (that is, it starts with the character sequence "{\rtf1")." - MS-OXRTFEX
+</code></pre>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>MalformedRtf</code></dt>
+<dd>The .rtf headers do not include \rtf1.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">    @staticmethod
+    def validate_rtf_doc_header(doc_tree: Tree):
+        &#34;&#34;&#34;Check if doc starts with a valid RTF header `\\rtf1`.
+
+        &#34;Before the de-encapsulating RTF reader tries to recognize the encapsulation, the reader SHOULD ensure that the document has a valid RTF document heading according to [MSFT-RTF] (that is, it starts with the character sequence &#34;{\\rtf1&#34;).&#34; - MS-OXRTFEX
+
+Raises:
+        MalformedRtf: The .rtf headers do not include \\rtf1.
+&#34;&#34;&#34;
+        first_token = doc_tree.children[0].value
+        if first_token != &#34;\\rtf1&#34;:
+            log.debug(&#34;RTF stream does not contain valid valid RTF document heading. The file must start with \&#34;{\\rtf1\&#34;&#34;)
+            log_validators(f&#34;First child object in document tree is: {first_token!r}&#34;)
+            raise MalformedRtf(&#34;RTF stream does not start with {\\rtf1&#34;)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="RTFDE.deencapsulate.DeEncapsulator.deencapsulate"><code class="name flex">
+<span>def <span class="ident">deencapsulate</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>De-encapsulate the RTF content loaded into the De-Encapsulator.</p>
+<p>Once you have loaded in the raw rtf this function will set the properties containing the encapsulated content. The <code>content</code> property will store the content no matter what format it is in. The <code>html</code> and <code>text</code> properties will be populated based on the type of content that is extracted. (self.html will be populated if it is html and self.text if it is plain text.)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">    def deencapsulate(self):
+        &#34;&#34;&#34;De-encapsulate the RTF content loaded into the De-Encapsulator.
+
+Once you have loaded in the raw rtf this function will set the properties containing the encapsulated content. The `content` property will store the content no matter what format it is in. The `html` and `text` properties will be populated based on the type of content that is extracted. (self.html will be populated if it is html and self.text if it is plain text.)
+        &#34;&#34;&#34;
+        escaped_rtf = encode_escaped_control_chars(self.raw_rtf)
+        log_transformations(escaped_rtf)
+        self.parse_rtf(escaped_rtf)
+        Decoder = TextDecoder()
+        Decoder.update_children(self.full_tree)
+        self.get_doc_tree()
+        self.validate_encapsulation()
+        # remove htmlrtf escaped values
+        htmlrtf_stripped = self.strip_htmlrtf_tokens()
+        # Strips whitespace from control words
+        control_stripped = StripControlWords().transform(htmlrtf_stripped)
+        # Strip unused control chars
+        special_stripper = StripUnusedSpecialCharacters()
+        non_special_tree = special_stripper.transform(control_stripped)
+        # Strip out non-visible RTF groups
+        stripper = StripNonVisibleRTFGroups()
+        stripped_tree = stripper.transform(non_special_tree)
+        # Converts any remaining tokens
+        cleaner = RTFCleaner(visit_tokens=True)
+        cleaned_text = cleaner.transform(stripped_tree)
+
+        self.content = cleaned_text
+        self.set_content() # Populates self.html || self.text</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.deencapsulate.DeEncapsulator.get_ansicpg_header"><code class="name flex">
+<span>def <span class="ident">get_ansicpg_header</span></span>(<span>self) ‑> Optional[lark.lexer.Token]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Extract the ansicpg control word from the .rtf header.</p>
+<h2 id="returns">Returns</h2>
+<p>A lark CONTROLWORD Token with the <code>\ansicpg</code> value. Returns None if the <code>\ansicpg</code> control word is not included as this is only required if there is Unicode which needs to be converted to ANSI within a .rtf file.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">    def get_ansicpg_header(self) -&gt; Union[Token,None]:
+        &#34;&#34;&#34;Extract the ansicpg control word from the .rtf header.
+
+Returns:
+        A lark CONTROLWORD Token with the `\\ansicpg` value. Returns None if the `\\ansicpg` control word is not included as this is only required if there is Unicode which needs to be converted to ANSI within a .rtf file.
+&#34;&#34;&#34;
+        headers = self.get_header_control_words_before_first_group()
+        for item in headers:
+            if item.value.startswith(&#39;\\ansicpg&#39;):
+                return item
+        return None</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.deencapsulate.DeEncapsulator.get_content_type"><code class="name flex">
+<span>def <span class="ident">get_content_type</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Provide the type of content encapsulated in RTF.</p>
+<p>NOTE: This function will only work after the header validation has completed. Header validation also extracts the content type of the encapsulated data.</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>NotEncapsulatedRtf</code></dt>
+<dd>The .rtf object is missing an encapsulated content type header. Which means that it is likely just a regular .rtf file.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">    def get_content_type(self):
+        &#34;&#34;&#34;Provide the type of content encapsulated in RTF.
+
+NOTE: This function will only work after the header validation has completed. Header validation also extracts the content type of the encapsulated data.
+
+Raises:
+        NotEncapsulatedRtf: The .rtf object is missing an encapsulated content type header. Which means that it is likely just a regular .rtf file.
+&#34;&#34;&#34;
+        if self.content_type_token is None:
+            self.validate_FROM_in_doc_header()
+        elif self.content_type_token == &#39;\\fromhtml1&#39;:
+            return &#39;html&#39;
+        elif self.content_type_token == &#39;\\fromtext&#39;:
+            return &#34;text&#34;
+
+        raise NotEncapsulatedRtf(&#34;Data is missing encapsulated content type header (the FROM header).&#34;)</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.deencapsulate.DeEncapsulator.get_doc_tree"><code class="name flex">
+<span>def <span class="ident">get_doc_tree</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Extract the document portion of the .rtf full_tree object. Populates the classes doc_tree attribute.</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>ValueError</code></dt>
+<dd>The .rtf document object is missing or mis-located in the .rtf's full_tree object.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">    def get_doc_tree(self):
+        &#34;&#34;&#34;Extract the document portion of the .rtf full_tree object. Populates the classes doc_tree attribute.
+
+Raises:
+        ValueError: The .rtf document object is missing or mis-located in the .rtf&#39;s full_tree object.
+&#34;&#34;&#34;
+        if self.full_tree.children[1].data == &#34;document&#34;:
+            self.doc_tree = self.full_tree.children[1]
+        else:
+            raise ValueError(&#34;Document object in the wrong place after parsing.&#34;)</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.deencapsulate.DeEncapsulator.get_header_control_words_before_first_group"><code class="name flex">
+<span>def <span class="ident">get_header_control_words_before_first_group</span></span>(<span>self) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Extracts all the control words in the first 20 tokens of the document or all the tokens which occur before the first group (whichever comes first.)</p>
+<p>This is used to extract initial header values for validation functions.</p>
+<h2 id="returns">Returns</h2>
+<p>A list containing the header tokens in the .rtf data.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">    def get_header_control_words_before_first_group(self) -&gt; list:
+        &#34;&#34;&#34;Extracts all the control words in the first 20 tokens of the document or all the tokens which occur before the first group (whichever comes first.)
+
+This is used to extract initial header values for validation functions.
+
+Returns:
+        A list containing the header tokens in the .rtf data.
+        &#34;&#34;&#34;
+        initial_control_words = []
+        for token in self.doc_tree.children[:20]:
+            if isinstance(token, Token):
+                initial_control_words.append(token)
+            else:
+                return initial_control_words
+        return initial_control_words</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.deencapsulate.DeEncapsulator.parse_rtf"><code class="name flex">
+<span>def <span class="ident">parse_rtf</span></span>(<span>self, rtf: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Parse RTF file's header and document and extract the objects within the RTF into a Tree. Populates the self.full_tree attribute.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>rtf</code></strong></dt>
+<dd>The .rtf string to parse with the projects lark grammar.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">    def parse_rtf(self, rtf: str):
+        &#34;&#34;&#34;Parse RTF file&#39;s header and document and extract the objects within the RTF into a Tree. Populates the self.full_tree attribute.
+
+Args:
+        rtf: The .rtf string to parse with the projects lark grammar.
+&#34;&#34;&#34;
+        # Uncomment Lark debug argument if you want to enable logging.
+        # Note, this not enable ALL lark debug logging.
+        # To do that we would not be able to use the Lark convinence class which we are using here.
+        self.parser = Lark(self.grammar,
+                           parser=&#39;lalr&#39;,
+                           keep_all_tokens=True,
+                           # debug=True,
+                           propagate_positions=True)
+        self.full_tree = self.parser.parse(rtf)
+        log_transformations(self.full_tree)</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.deencapsulate.DeEncapsulator.set_content"><code class="name flex">
+<span>def <span class="ident">set_content</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Populate the html or text content based on the content type. Populates self.html and/or self.text variables.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def set_content(self):
+    &#34;&#34;&#34;Populate the html or text content based on the content type. Populates self.html and/or self.text variables.&#34;&#34;&#34;
+    self.content_type = self.get_content_type()
+    if self.content_type == &#39;html&#39;:
+        self.html = self.content
+    else:
+        self.text = self.content</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.deencapsulate.DeEncapsulator.strip_htmlrtf_tokens"><code class="name flex">
+<span>def <span class="ident">strip_htmlrtf_tokens</span></span>(<span>self) ‑> lark.tree.Tree</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Strip tokens from with htmlrtf regions of the doc_tree as they were not part of the original HTML content.</p>
+<h2 id="returns">Returns</h2>
+<p>.rtf doc_tree stripped of all non-original tokens.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">    def strip_htmlrtf_tokens(self) -&gt; Tree:
+        &#34;&#34;&#34;Strip tokens from with htmlrtf regions of the doc_tree as they were not part of the original HTML content.
+
+Returns:
+        .rtf doc_tree stripped of all non-original tokens.
+&#34;&#34;&#34;
+        # remove htmlrtf escaped values
+        delete_generator = get_stripped_HTMLRTF_values(self.doc_tree)
+        tokens_to_delete = list(delete_generator)
+        deleter = DeleteTokensFromTree(tokens_to_delete)
+        htmlrtf_cleaned_tree = deleter.transform(self.doc_tree)
+        return htmlrtf_cleaned_tree</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.deencapsulate.DeEncapsulator.validate_FROM_in_doc_header"><code class="name flex">
+<span>def <span class="ident">validate_FROM_in_doc_header</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Inspect the header to identify what type of content (html/plain text) is encapsulated within the document.</p>
+<p>NOTE: The de-encapsulating RTF reader inspects no more than the first 10 RTF tokens (that is, begin group marks and control words) in the input RTF document, in sequence, starting from the beginning of the RTF document. If one of the control words is the FROMHTML control word, the de-encapsulating RTF reader will conclude that the RTF document contains an encapsulated HTML document and stop further inspection. If one of the control words is the FROMTEXT control word, the de-encapsulating RTF reader concludes that the RTF document was produced from a plain text document and stops further inspection. - MS-OXRTFEX</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>MalformedEncapsulatedRtf</code></dt>
+<dd>The .rtf headers are malformed.</dd>
+<dt><code>NotEncapsulatedRtf</code></dt>
+<dd>The .rtf object is missing an encapsulated content type header. Which means that it is likely just a regular .rtf file.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">    def validate_FROM_in_doc_header(self):
+        &#34;&#34;&#34;Inspect the header to identify what type of content (html/plain text) is encapsulated within the document.
+
+NOTE: The de-encapsulating RTF reader inspects no more than the first 10 RTF tokens (that is, begin group marks and control words) in the input RTF document, in sequence, starting from the beginning of the RTF document. If one of the control words is the FROMHTML control word, the de-encapsulating RTF reader will conclude that the RTF document contains an encapsulated HTML document and stop further inspection. If one of the control words is the FROMTEXT control word, the de-encapsulating RTF reader concludes that the RTF document was produced from a plain text document and stops further inspection. - MS-OXRTFEX
+
+Raises:
+        MalformedEncapsulatedRtf: The .rtf headers are malformed.
+        NotEncapsulatedRtf: The .rtf object is missing an encapsulated content type header. Which means that it is likely just a regular .rtf file.
+        &#34;&#34;&#34;
+        cw_found = {&#34;rtf1&#34;:False,
+                    &#34;from&#34;:False,
+                    &#34;fonttbl&#34;:False,
+                    &#34;malformed&#34;:False}
+        # The de-encapsulating RTF reader SHOULD inspect no more than the first 10 RTF tokens (that is, begin group marks and control words) in the input RTF document, in sequence, starting from the beginning of the RTF document. This means more than just control words.
+        decoded_tree = StripControlWords().transform(self.doc_tree)
+        first_ten_tokens = decoded_tree.children[:10]
+        operating_tokens = []
+        found_token = None
+        for token in first_ten_tokens:
+            if isinstance(token, Token):
+                operating_tokens.append(token)
+            else:
+                operating_tokens += list(token.scan_values(lambda t: t.type == &#39;CONTROLWORD&#39;))
+        log_validators(f&#34;Header tokens being evaluated: {operating_tokens}&#34;)
+
+        for token in operating_tokens:
+            cw_found,found_token = self.check_from_token(token=token, cw_found=cw_found)
+            if cw_found[&#39;from&#39;] is True and cw_found[&#34;malformed&#34;] is True:
+                raise MalformedEncapsulatedRtf(&#34;RTF file looks like is was supposed to be encapsulated HTML/TEXT but the headers are malformed. Turn on debugging to see specific information&#34;)
+            # Save content type token available for id-ing type of content later
+            if found_token is not None:
+                self.content_type_token = found_token
+
+        if cw_found[&#39;from&#39;] is False:
+            log.debug(&#34;FROMHTML/TEXT control word not found in first 10 RTF tokens. This is not an HTML/TEXT encapsulated RTF document.&#34;)
+            raise NotEncapsulatedRtf(&#34;FROMHTML/TEXT control word not found.&#34;)</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.deencapsulate.DeEncapsulator.validate_charset"><code class="name flex">
+<span>def <span class="ident">validate_charset</span></span>(<span>self, fallback_to_default: bool = False) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Validate and return the RTF charset keyword from the RTF streams header.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>fallback_to_default</code></strong> :&ensp;<code>bool</code></dt>
+<dd>Allows you to force the use of the default charset "\ansi" if one is not found.</dd>
+</dl>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>MalformedRtf</code></dt>
+<dd>RTF stream does not include charset control word.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>The RTF charset keyword from the RTF streams header.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">    def validate_charset(self, fallback_to_default:bool =False) -&gt; str:
+        &#34;&#34;&#34;Validate and return the RTF charset keyword from the RTF streams header.
+
+Args:
+        fallback_to_default (bool): Allows you to force the use of the default charset &#34;\\ansi&#34; if one is not found.
+
+Raises:
+        MalformedRtf: RTF stream does not include charset control word.
+
+Returns:
+        The RTF charset keyword from the RTF streams header.
+&#34;&#34;&#34;
+        main_headers = self.get_header_control_words_before_first_group()
+
+        for token in main_headers:
+            if token in [&#34;\\ansi&#34;, &#34;\\mac&#34;, &#34;\\pc&#34;, &#34;\\pca&#34;]:
+                return token
+
+        log.debug(&#34;Acceptable charset not found as the second token in the RTF stream. The control word for the character set must precede any plain text or any table control words. So, if this stream doesn&#39;t have one it is malformed or corrupted.&#34;)
+        if fallback_to_default is False:
+            raise MalformedRtf(&#34;RTF stream does not include charset control word.&#34;)
+
+        log.warning(&#34;The fallback_to_default option on _get_charset is considered DANGEROUS if used on possibly malicious samples. Make sure you know what you are doing before using it.&#34;)
+        log.info(&#34;Attempting to decode RTF using the default charset ansi. This is not recommended and could have unforeseen consequences for the resulting file and your systems security.&#34;)
+        log.debug(&#34;You have a malformed RTF stream. Are you sure you really want to be parsing it? It might not just be corrupted. It could be maliciously constructed.&#34;)
+        return &#34;\\ansi&#34;</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.deencapsulate.DeEncapsulator.validate_encapsulation"><code class="name flex">
+<span>def <span class="ident">validate_encapsulation</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Runs simple tests to validate that the file in question is an rtf document which contains encapsulation.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def validate_encapsulation(self):
+    &#34;&#34;&#34;Runs simple tests to validate that the file in question is an rtf document which contains encapsulation.&#34;&#34;&#34;
+    self.validate_rtf_doc_header(self.doc_tree)
+    self.validate_charset()
+    self.validate_FROM_in_doc_header()
+    ansicpg = self.get_ansicpg_header()
+    if ansicpg is not None: # ansicpg is not manditory
+        validate_ansi_cpg(ansicpg.value)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="RTFDE" href="index.html">RTFDE</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="RTFDE.deencapsulate.DeEncapsulator" href="#RTFDE.deencapsulate.DeEncapsulator">DeEncapsulator</a></code></h4>
+<ul class="">
+<li><code><a title="RTFDE.deencapsulate.DeEncapsulator.catch_common_validation_issues" href="#RTFDE.deencapsulate.DeEncapsulator.catch_common_validation_issues">catch_common_validation_issues</a></code></li>
+<li><code><a title="RTFDE.deencapsulate.DeEncapsulator.check_from_token" href="#RTFDE.deencapsulate.DeEncapsulator.check_from_token">check_from_token</a></code></li>
+<li><code><a title="RTFDE.deencapsulate.DeEncapsulator.deencapsulate" href="#RTFDE.deencapsulate.DeEncapsulator.deencapsulate">deencapsulate</a></code></li>
+<li><code><a title="RTFDE.deencapsulate.DeEncapsulator.get_ansicpg_header" href="#RTFDE.deencapsulate.DeEncapsulator.get_ansicpg_header">get_ansicpg_header</a></code></li>
+<li><code><a title="RTFDE.deencapsulate.DeEncapsulator.get_content_type" href="#RTFDE.deencapsulate.DeEncapsulator.get_content_type">get_content_type</a></code></li>
+<li><code><a title="RTFDE.deencapsulate.DeEncapsulator.get_doc_tree" href="#RTFDE.deencapsulate.DeEncapsulator.get_doc_tree">get_doc_tree</a></code></li>
+<li><code><a title="RTFDE.deencapsulate.DeEncapsulator.get_header_control_words_before_first_group" href="#RTFDE.deencapsulate.DeEncapsulator.get_header_control_words_before_first_group">get_header_control_words_before_first_group</a></code></li>
+<li><code><a title="RTFDE.deencapsulate.DeEncapsulator.parse_rtf" href="#RTFDE.deencapsulate.DeEncapsulator.parse_rtf">parse_rtf</a></code></li>
+<li><code><a title="RTFDE.deencapsulate.DeEncapsulator.set_content" href="#RTFDE.deencapsulate.DeEncapsulator.set_content">set_content</a></code></li>
+<li><code><a title="RTFDE.deencapsulate.DeEncapsulator.strip_htmlrtf_tokens" href="#RTFDE.deencapsulate.DeEncapsulator.strip_htmlrtf_tokens">strip_htmlrtf_tokens</a></code></li>
+<li><code><a title="RTFDE.deencapsulate.DeEncapsulator.validate_FROM_in_doc_header" href="#RTFDE.deencapsulate.DeEncapsulator.validate_FROM_in_doc_header">validate_FROM_in_doc_header</a></code></li>
+<li><code><a title="RTFDE.deencapsulate.DeEncapsulator.validate_charset" href="#RTFDE.deencapsulate.DeEncapsulator.validate_charset">validate_charset</a></code></li>
+<li><code><a title="RTFDE.deencapsulate.DeEncapsulator.validate_encapsulation" href="#RTFDE.deencapsulate.DeEncapsulator.validate_encapsulation">validate_encapsulation</a></code></li>
+<li><code><a title="RTFDE.deencapsulate.DeEncapsulator.validate_rtf_doc_header" href="#RTFDE.deencapsulate.DeEncapsulator.validate_rtf_doc_header">validate_rtf_doc_header</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>
