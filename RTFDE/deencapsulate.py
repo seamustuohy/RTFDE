@@ -91,8 +91,8 @@ Raises:
             self.raw_rtf: str = raw_rtf.decode()
         elif isinstance(raw_rtf, str):
             # Remove any windows newlines
-            self.raw_rtf = self.raw_rtf.replace(r'\\r\\n',r'\\n')
-            self.raw_rtf = self.raw_rtf.replace(r'\\r',r'\\n')
+            self.raw_rtf = raw_rtf.replace(r'\\r\\n',r'\\n')
+            self.raw_rtf = raw_rtf.replace(r'\\r',r'\\n')
             self.raw_rtf = raw_rtf
         else:
             raise TypeError("DeEncapssulator only accepts RTF files in string or byte-string formats")
@@ -373,7 +373,7 @@ Raises:
             raise TypeError("Data passed as file pointer. DeEncapsulator only accepts strings and byte-strings.")
         if raw_rtf is None:
             raise TypeError("Data passed as raw RTF file is a null object `None` keyword.")
-        if raw_rtf[:8] == b"=\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
+        if raw_rtf[:8] == b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
             raise TypeError("Data passed is a full MSG object. You must extract the encapsulated RTF body first.")
         if raw_rtf in (b'', ''):
             raise MalformedRtf("Data passed as raw RTF file is an empty string.")
