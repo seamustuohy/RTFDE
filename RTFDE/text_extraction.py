@@ -58,7 +58,7 @@ Returns:
                 continue
             if isinstance(ctrl_value, Token):
                 table_type = ctrl_value.value.strip()
-                if table_type == "\\fonttbl":
+                if table_type == b"\\fonttbl":
                     return item
     raise ValueError("No font table found in tree")
 
@@ -71,7 +71,7 @@ Returns:
 
 """
     try:
-        if is_codeword_with_numeric_arg(token, '\\f'):
+        if is_codeword_with_numeric_arg(token, b'\\f'):
             return True
     except AttributeError: # pragma: no cover
         return False
@@ -127,14 +127,14 @@ Returns:
     The default font control number if it exists from the first `\\deffN`. None if not found.
 """
     deff_gen = tree.scan_values(
-        lambda v: is_codeword_with_numeric_arg(v, '\\deff')
+        lambda v: is_codeword_with_numeric_arg(v, b'\\deff')
     )
     deff_options = list(deff_gen)
     try:
         # We just want the first \\deffN. It shouldn't be set multiple times.
         deff = deff_options[0]
         deff_num = deff.value[5:]
-        return '\\f' + deff_num
+        return b'\\f' + deff_num
     except IndexError:
         return None
 
@@ -154,12 +154,12 @@ Returns:
             fcharset = None
             cpg_num = None
             for tok in tree.children:
-                if is_codeword_with_numeric_arg(tok, '\\f'):
+                if is_codeword_with_numeric_arg(tok, b'\\f'):
                     fnum = tok.value
-                elif is_codeword_with_numeric_arg(tok, '\\fcharset'):
+                elif is_codeword_with_numeric_arg(tok, b'\\fcharset'):
                     fchar_num = int(tok.value[9:])
                     fcharset = get_codepage_num_from_fcharset(fchar_num)
-                elif is_codeword_with_numeric_arg(tok, '\\cpg'):
+                elif is_codeword_with_numeric_arg(tok, b'\\cpg'):
                     cpg_num = int(tok.value[4:])
             if fnum is not None:
                 # get the codepage
@@ -182,7 +182,7 @@ Returns:
                 else:
                     codec = None
                 # Only add if there is a font definition
-                tree_str =  "".join(list(flatten_tree_to_string_array(tree)))
+                tree_str =  b"".join(list(flatten_tree_to_string_array(tree)))
                 parsed_font_tree[fnum] = fontdef(fnum, codepage_num, codec, tree_str)
     return parsed_font_tree
 
@@ -241,7 +241,7 @@ Raises:
 
 
 # UNICODE CHARS
-def unicode_escape_to_chr(item: str) -> str:
+def unicode_escape_to_chr(item: bytes) -> str:
     """Convert unicode char from it's decimal to its unicode character representation. From "\\u[-]NNNNN" to the string representing the character whose Unicode code point that decimal represents.
 
 Args:
@@ -254,7 +254,7 @@ Raises:
     ValueError: The escaped unicode character is not valid.
 """
     try:
-        nnnn = int(item.removeprefix('\\u')) # raises ValueError if not int.
+        nnnn = int(item.removeprefix(b'\\u')) # raises ValueError if not int.
     except ValueError as _e:
         raise ValueError(f"`{item}` is not a valid escaped unicode character.") from _e
     if nnnn < 0: # § -NNNNN is a negative integer expressed in decimal digits
@@ -411,7 +411,7 @@ def is_surrogate_high_char(item):
 
         item (str): A string representing a unicode character. "\\u-10179"
     """
-    if item.startswith("\\u"):
+    if item.startswith(b"\\u"):
         item = item[2:]
     if 0xD800 <= ord(chr(65536+int(item))) <= 0xDBFF:
         return True
@@ -422,7 +422,7 @@ def is_surrogate_low_char(item):
 
         item (str): A string representing a unicode character.
     """
-    if item.startswith("\\u"):
+    if item.startswith(b"\\u"):
         item = item[2:]
     if 0xDC00 <= ord(chr(65536+int(item))) <= 0xDFFF:
         return True
@@ -449,15 +449,15 @@ def decode_surrogate_pair(high, low, encoding='utf-16-le'):
     # Unicode scalar value means the same thing as "code position" or "code point"
      # https://www.unicode.org/versions/Unicode3.0.0/
      # section 3.7 https://www.unicode.org/versions/Unicode3.0.0/ch03.pdf#page=9
-    if high.startswith("\\u"):
+    if high.startswith(b"\\u"):
         high = high[2:]
-    if low.startswith("\\u"):
+    if low.startswith(b"\\u"):
         low = low[2:]
     high = chr(65536+int(high))
     low = chr(65536+int(low))
     unicode_scalar_value = ((ord(high) - 0xD800) * 0x400) + (ord(low) - 0xDC00) + 0x10000
     unicode_bytes = chr(unicode_scalar_value).encode(encoding)
-    return unicode_bytes.decode(encoding)
+    return unicode_bytes.decode(encoding).encode()
 
 def merge_surrogate_chars(children, ascii_map,
                           use_ASCII_alternatives_on_unicode_decode_failure = False):
@@ -492,19 +492,19 @@ Raises:
                                               column=surrogate_high.column,
                                               end_column=surrogate_low.end_column)
                         children[surrogate_start] = surrogate_tok
-                        children[i] = ""
+                        children[i] = b""
                         surrogate_start = None
                         surrogate_high = None
                     except UnicodeDecodeError as _e:
                         if use_ASCII_alternatives_on_unicode_decode_failure is True:
-                            children[surrogate_start] = "".join([i.value for i in ascii_map[surrogate_high]])
-                            children[i] = "".join([i.value for i in ascii_map[surrogate_low]])
+                            children[surrogate_start] = b"".join([i.value for i in ascii_map[surrogate_high]])
+                            children[i] = b"".join([i.value for i in ascii_map[surrogate_low]])
                         else:
                             raise _e
                 else:
                     log.info("RTFDE encountered a standalone high-surrogate point without a corresponding low-surrogate. Standalone surrogate code points have either a high surrogate without an adjacent low surrogate, or vice versa. These code points are invalid and are not supported. Their behavior is undefined. Codepoints encountered: {0}, {1}".format(surrogate_high, surrogate_low))
                     if use_ASCII_alternatives_on_unicode_decode_failure is True:
-                        children[surrogate_start] = "".join([i.value for i in ascii_map[surrogate_high]])
+                        children[surrogate_start] = b"".join([i.value for i in ascii_map[surrogate_high]])
                     else:
                         raise ValueError("Standalone high-surrogate found. High surrogate followed by a illegal low-surrogate character.")
     return children
@@ -514,11 +514,12 @@ Raises:
 def is_unicode_char_byte_count(item: Token) -> bool:
     if isinstance(item, Token):
         if item.type == "CONTROLWORD":
-            if item.value.startswith('\\uc'):
+            if item.value.startswith(b'\\uc'):
                 return True
     return False
 
-def get_unicode_char_byte_count(item):
+def get_unicode_char_byte_count(item: bytes) -> int:
+    item = item.value.decode()
     cur_uc = int(item[3:])
     return cur_uc
 
@@ -549,8 +550,8 @@ def get_bytes_from_hex_encoded(item):
 
     item (str): a hex encoded string in format \\'XX
     """
-    hexstring = item.replace("\\'", "")
-    hex_bytes = bytes.fromhex(hexstring)
+    hexstring = item.replace(b"\\'", b"")
+    hex_bytes = bytes.fromhex(hexstring.decode())
     return hex_bytes
 
 def decode_hex_char(item, codec):
@@ -564,6 +565,7 @@ def decode_hex_char(item, codec):
         # Default to U.S. Windows default codepage
         codec = 'CP1252'
     decoded = item.decode(codec)
+    decoded = decoded.encode()
     # print("char {0} decoded into {1} using codec {2}".format(item, decoded, codec))
     return decoded
 
@@ -637,7 +639,6 @@ class TextDecoder:
         children = self.prep_unicode(children)
         # print("PREP-AFTER: "+repr(children))
 
-
         for item in children:
             if is_font_number(item): # Font Definitions
                 self.font_stack.append(item.value.strip())
@@ -647,7 +648,7 @@ class TextDecoder:
             elif is_unicode_char_byte_count(item):
                 bc = get_unicode_char_byte_count(item)
             elif is_unicode_encoded(item): # Unicode Chars
-                decoded = unicode_escape_to_chr(item.value)
+                decoded = unicode_escape_to_chr(item.value).encode()
                 # Convert into STRING token
                 decoded_tok = Token('STRING',
                                     decoded,
@@ -661,7 +662,7 @@ class TextDecoder:
                 yield decoded_tok
             # Decode a hex array
             elif is_hexarray(item):
-                # print("IS Hex?? {0}".format(item))
+                #print("IS Hex?? {0}".format(item))
                 base_bytes = None
                 for hexchild in item.children:
                     if base_bytes is None:
@@ -685,6 +686,7 @@ class TextDecoder:
             elif isinstance(item, Tree):
                 # Run this same function recursively on nested trees
                 item.children = [i for i in self.iterate_on_children(item.children)]
+                # print(item.children)
                 yield item
             else:
                 yield item

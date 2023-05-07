@@ -63,7 +63,7 @@ Args:
         print(data)
         sys.stdout = original_stdout
 
-def encode_escaped_control_chars(raw_text: str) -> str:
+def encode_escaped_control_chars(raw_text: bytes) -> bytes:
     """Replaces escaped control chars within the text with their RTF encoded versions \\'HH.
 
 Args:
@@ -72,12 +72,12 @@ Args:
 Returns:
     A string with escaped control chars
     """
-    cleaned = raw_text.replace('\\\\', "\\'5c")
-    cleaned = cleaned.replace('\\{', "\\'7b")
-    cleaned = cleaned.replace('\\}', "\\'7d")
+    cleaned = raw_text.replace(b'\\\\', b"\\'5c")
+    cleaned = cleaned.replace(b'\\{', b"\\'7b")
+    cleaned = cleaned.replace(b'\\}', b"\\'7d")
     return cleaned
 
-def is_codeword_with_numeric_arg(token: Union[Token,Any], codeword) -> bool:
+def is_codeword_with_numeric_arg(token: Union[Token,Any], codeword: bytes) -> bool:
     """Checks if a Token is a codeword with a numeric argument.
 
 Returns:
@@ -85,6 +85,7 @@ Returns:
 """
     try:
         val = token.value.strip()
+        # print(val, codeword)
         if (val.startswith(codeword) and
             val[len(codeword):].isdigit()):
             return True
@@ -146,7 +147,7 @@ Raises:
                                   end_pos = data.end_pos)
         logger.debug(log_msg)
 
-def log_string_diff(original: str, revised: str, sep: Union[str,None] = None):
+def log_string_diff(original: bytes, revised: bytes, sep: Union[bytes,None] = None):
     """Log diff of two strings. Defaults to splitting by newlines and keeping the ends.
 
 Logs the result in the main RTFDE logger as a debug log. Warning: Only use when debugging as this is too verbose to be used in regular logging.
@@ -158,7 +159,7 @@ Args:
 """
     log.debug(get_string_diff(original, revised, sep))
 
-def get_string_diff(original: str, revised: str, sep: Union[str,None] = None):
+def get_string_diff(original: bytes, revised: bytes, sep: Union[bytes,None] = None):
     """Get the diff of two strings. Defaults to splitting by newlines and keeping the ends.
 
 Args:
@@ -170,13 +171,13 @@ Returns:
     A string object representing the diff of the two strings provided.
 """
     if sep is None:
-        orig_split = original.splitlines(keepends=True)
-        revised_split = revised.splitlines(keepends=True)
+        orig_split = original.decode().splitlines(keepends=True)
+        revised_split = revised.decode().splitlines(keepends=True)
     else:
-        original = original.replace('\n','')
-        revised = revised.replace('\n','')
-        orig_split = [i for i in re.split(sep, original) if i != '']
-        revised_split = [i for i in re.split(sep, revised) if i != '']
+        original = original.replace(b'\n',b'')
+        revised = revised.replace(b'\n',b'')
+        orig_split = [i.decode() for i in re.split(sep, original) if i != b'']
+        revised_split = [i.decode() for i in re.split(sep, revised) if i != b'']
     return "\n".join(list(difflib.context_diff(orig_split,
                                                revised_split)))
 

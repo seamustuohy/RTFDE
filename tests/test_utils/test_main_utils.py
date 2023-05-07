@@ -92,15 +92,15 @@ class TestLogging(unittest.TestCase):
         logger = logging.getLogger("RTFDE")
         logger.setLevel(logging.DEBUG)
         rtf_path = join(DATA_BASE_DIR, "plain_text", "test_data.rtf")
-        with open(rtf_path, 'r') as fp:
+        with open(rtf_path, 'rb') as fp:
             raw_rtf = fp.read()
         mod_rtf = raw_rtf
-        mod_rtf = mod_rtf.replace('\\fswiss ', '\\things ')
-        mod_rtf = mod_rtf.replace('\\blue255', '\\notblueothernumber')
+        mod_rtf = mod_rtf.replace(b'\\fswiss ', b'\\things ')
+        mod_rtf = mod_rtf.replace(b'\\blue255', b'\\notblueothernumber')
         # log_string_diff(raw_rtf, mod_rtf)
         print("===========================sep========================")
         with capture_log(logger) as log:
-            log_string_diff(raw_rtf, mod_rtf, sep='\\{|\\}')
+            log_string_diff(raw_rtf, mod_rtf, sep=b'\\{|\\}')
         log = log.getvalue()
         self.assertIn(r"! \f0\fswiss Arial;", log)
         self.assertIn(r"! \f0\things Arial;", log)
@@ -110,11 +110,11 @@ class TestLogging(unittest.TestCase):
 
     def test_tree_diff(self):
         rtf_path = join(DATA_BASE_DIR, "plain_text", "test_data.rtf")
-        with open(rtf_path, 'r') as fp:
+        with open(rtf_path, 'rb') as fp:
             raw_rtf = fp.read()
         mod_rtf = raw_rtf
-        mod_rtf = mod_rtf.replace('\\fswiss ', '\\things ')
-        mod_rtf = mod_rtf.replace('\\blue255', '\\notblueothernumber')
+        mod_rtf = mod_rtf.replace(b'\\fswiss ', b'\\things ')
+        mod_rtf = mod_rtf.replace(b'\\blue255', b'\\notblueothernumber')
         # Create Trees
         rtf_obj = DeEncapsulator(raw_rtf)
         rtf_obj.deencapsulate()
@@ -122,18 +122,18 @@ class TestLogging(unittest.TestCase):
         mod_rtf_obj.deencapsulate()
         log = get_tree_diff(rtf_obj.full_tree,
                           mod_rtf_obj.full_tree)
-        self.assertIn(r"! Token('CONTROLWORD', '\\fswiss ')", log)
-        self.assertIn(r"! Token('CONTROLWORD', '\\things ')", log)
-        self.assertIn(r"! Token('CONTROLWORD', '\\blue255')", log)
-        self.assertIn(r"! Token('CONTROLWORD', '\\notblueothernumber')", log)
+        self.assertIn(r"! Token('CONTROLWORD', b'\\fswiss ')", log)
+        self.assertIn(r"! Token('CONTROLWORD', b'\\things ')", log)
+        self.assertIn(r"! Token('CONTROLWORD', b'\\blue255')", log)
+        self.assertIn(r"! Token('CONTROLWORD', b'\\notblueothernumber')", log)
 
 class TestUtilities(unittest.TestCase):
     """Test that important utilities are working
     """
 
     def test_encode_escape_chars(self):
-        raw_text = r"test\\thing\{stuff\}test"
+        raw_text = r"test\\thing\{stuff\}test".encode()
         converted = encode_escaped_control_chars(raw_text)
-        self.assertIn("\\'5c", converted)
-        self.assertIn("\\'7b", converted)
-        self.assertIn("\\'7d", converted)
+        self.assertIn(b"\\'5c", converted)
+        self.assertIn(b"\\'7b", converted)
+        self.assertIn(b"\\'7d", converted)
