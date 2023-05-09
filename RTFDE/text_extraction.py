@@ -492,7 +492,15 @@ Raises:
                                               column=surrogate_high.column,
                                               end_column=surrogate_low.end_column)
                         children[surrogate_start] = surrogate_tok
-                        children[i] = b""
+                        blank_tok = Token('STRING',
+                                          b"",
+                                          start_pos=surrogate_high.start_pos+1,
+                                          end_pos=surrogate_low.end_pos+1,
+                                          line=surrogate_high.line,
+                                          end_line=surrogate_low.end_line,
+                                          column=surrogate_high.column,
+                                          end_column=surrogate_low.end_column)
+                        children[i] = blank_tok
                         surrogate_start = None
                         surrogate_high = None
                     except UnicodeDecodeError as _e:
