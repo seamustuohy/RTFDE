@@ -137,3 +137,36 @@ class TestUtilities(unittest.TestCase):
         self.assertIn(b"\\'5c", converted)
         self.assertIn(b"\\'7b", converted)
         self.assertIn(b"\\'7d", converted)
+
+
+def embed():
+    import os
+    import readline
+    import rlcompleter
+    import code
+    import inspect
+    import traceback
+
+    history = os.path.join(os.path.expanduser('~'), '.python_history')
+    if os.path.isfile(history):
+        readline.read_history_file(history)
+
+    frame = inspect.currentframe().f_back
+    namespace = frame.f_locals.copy()
+    namespace.update(frame.f_globals)
+
+    readline.set_completer(rlcompleter.Completer(namespace).complete)
+    readline.parse_and_bind("tab: complete")
+
+    file = frame.f_code.co_filename
+    line = frame.f_lineno
+    function = frame.f_code.co_name
+
+    stack = ''.join(traceback.format_stack()[:-1])
+    print(stack)
+    banner = f" [ {os.path.basename(file)}:{line} in {function}() ]"
+    banner += "\n Entering interactive mode (Ctrl-D to exit) ..."
+    try:
+        code.interact(banner=banner, local=namespace)
+    finally:
+        readline.write_history_file(history)

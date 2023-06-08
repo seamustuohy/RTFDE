@@ -291,6 +291,27 @@ class TestTextDecoding(unittest.TestCase):
         for sur in surrogate_encodings:
             self.assertIsInstance(unicode_escape_to_chr(sur), str)
 
+
+    def test_surrogate_in_htmlrtf(self):
+        """Don't show surrogate text within htmlrtf block."""
+        rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "surrogate_pairs_02.rtf")
+        rtf_obj = self.deencapsulate(rtf_path)
+        correct_repr = b'&#128522;'
+        self.assertEqual(correct_repr, rtf_obj.content)
+        print(rtf_obj.content)
+
+    def test_surrogate_without_16bitsigned(self):
+        """Test surrogate which doesn't use a 16 signed integer."""
+        rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "surrogate_pairs_03.rtf")
+        rtf_obj = self.deencapsulate(rtf_path)
+        print(rtf_obj.content)
+        correct_repr =  b'&#128522;'
+        self.assertEqual(correct_repr, rtf_obj.content)
+        rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "surrogate_pairs_04.rtf")
+        rtf_obj = self.deencapsulate(rtf_path)
+        correct_repr = b'&#128522; \xf0\x9f\x93\x9e'
+        self.assertEqual(correct_repr, rtf_obj.content)
+
     def test_hexencoded(self):
         original_body = '【 This is a test 】'.encode()
         raw_rtf = self.get_small_template()

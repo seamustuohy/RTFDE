@@ -415,6 +415,9 @@ def is_surrogate_high_char(item):
         item = item[2:]
     if 0xD800 <= ord(chr(65536+int(item))) <= 0xDBFF:
         return True
+    # In case unicode is NOT using the 16 bit signed integer
+    elif 0xD800 <= int(item) <= 0xDBFF:
+        return True
     return False
 
 def is_surrogate_low_char(item):
@@ -426,7 +429,28 @@ def is_surrogate_low_char(item):
         item = item[2:]
     if 0xDC00 <= ord(chr(65536+int(item))) <= 0xDFFF:
         return True
+    # In case unicode is NOT using the 16 bit signed integer
+    elif 0xDC00 <= int(item) <= 0xDFFF:
+        return True
     return False
+
+def is_surrogate_16bit(item: str, cp_range) -> bool:
+    """Checks if a unicode char is 16 bit signed integer or the raw unicode char. This should first check if it is a surrogate code using the is_surrogate_XXXX_char functions.
+
+Args:
+    item (str): A string representing a unicode character.
+    cp_range (str): ['low' OR 'high'] The code point range (low-surrogate or high-surrogate).
+    """
+    if cp_range == 'low':
+        if 0xDC00 <= ord(chr(65536+int(item))) <= 0xDFFF:
+            return True
+    elif cp_range == 'high':
+        if 0xD800 <= ord(chr(65536+int(item))) <= 0xDBFF:
+            return True
+    else:
+        raise ValueError("cp_range must be either 'low' or 'high'")
+    return False
+
 
 def is_surrogate_pair(first, second):
     """Check if a pair of unicode characters are a surrogate pair. Must be passed in the correct order.
@@ -453,8 +477,14 @@ def decode_surrogate_pair(high, low, encoding='utf-16-le'):
         high = high[2:]
     if low.startswith(b"\\u"):
         low = low[2:]
-    high = chr(65536+int(high))
-    low = chr(65536+int(low))
+    if is_surrogate_16bit(high, "high"):
+        high = chr(65536+int(high))
+    else:
+        high = chr(int(high))
+    if is_surrogate_16bit(low, "low"):
+        low = chr(65536+int(low))
+    else:
+        low = chr(int(low))
     unicode_scalar_value = ((ord(high) - 0xD800) * 0x400) + (ord(low) - 0xDC00) + 0x10000
     unicode_bytes = chr(unicode_scalar_value).encode(encoding)
     return unicode_bytes.decode(encoding).encode()
