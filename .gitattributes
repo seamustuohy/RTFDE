@@ -1,0 +1,5 @@
+tests/test_data/html/multiple-encodings.rtf text eol=crlf
+tests/test_data/rtf_parsing/surrogate_pairs.rtf text eol=crlf
+tests/test_data/rtf_parsing/encapsulated_example.html text eol=crlf
+tests/test_data/rtf_parsing/surrogates.rtf text eol=crlf
+tests/test_data/rtf_parsing/small_template.rtf text eol=crlf
