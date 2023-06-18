@@ -5,7 +5,11 @@ Functions
 ---------
 
     
-`encode_escaped_control_chars(raw_text: str) ‑> str`
+`embed()`
+:   
+
+    
+`encode_escaped_control_chars(raw_text: bytes) ‑> bytes`
 :   Replaces escaped control chars within the text with their RTF encoded versions \'HH.
     
     Args:
@@ -39,7 +43,7 @@ Functions
         Zero padded 6 char long hexedecimal string.
 
     
-`get_string_diff(original: str, revised: str, sep: Optional[str] = None)`
+`get_string_diff(original: bytes, revised: bytes, sep: Optional[bytes] = None)`
 :   Get the diff of two strings. Defaults to splitting by newlines and keeping the ends.
     
     Args:
@@ -68,7 +72,7 @@ Functions
         get_tree_diff(rtf_obj.full_tree, transformed_tree)
 
     
-`is_codeword_with_numeric_arg(token: Union[lark.lexer.Token, Any], codeword) ‑> bool`
+`is_codeword_with_numeric_arg(token: Union[lark.lexer.Token, Any], codeword: bytes) ‑> bool`
 :   Checks if a Token is a codeword with a numeric argument.
     
     Returns:
@@ -82,7 +86,7 @@ Functions
         AttributeError: Will occur if you pass this something that is not a token.
 
     
-`log_string_diff(original: str, revised: str, sep: Optional[str] = None)`
+`log_string_diff(original: bytes, revised: bytes, sep: Optional[bytes] = None)`
 :   Log diff of two strings. Defaults to splitting by newlines and keeping the ends.
     
     Logs the result in the main RTFDE logger as a debug log. Warning: Only use when debugging as this is too verbose to be used in regular logging.
@@ -93,12 +97,20 @@ Functions
         sep (string): A pattern to split the string by. Uses re.split under the hood. NOTE: Deletes all empty strings before diffing to make the diff more concise.
 
     
+`log_text_extraction(data)`
+:   Log additional text decoding/encoding logging only if RTFDE.text_extraction set to debug.
+
+    
 `log_transformations(data)`
 :   Log transform logging only if RTFDE.transform_logger set to debug.
 
     
 `log_validators(data)`
 :   Log validator logging only if RTFDE.validation_logger set to debug.
+
+    
+`make_token_replacement(ttype, value, example)`
+:   
 
     
 `print_lark_parser_evaluated_grammar(parser)`

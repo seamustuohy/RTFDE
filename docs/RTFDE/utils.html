@@ -91,7 +91,7 @@ Args:
         print(data)
         sys.stdout = original_stdout
 
-def encode_escaped_control_chars(raw_text: str) -&gt; str:
+def encode_escaped_control_chars(raw_text: bytes) -&gt; bytes:
     &#34;&#34;&#34;Replaces escaped control chars within the text with their RTF encoded versions \\&#39;HH.
 
 Args:
@@ -100,12 +100,12 @@ Args:
 Returns:
     A string with escaped control chars
     &#34;&#34;&#34;
-    cleaned = raw_text.replace(&#39;\\\\&#39;, &#34;\\&#39;5c&#34;)
-    cleaned = cleaned.replace(&#39;\\{&#39;, &#34;\\&#39;7b&#34;)
-    cleaned = cleaned.replace(&#39;\\}&#39;, &#34;\\&#39;7d&#34;)
+    cleaned = raw_text.replace(b&#39;\\\\&#39;, b&#34;\\&#39;5c&#34;)
+    cleaned = cleaned.replace(b&#39;\\{&#39;, b&#34;\\&#39;7b&#34;)
+    cleaned = cleaned.replace(b&#39;\\}&#39;, b&#34;\\&#39;7d&#34;)
     return cleaned
 
-def is_codeword_with_numeric_arg(token: Union[Token,Any], codeword) -&gt; bool:
+def is_codeword_with_numeric_arg(token: Union[Token,Any], codeword: bytes) -&gt; bool:
     &#34;&#34;&#34;Checks if a Token is a codeword with a numeric argument.
 
 Returns:
@@ -113,6 +113,7 @@ Returns:
 &#34;&#34;&#34;
     try:
         val = token.value.strip()
+        # print(val, codeword)
         if (val.startswith(codeword) and
             val[len(codeword):].isdigit()):
             return True
@@ -156,6 +157,13 @@ def log_transformations(data):
     if logger.level == logging.DEBUG:
         logger.debug(data)
 
+def log_text_extraction(data):
+    &#34;&#34;&#34;Log additional text decoding/encoding logging only if RTFDE.text_extraction set to debug.
+    &#34;&#34;&#34;
+    logger = logging.getLogger(&#34;RTFDE.text_extraction&#34;)
+    if logger.level == logging.DEBUG:
+        logger.debug(data)
+
 def log_htmlrtf_stripping(data: Token):
     &#34;&#34;&#34;Log HTMLRTF Stripping logging only if RTFDE.HTMLRTF_Stripping_logger set to debug.
 
@@ -174,7 +182,7 @@ Raises:
                                   end_pos = data.end_pos)
         logger.debug(log_msg)
 
-def log_string_diff(original: str, revised: str, sep: Union[str,None] = None):
+def log_string_diff(original: bytes, revised: bytes, sep: Union[bytes,None] = None):
     &#34;&#34;&#34;Log diff of two strings. Defaults to splitting by newlines and keeping the ends.
 
 Logs the result in the main RTFDE logger as a debug log. Warning: Only use when debugging as this is too verbose to be used in regular logging.
@@ -186,7 +194,7 @@ Args:
 &#34;&#34;&#34;
     log.debug(get_string_diff(original, revised, sep))
 
-def get_string_diff(original: str, revised: str, sep: Union[str,None] = None):
+def get_string_diff(original: bytes, revised: bytes, sep: Union[bytes,None] = None):
     &#34;&#34;&#34;Get the diff of two strings. Defaults to splitting by newlines and keeping the ends.
 
 Args:
@@ -198,13 +206,13 @@ Returns:
     A string object representing the diff of the two strings provided.
 &#34;&#34;&#34;
     if sep is None:
-        orig_split = original.splitlines(keepends=True)
-        revised_split = revised.splitlines(keepends=True)
+        orig_split = original.decode().splitlines(keepends=True)
+        revised_split = revised.decode().splitlines(keepends=True)
     else:
-        original = original.replace(&#39;\n&#39;,&#39;&#39;)
-        revised = revised.replace(&#39;\n&#39;,&#39;&#39;)
-        orig_split = [i for i in re.split(sep, original) if i != &#39;&#39;]
-        revised_split = [i for i in re.split(sep, revised) if i != &#39;&#39;]
+        original = original.replace(b&#39;\n&#39;,b&#39;&#39;)
+        revised = revised.replace(b&#39;\n&#39;,b&#39;&#39;)
+        orig_split = [i.decode() for i in re.split(sep, original) if i != b&#39;&#39;]
+        revised_split = [i.decode() for i in re.split(sep, revised) if i != b&#39;&#39;]
     return &#34;\n&#34;.join(list(difflib.context_diff(orig_split,
                                                revised_split)))
 
@@ -259,7 +267,62 @@ Args:
         elif isinstance(child, Token):
             yield child.value
         else:
-            yield child</code></pre>
+            yield child
+
+def make_token_replacement(ttype, value, example):
+    if isinstance(example, Token):
+        fake_tok = Token(ttype,
+                        value,
+                        start_pos=example.start_pos,
+                        end_pos=example.end_pos,
+                        line=example.line,
+                        end_line=example.end_line,
+                        column=example.column,
+                        end_column=example.end_column)
+    elif isinstance(example, Tree):
+        fake_tok = Token(ttype,
+                         value,
+                         start_pos=example.meta.start_pos,
+                         end_pos=example.meta.end_pos,
+                         line=example.meta.line,
+                         end_line=example.meta.end_line,
+                         column=example.meta.column,
+                         end_column=example.meta.end_column)
+
+    return fake_tok
+
+
+def embed():
+    import os
+    import readline
+    import rlcompleter
+    import code
+    import inspect
+    import traceback
+
+    history = os.path.join(os.path.expanduser(&#39;~&#39;), &#39;.python_history&#39;)
+    if os.path.isfile(history):
+        readline.read_history_file(history)
+
+    frame = inspect.currentframe().f_back
+    namespace = frame.f_locals.copy()
+    namespace.update(frame.f_globals)
+
+    readline.set_completer(rlcompleter.Completer(namespace).complete)
+    readline.parse_and_bind(&#34;tab: complete&#34;)
+
+    file = frame.f_code.co_filename
+    line = frame.f_lineno
+    function = frame.f_code.co_name
+
+    stack = &#39;&#39;.join(traceback.format_stack()[:-1])
+    print(stack)
+    banner = f&#34; [ {os.path.basename(file)}:{line} in {function}() ]&#34;
+    banner += &#34;\n Entering interactive mode (Ctrl-D to exit) ...&#34;
+    try:
+        code.interact(banner=banner, local=namespace)
+    finally:
+        readline.write_history_file(history)</code></pre>
 </details>
 </section>
 <section>
@@ -269,8 +332,50 @@ Args:
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
+<dt id="RTFDE.utils.embed"><code class="name flex">
+<span>def <span class="ident">embed</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def embed():
+    import os
+    import readline
+    import rlcompleter
+    import code
+    import inspect
+    import traceback
+
+    history = os.path.join(os.path.expanduser(&#39;~&#39;), &#39;.python_history&#39;)
+    if os.path.isfile(history):
+        readline.read_history_file(history)
+
+    frame = inspect.currentframe().f_back
+    namespace = frame.f_locals.copy()
+    namespace.update(frame.f_globals)
+
+    readline.set_completer(rlcompleter.Completer(namespace).complete)
+    readline.parse_and_bind(&#34;tab: complete&#34;)
+
+    file = frame.f_code.co_filename
+    line = frame.f_lineno
+    function = frame.f_code.co_name
+
+    stack = &#39;&#39;.join(traceback.format_stack()[:-1])
+    print(stack)
+    banner = f&#34; [ {os.path.basename(file)}:{line} in {function}() ]&#34;
+    banner += &#34;\n Entering interactive mode (Ctrl-D to exit) ...&#34;
+    try:
+        code.interact(banner=banner, local=namespace)
+    finally:
+        readline.write_history_file(history)</code></pre>
+</details>
+</dd>
 <dt id="RTFDE.utils.encode_escaped_control_chars"><code class="name flex">
-<span>def <span class="ident">encode_escaped_control_chars</span></span>(<span>raw_text: str) ‑> str</span>
+<span>def <span class="ident">encode_escaped_control_chars</span></span>(<span>raw_text: bytes) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Replaces escaped control chars within the text with their RTF encoded versions 'HH.</p>
@@ -285,7 +390,7 @@ Args:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def encode_escaped_control_chars(raw_text: str) -&gt; str:
+<pre><code class="python">def encode_escaped_control_chars(raw_text: bytes) -&gt; bytes:
     &#34;&#34;&#34;Replaces escaped control chars within the text with their RTF encoded versions \\&#39;HH.
 
 Args:
@@ -294,9 +399,9 @@ Args:
 Returns:
     A string with escaped control chars
     &#34;&#34;&#34;
-    cleaned = raw_text.replace(&#39;\\\\&#39;, &#34;\\&#39;5c&#34;)
-    cleaned = cleaned.replace(&#39;\\{&#39;, &#34;\\&#39;7b&#34;)
-    cleaned = cleaned.replace(&#39;\\}&#39;, &#34;\\&#39;7d&#34;)
+    cleaned = raw_text.replace(b&#39;\\\\&#39;, b&#34;\\&#39;5c&#34;)
+    cleaned = cleaned.replace(b&#39;\\{&#39;, b&#34;\\&#39;7b&#34;)
+    cleaned = cleaned.replace(b&#39;\\}&#39;, b&#34;\\&#39;7d&#34;)
     return cleaned</code></pre>
 </details>
 </dd>
@@ -395,7 +500,7 @@ Returns:
 </details>
 </dd>
 <dt id="RTFDE.utils.get_string_diff"><code class="name flex">
-<span>def <span class="ident">get_string_diff</span></span>(<span>original: str, revised: str, sep: Optional[str] = None)</span>
+<span>def <span class="ident">get_string_diff</span></span>(<span>original: bytes, revised: bytes, sep: Optional[bytes] = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the diff of two strings. Defaults to splitting by newlines and keeping the ends.</p>
@@ -414,7 +519,7 @@ Returns:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_string_diff(original: str, revised: str, sep: Union[str,None] = None):
+<pre><code class="python">def get_string_diff(original: bytes, revised: bytes, sep: Union[bytes,None] = None):
     &#34;&#34;&#34;Get the diff of two strings. Defaults to splitting by newlines and keeping the ends.
 
 Args:
@@ -426,13 +531,13 @@ Returns:
     A string object representing the diff of the two strings provided.
 &#34;&#34;&#34;
     if sep is None:
-        orig_split = original.splitlines(keepends=True)
-        revised_split = revised.splitlines(keepends=True)
+        orig_split = original.decode().splitlines(keepends=True)
+        revised_split = revised.decode().splitlines(keepends=True)
     else:
-        original = original.replace(&#39;\n&#39;,&#39;&#39;)
-        revised = revised.replace(&#39;\n&#39;,&#39;&#39;)
-        orig_split = [i for i in re.split(sep, original) if i != &#39;&#39;]
-        revised_split = [i for i in re.split(sep, revised) if i != &#39;&#39;]
+        original = original.replace(b&#39;\n&#39;,b&#39;&#39;)
+        revised = revised.replace(b&#39;\n&#39;,b&#39;&#39;)
+        orig_split = [i.decode() for i in re.split(sep, original) if i != b&#39;&#39;]
+        revised_split = [i.decode() for i in re.split(sep, revised) if i != b&#39;&#39;]
     return &#34;\n&#34;.join(list(difflib.context_diff(orig_split,
                                                revised_split)))</code></pre>
 </details>
@@ -485,7 +590,7 @@ Example:
 </details>
 </dd>
 <dt id="RTFDE.utils.is_codeword_with_numeric_arg"><code class="name flex">
-<span>def <span class="ident">is_codeword_with_numeric_arg</span></span>(<span>token: Union[lark.lexer.Token, Any], codeword) ‑> bool</span>
+<span>def <span class="ident">is_codeword_with_numeric_arg</span></span>(<span>token: Union[lark.lexer.Token, Any], codeword: bytes) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if a Token is a codeword with a numeric argument.</p>
@@ -495,7 +600,7 @@ Example:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_codeword_with_numeric_arg(token: Union[Token,Any], codeword) -&gt; bool:
+<pre><code class="python">def is_codeword_with_numeric_arg(token: Union[Token,Any], codeword: bytes) -&gt; bool:
     &#34;&#34;&#34;Checks if a Token is a codeword with a numeric argument.
 
 Returns:
@@ -503,6 +608,7 @@ Returns:
 &#34;&#34;&#34;
     try:
         val = token.value.strip()
+        # print(val, codeword)
         if (val.startswith(codeword) and
             val[len(codeword):].isdigit()):
             return True
@@ -545,7 +651,7 @@ Raises:
 </details>
 </dd>
 <dt id="RTFDE.utils.log_string_diff"><code class="name flex">
-<span>def <span class="ident">log_string_diff</span></span>(<span>original: str, revised: str, sep: Optional[str] = None)</span>
+<span>def <span class="ident">log_string_diff</span></span>(<span>original: bytes, revised: bytes, sep: Optional[bytes] = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Log diff of two strings. Defaults to splitting by newlines and keeping the ends.</p>
@@ -563,7 +669,7 @@ Raises:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def log_string_diff(original: str, revised: str, sep: Union[str,None] = None):
+<pre><code class="python">def log_string_diff(original: bytes, revised: bytes, sep: Union[bytes,None] = None):
     &#34;&#34;&#34;Log diff of two strings. Defaults to splitting by newlines and keeping the ends.
 
 Logs the result in the main RTFDE logger as a debug log. Warning: Only use when debugging as this is too verbose to be used in regular logging.
@@ -574,6 +680,23 @@ Args:
     sep (string): A pattern to split the string by. Uses re.split under the hood. NOTE: Deletes all empty strings before diffing to make the diff more concise.
 &#34;&#34;&#34;
     log.debug(get_string_diff(original, revised, sep))</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.log_text_extraction"><code class="name flex">
+<span>def <span class="ident">log_text_extraction</span></span>(<span>data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Log additional text decoding/encoding logging only if RTFDE.text_extraction set to debug.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def log_text_extraction(data):
+    &#34;&#34;&#34;Log additional text decoding/encoding logging only if RTFDE.text_extraction set to debug.
+    &#34;&#34;&#34;
+    logger = logging.getLogger(&#34;RTFDE.text_extraction&#34;)
+    if logger.level == logging.DEBUG:
+        logger.debug(data)</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.utils.log_transformations"><code class="name flex">
@@ -608,6 +731,38 @@ Args:
     logger = logging.getLogger(&#34;RTFDE.validation_logger&#34;)
     if logger.level == logging.DEBUG:
         logger.debug(data)</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.make_token_replacement"><code class="name flex">
+<span>def <span class="ident">make_token_replacement</span></span>(<span>ttype, value, example)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def make_token_replacement(ttype, value, example):
+    if isinstance(example, Token):
+        fake_tok = Token(ttype,
+                        value,
+                        start_pos=example.start_pos,
+                        end_pos=example.end_pos,
+                        line=example.line,
+                        end_line=example.end_line,
+                        column=example.column,
+                        end_column=example.end_column)
+    elif isinstance(example, Tree):
+        fake_tok = Token(ttype,
+                         value,
+                         start_pos=example.meta.start_pos,
+                         end_pos=example.meta.end_pos,
+                         line=example.meta.line,
+                         end_line=example.meta.end_line,
+                         column=example.meta.column,
+                         end_column=example.meta.end_column)
+
+    return fake_tok</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.utils.print_lark_parser_evaluated_grammar"><code class="name flex">
@@ -703,6 +858,7 @@ Args:
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
+<li><code><a title="RTFDE.utils.embed" href="#RTFDE.utils.embed">embed</a></code></li>
 <li><code><a title="RTFDE.utils.encode_escaped_control_chars" href="#RTFDE.utils.encode_escaped_control_chars">encode_escaped_control_chars</a></code></li>
 <li><code><a title="RTFDE.utils.flatten_tree" href="#RTFDE.utils.flatten_tree">flatten_tree</a></code></li>
 <li><code><a title="RTFDE.utils.flatten_tree_to_string_array" href="#RTFDE.utils.flatten_tree_to_string_array">flatten_tree_to_string_array</a></code></li>
@@ -712,8 +868,10 @@ Args:
 <li><code><a title="RTFDE.utils.is_codeword_with_numeric_arg" href="#RTFDE.utils.is_codeword_with_numeric_arg">is_codeword_with_numeric_arg</a></code></li>
 <li><code><a title="RTFDE.utils.log_htmlrtf_stripping" href="#RTFDE.utils.log_htmlrtf_stripping">log_htmlrtf_stripping</a></code></li>
 <li><code><a title="RTFDE.utils.log_string_diff" href="#RTFDE.utils.log_string_diff">log_string_diff</a></code></li>
+<li><code><a title="RTFDE.utils.log_text_extraction" href="#RTFDE.utils.log_text_extraction">log_text_extraction</a></code></li>
 <li><code><a title="RTFDE.utils.log_transformations" href="#RTFDE.utils.log_transformations">log_transformations</a></code></li>
 <li><code><a title="RTFDE.utils.log_validators" href="#RTFDE.utils.log_validators">log_validators</a></code></li>
+<li><code><a title="RTFDE.utils.make_token_replacement" href="#RTFDE.utils.make_token_replacement">make_token_replacement</a></code></li>
 <li><code><a title="RTFDE.utils.print_lark_parser_evaluated_grammar" href="#RTFDE.utils.print_lark_parser_evaluated_grammar">print_lark_parser_evaluated_grammar</a></code></li>
 <li><code><a title="RTFDE.utils.print_to_tmp_file" href="#RTFDE.utils.print_to_tmp_file">print_to_tmp_file</a></code></li>
 </ul>

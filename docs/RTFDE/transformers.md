@@ -15,6 +15,35 @@ Functions
         A list of Tokens which should be suppressed by HTMLRTF control words.
 
     
+`strip_binary_objects(raw_rtf: bytes) ‑> tuple`
+:   Extracts binary objects from a rtf file.
+    
+    Parameters:
+        raw_rtf: (bytes): It's the raw RTF file as bytes.
+    
+    Returns:
+        A tuple containing (new_raw, found_bytes)
+            new_raw: (bytes) A bytes object where any binary data has been removed.
+            found_bytes: (list) List of dictionaries containing binary data extracted from the rtf file. Each dictionary includes the data extracted, where it was extracted from in the original rtf file and where it can be inserted back into the stripped output.
+    
+        Description of found_bytes dictionaries:
+    
+            "bytes": (bytes) The binary data contained which was extracted.
+            "ctrl_char": (tuple) Tuple containing the binary control word and its numeric parameter
+            "start_pos": (int) The position (in the original raw rtf data) where the binary control word started.
+            "bin_start_pos": (int) The position (in the original raw rtf data) where the binary data starts.
+            "end_pos": (int) The position (in the original raw rtf data) where the binary data ends.
+    
+        Here is an example of what this looks like (by displaying the printable representation so you can see the bytes and then splitting the dict keys on new lines to make it readable.)
+            >> print(repr(found_bytes))
+    
+            "{'bytes': b'\xf4UP\x13\xdb\xe4\xe6CO\xa8\x16\x10\x8b\n\xfbA\x9d\xc5\xd1C',
+              'ctrl_char': (b'\\bin', b'20'),
+              'start_pos': 56,
+              'end_pos': 83,
+              'bin_start_pos': 63}"
+
+    
 `toggle_htmlrtf(child: Union[lark.lexer.Token, str]) ‑> Optional[bool]`
 :   Identify if htmlrtf is being turned on or off.
     
@@ -58,56 +87,59 @@ Classes
 
     ### Methods
 
-    `CLOSEPAREN(self, args: lark.lexer.Token) ‑> str`
+    `CLOSEPAREN(self, args: lark.lexer.Token) ‑> bytes`
     :   Delete all closed parens.
 
-    `CONTROLSYMBOL(self, args: lark.lexer.Token) ‑> str`
+    `CONTROLSYMBOL(self, args: lark.lexer.Token) ‑> bytes`
     :   Convert encoded chars which are mis-categorized as control symbols into their respective chars. Delete all the other ones.
 
-    `CONTROLWORD(self, args: lark.lexer.Token) ‑> str`
+    `CONTROLWORD(self, args: lark.lexer.Token) ‑> bytes`
     :   Convert encoded chars which are mis-categorized as control words into their respective chars. Delete all the other ones.
 
-    `FORMULA_CHARACTER(self, args: lark.lexer.Token) ‑> str`
+    `FORMULA_CHARACTER(self, args: lark.lexer.Token) ‑> bytes`
     :   Convert a formula character into an empty string.
         
         If we are attempting to represent formula characters the scope for this library has grown too inclusive. This was only used by Word 5.1 for the Macintosh as the beginning delimiter for a string of formula typesetting commands.
 
-    `HTMLTAG(self, htmltag: lark.lexer.Token) ‑> str`
+    `HTMLTAG(self, htmltag: lark.lexer.Token) ‑> bytes`
     :   Delete all HTMLTAG objects
 
-    `INDEX_SUBENTRY(self, args: lark.lexer.Token) ‑> str`
+    `INDEX_SUBENTRY(self, args: lark.lexer.Token) ‑> bytes`
     :   Process index subentry items
         
         Discard index sub-entries. Because, we don't care about indexes when de-encapsulating at this time.
 
-    `NONBREAKING_HYPHEN(self, args: lark.lexer.Token) ‑> str`
+    `NONBREAKING_HYPHEN(self, args: lark.lexer.Token) ‑> bytes`
     :   Convert non-breaking hyphens into visible representation.
 
-    `NONBREAKING_SPACE(self, args: lark.lexer.Token) ‑> str`
+    `NONBREAKING_SPACE(self, args: lark.lexer.Token) ‑> bytes`
     :   Convert non-breaking spaces into visible representation.
 
-    `OPENPAREN(self, args: lark.lexer.Token) ‑> str`
+    `OPENPAREN(self, args: lark.lexer.Token) ‑> bytes`
     :   Delete all open parens.
 
-    `OPTIONAL_HYPHEN(self, args: lark.lexer.Token) ‑> str`
+    `OPTIONAL_HYPHEN(self, args: lark.lexer.Token) ‑> bytes`
     :   Convert hyphen control char into visible representation.
 
-    `STAR_ESCAPE(self, char: lark.lexer.Token) ‑> str`
+    `SPACE_SAVE(self, string: lark.lexer.Token) ‑> bytes`
+    :
+
+    `STAR_ESCAPE(self, char: lark.lexer.Token) ‑> bytes`
     :   Delete all star escape objects
 
-    `STRING(self, string: lark.lexer.Token) ‑> str`
+    `STRING(self, string: lark.lexer.Token) ‑> bytes`
     :   Convert a string object into a raw string.
 
-    `control_symbol(self, symbols: List) ‑> str`
+    `control_symbol(self, symbols: List) ‑> bytes`
     :   Join all visible symbols from in control symbol groups.
 
-    `document(self, args: List) ‑> str`
+    `document(self, args: List) ‑> bytes`
     :   Join the all the strings in an .rtf object into a single string representation of the document.
 
-    `group(self, grp: List) ‑> str`
+    `group(self, grp: List) ‑> bytes`
     :   Join the strings in all group objects.
 
-    `htmltag_group(self, strings: List) ‑> str`
+    `htmltag_group(self, strings: List) ‑> bytes`
     :   HTMLTAG processing.
         
         Takes any string values within an HTMLTAG and returns them.
@@ -120,12 +152,12 @@ Classes
         Returns:
                 Always returns a discard object.
 
-    `start(self, args: List) ‑> str`
+    `start(self, args: List) ‑> bytes`
     :   Joins the .rtf object's string representations together at highest level object `start`.
         
         This is the final string combination.
 
-    `string(self, strings: List) ‑> str`
+    `string(self, strings: List) ‑> bytes`
     :   Convert all string objects withing a string group into a single string.
 
 `StripControlWords(visit_tokens: bool = True)`

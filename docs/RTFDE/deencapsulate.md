@@ -4,24 +4,25 @@ Module RTFDE.deencapsulate
 Classes
 -------
 
-`DeEncapsulator(raw_rtf: ~AnyStr, grammar: Optional[str] = None)`
+`DeEncapsulator(raw_rtf: bytes, grammar: Optional[str] = None)`
 :   De-Encapsulating RTF converter of HTML/TEXT found in .msg files.
     
     De-encapsulation enables previously encapsulated HTML and plain text content to be extracted and rendered as HTML and plain text instead of the encapsulating RTF content. After de-encapsulation, the HTML and plain text should differ only minimally from the original HTML or plain text content.
     
     
     Parameters:
-        raw_rtf: (str): It's the raw RTF string.
+        raw_rtf: (bytes): It's the raw RTF file as bytes.
         grammar: (str): OPTIONAL - Lark parsing grammar which defines the RTF language. https://github.com/lark-parser/lark If you think my grammar is shoddy this is your chance to test out a better one and make a pull request.
     
     Attributes:
-        content: The deencapsulated content no matter what format it is in. Populated by the `deencapsulate` function.
-        html: The deencapsulated content IF it is HTML content. Populated by the `set_content` function.
-        text: The deencapsulated content IF it is plain text content. Populated by the `set_content` function.
+        content: (bytes) The deencapsulated content no matter what format it is in. Populated by the `deencapsulate` function.
+        html: (bytes) The deencapsulated content IF it is HTML content. Populated by the `set_content` function.
+        text: (bytes) The deencapsulated content IF it is plain text content. Populated by the `set_content` function.
+        found_binary: List of dictionaries containing binary data extracted from the rtf file.
         content_type: The type of content encapsulated in .rtf data (html or text). Populated by the `get_content_type` function.
         full_tree: The full .rtf object parsed into an object Tree using the grammar. Populated by the `parse_rtf` function.
         doc_tree: The `document` portion of the .rtf full_tree object.
-        raw_rtf: The raw encapsulated .rtf data in string format.
+        raw_rtf: The raw encapsulated .rtf data in byte format.
         grammar: The Lark parsing grammer used to parse the .rtf data.
         content_type_token: The .rtf header token identifying the content type. (\fromhtml1 OR \fromtext)
         parser: The lark parser. Should not need to be manipulated directly. But, useful for debugging and saving the parsed object.
@@ -32,7 +33,7 @@ Classes
     NOTE: This does not do the parsing in the init so that you can initiate the object and do the parsing step by step.
     
     Parameters:
-            raw_rtf: (str): It's the raw RTF string.
+            raw_rtf: (bytes): It's the raw RTF string.
             grammar: (str): OPTIONAL - Lark parsing grammar which defines the RTF language. https://github.com/lark-parser/lark If you think my grammar is shoddy this is your chance to test out a better one and make a pull request.
     
     Raises:
@@ -131,7 +132,7 @@ Classes
                 MalformedEncapsulatedRtf: The .rtf headers are malformed.
                 NotEncapsulatedRtf: The .rtf object is missing an encapsulated content type header. Which means that it is likely just a regular .rtf file.
 
-    `validate_charset(self, fallback_to_default: bool = False) ‑> str`
+    `validate_charset(self, fallback_to_default: bool = False) ‑> bytes`
     :   Validate and return the RTF charset keyword from the RTF streams header.
         
         Args:

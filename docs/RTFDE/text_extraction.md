@@ -25,12 +25,13 @@ Functions
     codec (str): The name of the codec to use to decode the bytes
 
     
-`decode_surrogate_pair(high, low, encoding='utf-16-le')`
+`decode_surrogate_pair(high: bytes, low: bytes, encoding: str = 'utf-16-le') ‑> bytes`
 :   Convert a pair of surrogate chars into the corresponding utf-16 encoded text string they should represent.
     
-    high (chr): the high-surrogate code point
-    low (chr): the low-surrogate code point
-    encoding (str): The encoding to apply to the final value. Defaults to 'utf-16-le' because:  Microsoft uses UTF-16, little endian byte order. ( https://learn.microsoft.com/en-us/windows/win32/intl/using-byte-order-marks ) The Msg format is a Microsoft standard. Therefore, man is mortal.
+    Args:
+            high (bytes): the high-surrogate code point
+            low (bytes): the low-surrogate code point
+            encoding (str): The encoding to apply to the final value. Defaults to 'utf-16-le' because:  Microsoft uses UTF-16, little endian byte order. ( https://learn.microsoft.com/en-us/windows/win32/intl/using-byte-order-marks ) The Msg format is a Microsoft standard. Therefore, man is mortal.
 
     
 `get_bytes_from_hex_encoded(item)`
@@ -90,11 +91,11 @@ Functions
         The name of the codec in the Python codec registry. Used as the name for enacoding/decoding.
 
     
-`get_unicode_char_byte_count(item)`
+`get_unicode_char_byte_count(item: lark.lexer.Token) ‑> int`
 :   
 
     
-`has_hexarray(children)`
+`has_hexarray(children: List[Union[lark.lexer.Token, lark.tree.Tree]]) ‑> bool`
 :   Checks if an tree's children includes a hexarray tree.
     
     children (array): the children object from a tree.
@@ -132,20 +133,32 @@ Functions
     item (Tree or Token): an item to check to see if its a hex array
 
     
-`is_surrogate_high_char(item)`
+`is_surrogate_16bit(item: bytes, cp_range) ‑> bool`
+:   Checks if a unicode char is 16 bit signed integer or the raw unicode char. This should first check if it is a surrogate code using the is_surrogate_XXXX_char functions.
+    
+    Args:
+        item (bytes): A bytes representation of a string representing a unicode character.
+        cp_range (str): ['low' OR 'high'] The code point range (low-surrogate or high-surrogate).
+
+    
+`is_surrogate_high_char(item: bytes) ‑> bool`
 :   Check's if chr is a is in the high-surrogate code point rage. "High-surrogate code point: A Unicode code point in the range U+D800 to U+DBFF." High-surrogate also sometimes known as the leading surrogate.
     
-    item (str): A string representing a unicode character. "\u-10179"
+    item (bytes): A bytes representation of a string representing a unicode character. "\u-10179"
 
     
-`is_surrogate_low_char(item)`
+`is_surrogate_low_char(item: bytes) ‑> bool`
 :   Check's if chr is a is in the low-surrogate code point rage. "Low-surrogate code point: A Unicode code point in the range U+DC00 to U+DFFF."  Low-surrogate also sometimes known as following surrogates.
     
-    item (str): A string representing a unicode character.
+    item (bytes): A bytes representation of a string representing a unicode character.
 
     
-`is_surrogate_pair(first, second)`
+`is_surrogate_pair(first: bytes, second: bytes) ‑> bool`
 :   Check if a pair of unicode characters are a surrogate pair. Must be passed in the correct order.
+    
+    Args:
+        first (bytes): A bytes representation of a string representing the high-order byte in a surrogate char.
+        second (bytes): A bytes representation of a string representing the low-order byte in a surrogate char.
 
     
 `is_unicode_char_byte_count(item: lark.lexer.Token) ‑> bool`
@@ -200,7 +213,7 @@ Functions
         ascii_map (dict): All the Tokens which were removed from the provided children list keyed by
 
     
-`unicode_escape_to_chr(item: str) ‑> str`
+`unicode_escape_to_chr(item: bytes) ‑> str`
 :   Convert unicode char from it's decimal to its unicode character representation. From "\u[-]NNNNN" to the string representing the character whose Unicode code point that decimal represents.
     
     Args:
@@ -235,13 +248,13 @@ Classes
     `iterate_on_children(self, children)`
     :
 
-    `prep_unicode(self, children)`
+    `prep_unicode(self, children: List[lark.lexer.Token])`
     :
 
-    `set_font_info(self, obj)`
+    `set_font_info(self, obj: lark.tree.Tree)`
     :   obj (Tree): A lark Tree object. Should be the DeEncapsulator.full_tree.
 
-    `update_children(self, obj)`
+    `update_children(self, obj: lark.tree.Tree)`
     :   obj (Tree): A lark Tree object. Should be the DeEncapsulator.full_tree.
 
 `fontdef(fnum, codepage, codec, fontdef_tree)`

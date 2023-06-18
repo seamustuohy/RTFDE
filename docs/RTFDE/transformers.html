@@ -42,7 +42,8 @@
 # FITNESS FOR A PARTICULAR PURPOSE. See the included LICENSE file for details.
 
 
-from typing import Union, List
+from typing import Union, List, Tuple
+from typing import TypedDict
 #  from Python 3.9 typing.Generator is deprecated in favour of collections.abc.Generator
 from collections.abc import Generator
 
@@ -50,12 +51,12 @@ from lark.visitors import Transformer
 from lark.visitors import v_args, Discard
 from lark.tree import Tree
 from lark.lexer import Token
+import re
 
 from RTFDE.utils import log_htmlrtf_stripping
 
 import logging
 log = logging.getLogger(&#34;RTFDE&#34;)
-
 
 class StripNonVisibleRTFGroups(Transformer):
     &#34;&#34;&#34;Visits each Token in provided RTF Trees and strips out any RTF groups which are non-visible when de-encapsulated into HTML.
@@ -72,7 +73,7 @@ Args:
 &#34;&#34;&#34;
         children = tree.children
         if len(children) == 0:
-            return &#34;&#34;
+            return b&#34;&#34;
         first_child = children[0]
 
         known_control_groups = [&#34;htmltag_group&#34;]
@@ -82,13 +83,15 @@ Args:
         known_non_visible_control_groups = [&#34;mhtmltag_group&#34;]
         if isinstance(first_child, Tree):
             if first_child.data in known_non_visible_control_groups:
-                return &#34;&#34;
+                # print(f&#34;DELETING: {first_child} : because mhtmltag&#34;)
+                return b&#34;&#34;
 
         # process known non-visible groups
-        non_visible_control_words = [&#34;\\context&#34;, &#34;\\colortbl&#34;, &#34;\\fonttbl&#34;]
+        non_visible_control_words = [b&#34;\\context&#34;, b&#34;\\colortbl&#34;, b&#34;\\fonttbl&#34;]
         first_control = self.get_first_controlword(children)
+        # print(f&#34;FIRST: {first_control}&#34;)
         if first_control in non_visible_control_words:
-            return &#34;&#34;
+            return b&#34;&#34;
 
         # Process star escaped groups
         # NOTE: `understood_commands` is where we can include commands we decide to actively process during deencapsulation in the future.
@@ -103,13 +106,14 @@ Args:
                     is_star_escaped = True
         control_word = None
         if is_star_escaped is True:
+            # print(f&#34;STAR: {children}&#34;)
             first_token = children[1]
             if isinstance(first_token, Token):
                 if first_token.type == &#34;CONTROLWORD&#34;:
                     control_word = first_token
                     if control_word.value in understood_commands:
                         return tree
-                    return &#34;&#34;
+                    return b&#34;&#34;
         return tree
 
     @staticmethod
@@ -134,23 +138,27 @@ class RTFCleaner(Transformer):
     &#34;&#34;&#34;Visits each Token in provided RTF Trees. Converts all tokens that need converting. Deletes all tokens that shouldn&#39;t be visible. And, joins all strings that are left into one final string.
     &#34;&#34;&#34;
 
-    def start(self, args: List) -&gt; str:
+    def start(self, args: List) -&gt; bytes:
         &#34;&#34;&#34;Joins the .rtf object&#39;s string representations together at highest level object `start`.
 
 This is the final string combination. &#34;&#34;&#34;
-        return &#34;&#34;.join(args)
+        return b&#34;&#34;.join(args)
 
-    def STRING(self, string: Token) -&gt; str:
+    def STRING(self, string: Token) -&gt; bytes:
         &#34;&#34;&#34;Convert a string object into a raw string.&#34;&#34;&#34;
         if string.value is not None:
             return string.value
-        return &#34;&#34;
+        return b&#34;&#34;
 
-    def string(self, strings: List) -&gt; str:
+    def SPACE_SAVE(self, string: Token) -&gt; bytes:
+        return string.value
+
+    def string(self, strings: List) -&gt; bytes:
         &#34;&#34;&#34;Convert all string objects withing a string group into a single string.&#34;&#34;&#34;
-        return &#34;&#34;.join(strings)
+        # print(strings)
+        return b&#34;&#34;.join(strings)
 
-    def group(self, grp: List) -&gt; str:
+    def group(self, grp: List) -&gt; bytes:
         &#34;&#34;&#34;Join the strings in all group objects.&#34;&#34;&#34;
         _new_children = []
         for i in grp:
@@ -158,19 +166,20 @@ This is the final string combination. &#34;&#34;&#34;
                 pass
             else:
                 _new_children.append(i)
-        return &#34;&#34;.join(_new_children)
+        return b&#34;&#34;.join(_new_children)
 
-    def document(self, args: List) -&gt; str:
+    def document(self, args: List) -&gt; bytes:
         &#34;&#34;&#34;Join the all the strings in an .rtf object into a single string representation of the document.&#34;&#34;&#34;
-        return &#34;&#34;.join(args)
+        args = [i for i in args if i is not None]
+        return b&#34;&#34;.join(args)
 
-    def OPENPAREN(self, args: Token) -&gt; str:
+    def OPENPAREN(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Delete all open parens.&#34;&#34;&#34;
-        return &#34;&#34;
+        return b&#34;&#34;
 
-    def CLOSEPAREN(self, args: Token) -&gt; str:
+    def CLOSEPAREN(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Delete all closed parens.&#34;&#34;&#34;
-        return &#34;&#34;
+        return b&#34;&#34;
 
     def mhtmltag_group(self, args: List):
         &#34;&#34;&#34;Process MHTMLTAG groups
@@ -181,86 +190,86 @@ Returns:
         Always returns a discard object.&#34;&#34;&#34;
         return Discard
 
-    def htmltag_group(self, strings: List) -&gt; str:
+    def htmltag_group(self, strings: List) -&gt; bytes:
         &#34;&#34;&#34;HTMLTAG processing.
 
 Takes any string values within an HTMLTAG and returns them.
         &#34;&#34;&#34;
-        return &#34;&#34;.join(strings)
+        return b&#34;&#34;.join(strings)
 
-    def HTMLTAG(self, htmltag: Token) -&gt; str:
+    def HTMLTAG(self, htmltag: Token) -&gt; bytes:
         &#34;&#34;&#34;Delete all HTMLTAG objects&#34;&#34;&#34;
-        return &#34;&#34;
+        return b&#34;&#34;
 
-    def STAR_ESCAPE(self, char: Token) -&gt; str:
+    def STAR_ESCAPE(self, char: Token) -&gt; bytes:
         &#34;&#34;&#34;Delete all star escape objects&#34;&#34;&#34;
         # &#39;\\*&#39;: &#39;&#39;
-        return &#34;&#34;
+        return b&#34;&#34;
 
-    def control_symbol(self, symbols: List) -&gt; str:
+    def control_symbol(self, symbols: List) -&gt; bytes:
         &#34;&#34;&#34;Join all visible symbols from in control symbol groups.&#34;&#34;&#34;
-        return &#34;&#34;.join(symbols)
+        return b&#34;&#34;.join(symbols)
 
-    def NONBREAKING_SPACE(self, args: Token) -&gt; str:
+    def NONBREAKING_SPACE(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Convert non-breaking spaces into visible representation.&#34;&#34;&#34;
         # &#39;\\~&#39;: &#39;\u00A0&#39;,
-        return u&#39;\u00A0&#39;
+        return u&#39;\u00A0&#39;.encode()
 
-    def NONBREAKING_HYPHEN(self, args: Token) -&gt; str:
+    def NONBREAKING_HYPHEN(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Convert non-breaking hyphens into visible representation.&#34;&#34;&#34;
         # &#39;\\_&#39;: &#39;\u00AD&#39;
-        return u&#39;\u00AD&#39;
+        return u&#39;\u00AD&#39;.encode()
 
-    def OPTIONAL_HYPHEN(self, args: Token) -&gt; str:
+    def OPTIONAL_HYPHEN(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Convert hyphen control char into visible representation.&#34;&#34;&#34;
         # &#39;\\-&#39;: &#39;\u2027&#39;
-        return u&#39;\u2027&#39;
+        return u&#39;\u2027&#39;.encode()
 
-    def FORMULA_CHARACTER(self, args: Token) -&gt; str:
+    def FORMULA_CHARACTER(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Convert a formula character into an empty string.
 
 If we are attempting to represent formula characters the scope for this library has grown too inclusive. This was only used by Word 5.1 for the Macintosh as the beginning delimiter for a string of formula typesetting commands.&#34;&#34;&#34;
-        return &#34;&#34;
+        return b&#34;&#34;
 
-    def INDEX_SUBENTRY(self, args: Token) -&gt; str:
+    def INDEX_SUBENTRY(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Process index subentry items
 
 Discard index sub-entries. Because, we don&#39;t care about indexes when de-encapsulating at this time.&#34;&#34;&#34;
-        return &#34;&#34;
+        return b&#34;&#34;
 
-    def CONTROLSYMBOL(self, args: Token) -&gt; str:
+    def CONTROLSYMBOL(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Convert encoded chars which are mis-categorized as control symbols into their respective chars. Delete all the other ones.&#34;&#34;&#34;
         symbols = {
-            &#39;\\{&#39;: &#39;\x7B&#39;,
-            &#39;\\}&#39;: &#39;\x7D&#39;,
-            &#39;\\\\&#39;: &#39;\x5C&#39;,
+            b&#39;\\{&#39;: b&#39;\x7B&#39;,
+            b&#39;\\}&#39;: b&#39;\x7D&#39;,
+            b&#39;\\\\&#39;: b&#39;\x5C&#39;,
         }
         replacement = symbols.get(args.value, None)
         # If this is simply a character to replace then return the value
         if replacement is not None:
             return replacement
-        return &#34;&#34;
+        return b&#34;&#34;
 
-    def CONTROLWORD(self, args: Token) -&gt; str:
+    def CONTROLWORD(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Convert encoded chars which are mis-categorized as control words into their respective chars. Delete all the other ones.
         &#34;&#34;&#34;
         words = {
-            &#39;\\par&#39;: &#39;\n&#39;,
-            &#39;\\tab&#39;: &#39;\t&#39;,
-            &#39;\\line&#39;: &#39;\n&#39;,
-            &#39;\\lquote&#39;: &#39;\u2018&#39;,
-            &#39;\\rquote&#39;: &#39;\u2019&#39;,
-            &#39;\\ldblquote&#39;: &#39;\u201C&#39;,
-            &#39;\\rdblquote&#39;: &#39;\u201D&#39;,
-            &#39;\\bullet&#39;: &#39;\u2022&#39;,
-            &#39;\\endash&#39;: &#39;\u2013&#39;,
-            &#39;\\emdash&#39;: &#39;\u2014&#39;
+            b&#39;\\par&#39;: b&#39;\n&#39;,
+            b&#39;\\tab&#39;: b&#39;\t&#39;,
+            b&#39;\\line&#39;: b&#39;\n&#39;,
+            b&#39;\\lquote&#39;: b&#39;\u2018&#39;,
+            b&#39;\\rquote&#39;: b&#39;\u2019&#39;,
+            b&#39;\\ldblquote&#39;: b&#39;\u201C&#39;,
+            b&#39;\\rdblquote&#39;: b&#39;\u201D&#39;,
+            b&#39;\\bullet&#39;: b&#39;\u2022&#39;,
+            b&#39;\\endash&#39;: b&#39;\u2013&#39;,
+            b&#39;\\emdash&#39;: b&#39;\u2014&#39;
         }
         replacement = words.get(args.value, None)
         # If this is simply a character to replace then return the value as a string
         if replacement is not None:
             return replacement
-        return &#34;&#34;
+        return b&#34;&#34;
 
 def get_stripped_HTMLRTF_values(tree: Tree, current_state: Union[bool,None] = None) -&gt; Generator:
     &#34;&#34;&#34;Get a list of Tokens which should be suppressed by HTMLRTF control words.
@@ -297,7 +306,7 @@ Returns:
 &#34;&#34;&#34;
     if isinstance(child, Token):
         if child.type == &#34;HTMLRTF&#34;:
-            htmlrtfstr = str(child).strip()
+            htmlrtfstr = child.value.decode().strip()
             if (len(htmlrtfstr) &gt; 0 and htmlrtfstr[-1] == &#34;0&#34;):
                 return False
             return True
@@ -341,6 +350,7 @@ Returns:
                         i.end_pos == token.end_pos and
                         i.value == token.value):
                         log_htmlrtf_stripping(i)
+                        # print(f&#34;DELETING: {i}&#34;)
                         return Discard
         return token
 
@@ -388,7 +398,57 @@ Args:
         token: A CONTROLWORD token to strip whitespace from.
         &#34;&#34;&#34;
         tok = token.update(value=token.value.strip())
-        return tok</code></pre>
+        return tok
+
+
+def strip_binary_objects(raw_rtf: bytes) -&gt; tuple:
+    &#34;&#34;&#34;Extracts binary objects from a rtf file.
+
+Parameters:
+    raw_rtf: (bytes): It&#39;s the raw RTF file as bytes.
+
+Returns:
+    A tuple containing (new_raw, found_bytes)
+        new_raw: (bytes) A bytes object where any binary data has been removed.
+        found_bytes: (list) List of dictionaries containing binary data extracted from the rtf file. Each dictionary includes the data extracted, where it was extracted from in the original rtf file and where it can be inserted back into the stripped output.
+
+    Description of found_bytes dictionaries:
+
+        &#34;bytes&#34;: (bytes) The binary data contained which was extracted.
+        &#34;ctrl_char&#34;: (tuple) Tuple containing the binary control word and its numeric parameter
+        &#34;start_pos&#34;: (int) The position (in the original raw rtf data) where the binary control word started.
+        &#34;bin_start_pos&#34;: (int) The position (in the original raw rtf data) where the binary data starts.
+        &#34;end_pos&#34;: (int) The position (in the original raw rtf data) where the binary data ends.
+
+    Here is an example of what this looks like (by displaying the printable representation so you can see the bytes and then splitting the dict keys on new lines to make it readable.)
+        &gt;&gt; print(repr(found_bytes))
+
+        &#34;{&#39;bytes&#39;: b&#39;\\xf4UP\\x13\\xdb\\xe4\\xe6CO\\xa8\\x16\\x10\\x8b\\n\\xfbA\\x9d\\xc5\\xd1C&#39;,
+          &#39;ctrl_char&#39;: (b&#39;\\\\bin&#39;, b&#39;20&#39;),
+          &#39;start_pos&#39;: 56,
+          &#39;end_pos&#39;: 83,
+          &#39;bin_start_pos&#39;: 63}&#34;
+    &#34;&#34;&#34;
+    found_bytes = []
+    byte_finder = rb&#39;(\\bin)([0-9]+)[ ]?&#39;
+    for matchitem in re.finditer(byte_finder, raw_rtf):
+        param = int(matchitem[2])
+        bin_start_pos = matchitem.span()[-1]
+        byte_obj = {&#34;bytes&#34;: raw_rtf[bin_start_pos:bin_start_pos+param],
+                    &#34;ctrl_char&#34;: matchitem.groups(),
+                    &#34;start_pos&#34;: matchitem.span()[0],
+                    &#34;end_pos&#34;: bin_start_pos+param,
+                    &#34;bin_start_pos&#34;: bin_start_pos
+                    }
+        # byte_obj : dict[str, Union[bytes, int, Tuple[bytes, bytes]]]
+        found_bytes.append(byte_obj)
+    new_raw = b&#39;&#39;
+    start_buffer = 0
+    for new_bytes in found_bytes:
+        new_raw += raw_rtf[start_buffer:new_bytes[&#34;start_pos&#34;]]
+        start_buffer = new_bytes[&#34;end_pos&#34;]
+    new_raw += raw_rtf[start_buffer:]
+    return (new_raw, found_bytes)</code></pre>
 </details>
 </section>
 <section>
@@ -439,6 +499,90 @@ Returns:
                 yield child</code></pre>
 </details>
 </dd>
+<dt id="RTFDE.transformers.strip_binary_objects"><code class="name flex">
+<span>def <span class="ident">strip_binary_objects</span></span>(<span>raw_rtf: bytes) ‑> tuple</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Extracts binary objects from a rtf file.</p>
+<h2 id="parameters">Parameters</h2>
+<p>raw_rtf: (bytes): It's the raw RTF file as bytes.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt>A tuple containing (new_raw, found_bytes)</dt>
+<dt><code>
+new_raw</code></dt>
+<dd>(bytes) A bytes object where any binary data has been removed.
+found_bytes: (list) List of dictionaries containing binary data extracted from the rtf file. Each dictionary includes the data extracted, where it was extracted from in the original rtf file and where it can be inserted back into the stripped output.</dd>
+</dl>
+<p>Description of found_bytes dictionaries:</p>
+<pre><code>"bytes": (bytes) The binary data contained which was extracted.
+"ctrl_char": (tuple) Tuple containing the binary control word and its numeric parameter
+"start_pos": (int) The position (in the original raw rtf data) where the binary control word started.
+"bin_start_pos": (int) The position (in the original raw rtf data) where the binary data starts.
+"end_pos": (int) The position (in the original raw rtf data) where the binary data ends.
+</code></pre>
+<p>Here is an example of what this looks like (by displaying the printable representation so you can see the bytes and then splitting the dict keys on new lines to make it readable.)
+&gt;&gt; print(repr(found_bytes))</p>
+<pre><code>"{'bytes': b'\xf4UP\x13\xdb\xe4\xe6CO\xa8\x16\x10\x8b\n\xfbA\x9d\xc5\xd1C',
+  'ctrl_char': (b'\\bin', b'20'),
+  'start_pos': 56,
+  'end_pos': 83,
+  'bin_start_pos': 63}"
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def strip_binary_objects(raw_rtf: bytes) -&gt; tuple:
+    &#34;&#34;&#34;Extracts binary objects from a rtf file.
+
+Parameters:
+    raw_rtf: (bytes): It&#39;s the raw RTF file as bytes.
+
+Returns:
+    A tuple containing (new_raw, found_bytes)
+        new_raw: (bytes) A bytes object where any binary data has been removed.
+        found_bytes: (list) List of dictionaries containing binary data extracted from the rtf file. Each dictionary includes the data extracted, where it was extracted from in the original rtf file and where it can be inserted back into the stripped output.
+
+    Description of found_bytes dictionaries:
+
+        &#34;bytes&#34;: (bytes) The binary data contained which was extracted.
+        &#34;ctrl_char&#34;: (tuple) Tuple containing the binary control word and its numeric parameter
+        &#34;start_pos&#34;: (int) The position (in the original raw rtf data) where the binary control word started.
+        &#34;bin_start_pos&#34;: (int) The position (in the original raw rtf data) where the binary data starts.
+        &#34;end_pos&#34;: (int) The position (in the original raw rtf data) where the binary data ends.
+
+    Here is an example of what this looks like (by displaying the printable representation so you can see the bytes and then splitting the dict keys on new lines to make it readable.)
+        &gt;&gt; print(repr(found_bytes))
+
+        &#34;{&#39;bytes&#39;: b&#39;\\xf4UP\\x13\\xdb\\xe4\\xe6CO\\xa8\\x16\\x10\\x8b\\n\\xfbA\\x9d\\xc5\\xd1C&#39;,
+          &#39;ctrl_char&#39;: (b&#39;\\\\bin&#39;, b&#39;20&#39;),
+          &#39;start_pos&#39;: 56,
+          &#39;end_pos&#39;: 83,
+          &#39;bin_start_pos&#39;: 63}&#34;
+    &#34;&#34;&#34;
+    found_bytes = []
+    byte_finder = rb&#39;(\\bin)([0-9]+)[ ]?&#39;
+    for matchitem in re.finditer(byte_finder, raw_rtf):
+        param = int(matchitem[2])
+        bin_start_pos = matchitem.span()[-1]
+        byte_obj = {&#34;bytes&#34;: raw_rtf[bin_start_pos:bin_start_pos+param],
+                    &#34;ctrl_char&#34;: matchitem.groups(),
+                    &#34;start_pos&#34;: matchitem.span()[0],
+                    &#34;end_pos&#34;: bin_start_pos+param,
+                    &#34;bin_start_pos&#34;: bin_start_pos
+                    }
+        # byte_obj : dict[str, Union[bytes, int, Tuple[bytes, bytes]]]
+        found_bytes.append(byte_obj)
+    new_raw = b&#39;&#39;
+    start_buffer = 0
+    for new_bytes in found_bytes:
+        new_raw += raw_rtf[start_buffer:new_bytes[&#34;start_pos&#34;]]
+        start_buffer = new_bytes[&#34;end_pos&#34;]
+    new_raw += raw_rtf[start_buffer:]
+    return (new_raw, found_bytes)</code></pre>
+</details>
+</dd>
 <dt id="RTFDE.transformers.toggle_htmlrtf"><code class="name flex">
 <span>def <span class="ident">toggle_htmlrtf</span></span>(<span>child: Union[lark.lexer.Token, str]) ‑> Optional[bool]</span>
 </code></dt>
@@ -458,7 +602,7 @@ Returns:
 &#34;&#34;&#34;
     if isinstance(child, Token):
         if child.type == &#34;HTMLRTF&#34;:
-            htmlrtfstr = str(child).strip()
+            htmlrtfstr = child.value.decode().strip()
             if (len(htmlrtfstr) &gt; 0 and htmlrtfstr[-1] == &#34;0&#34;):
                 return False
             return True
@@ -533,6 +677,7 @@ Returns:
                         i.end_pos == token.end_pos and
                         i.value == token.value):
                         log_htmlrtf_stripping(i)
+                        # print(f&#34;DELETING: {i}&#34;)
                         return Discard
         return token</code></pre>
 </details>
@@ -558,23 +703,27 @@ Returns:
     &#34;&#34;&#34;Visits each Token in provided RTF Trees. Converts all tokens that need converting. Deletes all tokens that shouldn&#39;t be visible. And, joins all strings that are left into one final string.
     &#34;&#34;&#34;
 
-    def start(self, args: List) -&gt; str:
+    def start(self, args: List) -&gt; bytes:
         &#34;&#34;&#34;Joins the .rtf object&#39;s string representations together at highest level object `start`.
 
 This is the final string combination. &#34;&#34;&#34;
-        return &#34;&#34;.join(args)
+        return b&#34;&#34;.join(args)
 
-    def STRING(self, string: Token) -&gt; str:
+    def STRING(self, string: Token) -&gt; bytes:
         &#34;&#34;&#34;Convert a string object into a raw string.&#34;&#34;&#34;
         if string.value is not None:
             return string.value
-        return &#34;&#34;
+        return b&#34;&#34;
 
-    def string(self, strings: List) -&gt; str:
+    def SPACE_SAVE(self, string: Token) -&gt; bytes:
+        return string.value
+
+    def string(self, strings: List) -&gt; bytes:
         &#34;&#34;&#34;Convert all string objects withing a string group into a single string.&#34;&#34;&#34;
-        return &#34;&#34;.join(strings)
+        # print(strings)
+        return b&#34;&#34;.join(strings)
 
-    def group(self, grp: List) -&gt; str:
+    def group(self, grp: List) -&gt; bytes:
         &#34;&#34;&#34;Join the strings in all group objects.&#34;&#34;&#34;
         _new_children = []
         for i in grp:
@@ -582,19 +731,20 @@ This is the final string combination. &#34;&#34;&#34;
                 pass
             else:
                 _new_children.append(i)
-        return &#34;&#34;.join(_new_children)
+        return b&#34;&#34;.join(_new_children)
 
-    def document(self, args: List) -&gt; str:
+    def document(self, args: List) -&gt; bytes:
         &#34;&#34;&#34;Join the all the strings in an .rtf object into a single string representation of the document.&#34;&#34;&#34;
-        return &#34;&#34;.join(args)
+        args = [i for i in args if i is not None]
+        return b&#34;&#34;.join(args)
 
-    def OPENPAREN(self, args: Token) -&gt; str:
+    def OPENPAREN(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Delete all open parens.&#34;&#34;&#34;
-        return &#34;&#34;
+        return b&#34;&#34;
 
-    def CLOSEPAREN(self, args: Token) -&gt; str:
+    def CLOSEPAREN(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Delete all closed parens.&#34;&#34;&#34;
-        return &#34;&#34;
+        return b&#34;&#34;
 
     def mhtmltag_group(self, args: List):
         &#34;&#34;&#34;Process MHTMLTAG groups
@@ -605,86 +755,86 @@ Returns:
         Always returns a discard object.&#34;&#34;&#34;
         return Discard
 
-    def htmltag_group(self, strings: List) -&gt; str:
+    def htmltag_group(self, strings: List) -&gt; bytes:
         &#34;&#34;&#34;HTMLTAG processing.
 
 Takes any string values within an HTMLTAG and returns them.
         &#34;&#34;&#34;
-        return &#34;&#34;.join(strings)
+        return b&#34;&#34;.join(strings)
 
-    def HTMLTAG(self, htmltag: Token) -&gt; str:
+    def HTMLTAG(self, htmltag: Token) -&gt; bytes:
         &#34;&#34;&#34;Delete all HTMLTAG objects&#34;&#34;&#34;
-        return &#34;&#34;
+        return b&#34;&#34;
 
-    def STAR_ESCAPE(self, char: Token) -&gt; str:
+    def STAR_ESCAPE(self, char: Token) -&gt; bytes:
         &#34;&#34;&#34;Delete all star escape objects&#34;&#34;&#34;
         # &#39;\\*&#39;: &#39;&#39;
-        return &#34;&#34;
+        return b&#34;&#34;
 
-    def control_symbol(self, symbols: List) -&gt; str:
+    def control_symbol(self, symbols: List) -&gt; bytes:
         &#34;&#34;&#34;Join all visible symbols from in control symbol groups.&#34;&#34;&#34;
-        return &#34;&#34;.join(symbols)
+        return b&#34;&#34;.join(symbols)
 
-    def NONBREAKING_SPACE(self, args: Token) -&gt; str:
+    def NONBREAKING_SPACE(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Convert non-breaking spaces into visible representation.&#34;&#34;&#34;
         # &#39;\\~&#39;: &#39;\u00A0&#39;,
-        return u&#39;\u00A0&#39;
+        return u&#39;\u00A0&#39;.encode()
 
-    def NONBREAKING_HYPHEN(self, args: Token) -&gt; str:
+    def NONBREAKING_HYPHEN(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Convert non-breaking hyphens into visible representation.&#34;&#34;&#34;
         # &#39;\\_&#39;: &#39;\u00AD&#39;
-        return u&#39;\u00AD&#39;
+        return u&#39;\u00AD&#39;.encode()
 
-    def OPTIONAL_HYPHEN(self, args: Token) -&gt; str:
+    def OPTIONAL_HYPHEN(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Convert hyphen control char into visible representation.&#34;&#34;&#34;
         # &#39;\\-&#39;: &#39;\u2027&#39;
-        return u&#39;\u2027&#39;
+        return u&#39;\u2027&#39;.encode()
 
-    def FORMULA_CHARACTER(self, args: Token) -&gt; str:
+    def FORMULA_CHARACTER(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Convert a formula character into an empty string.
 
 If we are attempting to represent formula characters the scope for this library has grown too inclusive. This was only used by Word 5.1 for the Macintosh as the beginning delimiter for a string of formula typesetting commands.&#34;&#34;&#34;
-        return &#34;&#34;
+        return b&#34;&#34;
 
-    def INDEX_SUBENTRY(self, args: Token) -&gt; str:
+    def INDEX_SUBENTRY(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Process index subentry items
 
 Discard index sub-entries. Because, we don&#39;t care about indexes when de-encapsulating at this time.&#34;&#34;&#34;
-        return &#34;&#34;
+        return b&#34;&#34;
 
-    def CONTROLSYMBOL(self, args: Token) -&gt; str:
+    def CONTROLSYMBOL(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Convert encoded chars which are mis-categorized as control symbols into their respective chars. Delete all the other ones.&#34;&#34;&#34;
         symbols = {
-            &#39;\\{&#39;: &#39;\x7B&#39;,
-            &#39;\\}&#39;: &#39;\x7D&#39;,
-            &#39;\\\\&#39;: &#39;\x5C&#39;,
+            b&#39;\\{&#39;: b&#39;\x7B&#39;,
+            b&#39;\\}&#39;: b&#39;\x7D&#39;,
+            b&#39;\\\\&#39;: b&#39;\x5C&#39;,
         }
         replacement = symbols.get(args.value, None)
         # If this is simply a character to replace then return the value
         if replacement is not None:
             return replacement
-        return &#34;&#34;
+        return b&#34;&#34;
 
-    def CONTROLWORD(self, args: Token) -&gt; str:
+    def CONTROLWORD(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Convert encoded chars which are mis-categorized as control words into their respective chars. Delete all the other ones.
         &#34;&#34;&#34;
         words = {
-            &#39;\\par&#39;: &#39;\n&#39;,
-            &#39;\\tab&#39;: &#39;\t&#39;,
-            &#39;\\line&#39;: &#39;\n&#39;,
-            &#39;\\lquote&#39;: &#39;\u2018&#39;,
-            &#39;\\rquote&#39;: &#39;\u2019&#39;,
-            &#39;\\ldblquote&#39;: &#39;\u201C&#39;,
-            &#39;\\rdblquote&#39;: &#39;\u201D&#39;,
-            &#39;\\bullet&#39;: &#39;\u2022&#39;,
-            &#39;\\endash&#39;: &#39;\u2013&#39;,
-            &#39;\\emdash&#39;: &#39;\u2014&#39;
+            b&#39;\\par&#39;: b&#39;\n&#39;,
+            b&#39;\\tab&#39;: b&#39;\t&#39;,
+            b&#39;\\line&#39;: b&#39;\n&#39;,
+            b&#39;\\lquote&#39;: b&#39;\u2018&#39;,
+            b&#39;\\rquote&#39;: b&#39;\u2019&#39;,
+            b&#39;\\ldblquote&#39;: b&#39;\u201C&#39;,
+            b&#39;\\rdblquote&#39;: b&#39;\u201D&#39;,
+            b&#39;\\bullet&#39;: b&#39;\u2022&#39;,
+            b&#39;\\endash&#39;: b&#39;\u2013&#39;,
+            b&#39;\\emdash&#39;: b&#39;\u2014&#39;
         }
         replacement = words.get(args.value, None)
         # If this is simply a character to replace then return the value as a string
         if replacement is not None:
             return replacement
-        return &#34;&#34;</code></pre>
+        return b&#34;&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -696,7 +846,7 @@ Discard index sub-entries. Because, we don&#39;t care about indexes when de-enca
 <h3>Methods</h3>
 <dl>
 <dt id="RTFDE.transformers.RTFCleaner.CLOSEPAREN"><code class="name flex">
-<span>def <span class="ident">CLOSEPAREN</span></span>(<span>self, args: lark.lexer.Token) ‑> str</span>
+<span>def <span class="ident">CLOSEPAREN</span></span>(<span>self, args: lark.lexer.Token) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Delete all closed parens.</p></div>
@@ -704,13 +854,13 @@ Discard index sub-entries. Because, we don&#39;t care about indexes when de-enca
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def CLOSEPAREN(self, args: Token) -&gt; str:
+<pre><code class="python">def CLOSEPAREN(self, args: Token) -&gt; bytes:
     &#34;&#34;&#34;Delete all closed parens.&#34;&#34;&#34;
-    return &#34;&#34;</code></pre>
+    return b&#34;&#34;</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.CONTROLSYMBOL"><code class="name flex">
-<span>def <span class="ident">CONTROLSYMBOL</span></span>(<span>self, args: lark.lexer.Token) ‑> str</span>
+<span>def <span class="ident">CONTROLSYMBOL</span></span>(<span>self, args: lark.lexer.Token) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Convert encoded chars which are mis-categorized as control symbols into their respective chars. Delete all the other ones.</p></div>
@@ -718,22 +868,22 @@ Discard index sub-entries. Because, we don&#39;t care about indexes when de-enca
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def CONTROLSYMBOL(self, args: Token) -&gt; str:
+<pre><code class="python">def CONTROLSYMBOL(self, args: Token) -&gt; bytes:
     &#34;&#34;&#34;Convert encoded chars which are mis-categorized as control symbols into their respective chars. Delete all the other ones.&#34;&#34;&#34;
     symbols = {
-        &#39;\\{&#39;: &#39;\x7B&#39;,
-        &#39;\\}&#39;: &#39;\x7D&#39;,
-        &#39;\\\\&#39;: &#39;\x5C&#39;,
+        b&#39;\\{&#39;: b&#39;\x7B&#39;,
+        b&#39;\\}&#39;: b&#39;\x7D&#39;,
+        b&#39;\\\\&#39;: b&#39;\x5C&#39;,
     }
     replacement = symbols.get(args.value, None)
     # If this is simply a character to replace then return the value
     if replacement is not None:
         return replacement
-    return &#34;&#34;</code></pre>
+    return b&#34;&#34;</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.CONTROLWORD"><code class="name flex">
-<span>def <span class="ident">CONTROLWORD</span></span>(<span>self, args: lark.lexer.Token) ‑> str</span>
+<span>def <span class="ident">CONTROLWORD</span></span>(<span>self, args: lark.lexer.Token) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Convert encoded chars which are mis-categorized as control words into their respective chars. Delete all the other ones.</p></div>
@@ -741,30 +891,30 @@ Discard index sub-entries. Because, we don&#39;t care about indexes when de-enca
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def CONTROLWORD(self, args: Token) -&gt; str:
+<pre><code class="python">def CONTROLWORD(self, args: Token) -&gt; bytes:
     &#34;&#34;&#34;Convert encoded chars which are mis-categorized as control words into their respective chars. Delete all the other ones.
     &#34;&#34;&#34;
     words = {
-        &#39;\\par&#39;: &#39;\n&#39;,
-        &#39;\\tab&#39;: &#39;\t&#39;,
-        &#39;\\line&#39;: &#39;\n&#39;,
-        &#39;\\lquote&#39;: &#39;\u2018&#39;,
-        &#39;\\rquote&#39;: &#39;\u2019&#39;,
-        &#39;\\ldblquote&#39;: &#39;\u201C&#39;,
-        &#39;\\rdblquote&#39;: &#39;\u201D&#39;,
-        &#39;\\bullet&#39;: &#39;\u2022&#39;,
-        &#39;\\endash&#39;: &#39;\u2013&#39;,
-        &#39;\\emdash&#39;: &#39;\u2014&#39;
+        b&#39;\\par&#39;: b&#39;\n&#39;,
+        b&#39;\\tab&#39;: b&#39;\t&#39;,
+        b&#39;\\line&#39;: b&#39;\n&#39;,
+        b&#39;\\lquote&#39;: b&#39;\u2018&#39;,
+        b&#39;\\rquote&#39;: b&#39;\u2019&#39;,
+        b&#39;\\ldblquote&#39;: b&#39;\u201C&#39;,
+        b&#39;\\rdblquote&#39;: b&#39;\u201D&#39;,
+        b&#39;\\bullet&#39;: b&#39;\u2022&#39;,
+        b&#39;\\endash&#39;: b&#39;\u2013&#39;,
+        b&#39;\\emdash&#39;: b&#39;\u2014&#39;
     }
     replacement = words.get(args.value, None)
     # If this is simply a character to replace then return the value as a string
     if replacement is not None:
         return replacement
-    return &#34;&#34;</code></pre>
+    return b&#34;&#34;</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.FORMULA_CHARACTER"><code class="name flex">
-<span>def <span class="ident">FORMULA_CHARACTER</span></span>(<span>self, args: lark.lexer.Token) ‑> str</span>
+<span>def <span class="ident">FORMULA_CHARACTER</span></span>(<span>self, args: lark.lexer.Token) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Convert a formula character into an empty string.</p>
@@ -773,15 +923,15 @@ Discard index sub-entries. Because, we don&#39;t care about indexes when de-enca
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">    def FORMULA_CHARACTER(self, args: Token) -&gt; str:
+<pre><code class="python">    def FORMULA_CHARACTER(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Convert a formula character into an empty string.
 
 If we are attempting to represent formula characters the scope for this library has grown too inclusive. This was only used by Word 5.1 for the Macintosh as the beginning delimiter for a string of formula typesetting commands.&#34;&#34;&#34;
-        return &#34;&#34;</code></pre>
+        return b&#34;&#34;</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.HTMLTAG"><code class="name flex">
-<span>def <span class="ident">HTMLTAG</span></span>(<span>self, htmltag: lark.lexer.Token) ‑> str</span>
+<span>def <span class="ident">HTMLTAG</span></span>(<span>self, htmltag: lark.lexer.Token) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Delete all HTMLTAG objects</p></div>
@@ -789,13 +939,13 @@ If we are attempting to represent formula characters the scope for this library 
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def HTMLTAG(self, htmltag: Token) -&gt; str:
+<pre><code class="python">def HTMLTAG(self, htmltag: Token) -&gt; bytes:
     &#34;&#34;&#34;Delete all HTMLTAG objects&#34;&#34;&#34;
-    return &#34;&#34;</code></pre>
+    return b&#34;&#34;</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.INDEX_SUBENTRY"><code class="name flex">
-<span>def <span class="ident">INDEX_SUBENTRY</span></span>(<span>self, args: lark.lexer.Token) ‑> str</span>
+<span>def <span class="ident">INDEX_SUBENTRY</span></span>(<span>self, args: lark.lexer.Token) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Process index subentry items</p>
@@ -804,15 +954,15 @@ If we are attempting to represent formula characters the scope for this library 
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">    def INDEX_SUBENTRY(self, args: Token) -&gt; str:
+<pre><code class="python">    def INDEX_SUBENTRY(self, args: Token) -&gt; bytes:
         &#34;&#34;&#34;Process index subentry items
 
 Discard index sub-entries. Because, we don&#39;t care about indexes when de-encapsulating at this time.&#34;&#34;&#34;
-        return &#34;&#34;</code></pre>
+        return b&#34;&#34;</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.NONBREAKING_HYPHEN"><code class="name flex">
-<span>def <span class="ident">NONBREAKING_HYPHEN</span></span>(<span>self, args: lark.lexer.Token) ‑> str</span>
+<span>def <span class="ident">NONBREAKING_HYPHEN</span></span>(<span>self, args: lark.lexer.Token) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Convert non-breaking hyphens into visible representation.</p></div>
@@ -820,14 +970,14 @@ Discard index sub-entries. Because, we don&#39;t care about indexes when de-enca
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def NONBREAKING_HYPHEN(self, args: Token) -&gt; str:
+<pre><code class="python">def NONBREAKING_HYPHEN(self, args: Token) -&gt; bytes:
     &#34;&#34;&#34;Convert non-breaking hyphens into visible representation.&#34;&#34;&#34;
     # &#39;\\_&#39;: &#39;\u00AD&#39;
-    return u&#39;\u00AD&#39;</code></pre>
+    return u&#39;\u00AD&#39;.encode()</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.NONBREAKING_SPACE"><code class="name flex">
-<span>def <span class="ident">NONBREAKING_SPACE</span></span>(<span>self, args: lark.lexer.Token) ‑> str</span>
+<span>def <span class="ident">NONBREAKING_SPACE</span></span>(<span>self, args: lark.lexer.Token) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Convert non-breaking spaces into visible representation.</p></div>
@@ -835,14 +985,14 @@ Discard index sub-entries. Because, we don&#39;t care about indexes when de-enca
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def NONBREAKING_SPACE(self, args: Token) -&gt; str:
+<pre><code class="python">def NONBREAKING_SPACE(self, args: Token) -&gt; bytes:
     &#34;&#34;&#34;Convert non-breaking spaces into visible representation.&#34;&#34;&#34;
     # &#39;\\~&#39;: &#39;\u00A0&#39;,
-    return u&#39;\u00A0&#39;</code></pre>
+    return u&#39;\u00A0&#39;.encode()</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.OPENPAREN"><code class="name flex">
-<span>def <span class="ident">OPENPAREN</span></span>(<span>self, args: lark.lexer.Token) ‑> str</span>
+<span>def <span class="ident">OPENPAREN</span></span>(<span>self, args: lark.lexer.Token) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Delete all open parens.</p></div>
@@ -850,13 +1000,13 @@ Discard index sub-entries. Because, we don&#39;t care about indexes when de-enca
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def OPENPAREN(self, args: Token) -&gt; str:
+<pre><code class="python">def OPENPAREN(self, args: Token) -&gt; bytes:
     &#34;&#34;&#34;Delete all open parens.&#34;&#34;&#34;
-    return &#34;&#34;</code></pre>
+    return b&#34;&#34;</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.OPTIONAL_HYPHEN"><code class="name flex">
-<span>def <span class="ident">OPTIONAL_HYPHEN</span></span>(<span>self, args: lark.lexer.Token) ‑> str</span>
+<span>def <span class="ident">OPTIONAL_HYPHEN</span></span>(<span>self, args: lark.lexer.Token) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Convert hyphen control char into visible representation.</p></div>
@@ -864,14 +1014,27 @@ Discard index sub-entries. Because, we don&#39;t care about indexes when de-enca
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def OPTIONAL_HYPHEN(self, args: Token) -&gt; str:
+<pre><code class="python">def OPTIONAL_HYPHEN(self, args: Token) -&gt; bytes:
     &#34;&#34;&#34;Convert hyphen control char into visible representation.&#34;&#34;&#34;
     # &#39;\\-&#39;: &#39;\u2027&#39;
-    return u&#39;\u2027&#39;</code></pre>
+    return u&#39;\u2027&#39;.encode()</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.transformers.RTFCleaner.SPACE_SAVE"><code class="name flex">
+<span>def <span class="ident">SPACE_SAVE</span></span>(<span>self, string: lark.lexer.Token) ‑> bytes</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def SPACE_SAVE(self, string: Token) -&gt; bytes:
+    return string.value</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.STAR_ESCAPE"><code class="name flex">
-<span>def <span class="ident">STAR_ESCAPE</span></span>(<span>self, char: lark.lexer.Token) ‑> str</span>
+<span>def <span class="ident">STAR_ESCAPE</span></span>(<span>self, char: lark.lexer.Token) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Delete all star escape objects</p></div>
@@ -879,14 +1042,14 @@ Discard index sub-entries. Because, we don&#39;t care about indexes when de-enca
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def STAR_ESCAPE(self, char: Token) -&gt; str:
+<pre><code class="python">def STAR_ESCAPE(self, char: Token) -&gt; bytes:
     &#34;&#34;&#34;Delete all star escape objects&#34;&#34;&#34;
     # &#39;\\*&#39;: &#39;&#39;
-    return &#34;&#34;</code></pre>
+    return b&#34;&#34;</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.STRING"><code class="name flex">
-<span>def <span class="ident">STRING</span></span>(<span>self, string: lark.lexer.Token) ‑> str</span>
+<span>def <span class="ident">STRING</span></span>(<span>self, string: lark.lexer.Token) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Convert a string object into a raw string.</p></div>
@@ -894,15 +1057,15 @@ Discard index sub-entries. Because, we don&#39;t care about indexes when de-enca
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def STRING(self, string: Token) -&gt; str:
+<pre><code class="python">def STRING(self, string: Token) -&gt; bytes:
     &#34;&#34;&#34;Convert a string object into a raw string.&#34;&#34;&#34;
     if string.value is not None:
         return string.value
-    return &#34;&#34;</code></pre>
+    return b&#34;&#34;</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.control_symbol"><code class="name flex">
-<span>def <span class="ident">control_symbol</span></span>(<span>self, symbols: List) ‑> str</span>
+<span>def <span class="ident">control_symbol</span></span>(<span>self, symbols: List) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Join all visible symbols from in control symbol groups.</p></div>
@@ -910,13 +1073,13 @@ Discard index sub-entries. Because, we don&#39;t care about indexes when de-enca
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def control_symbol(self, symbols: List) -&gt; str:
+<pre><code class="python">def control_symbol(self, symbols: List) -&gt; bytes:
     &#34;&#34;&#34;Join all visible symbols from in control symbol groups.&#34;&#34;&#34;
-    return &#34;&#34;.join(symbols)</code></pre>
+    return b&#34;&#34;.join(symbols)</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.document"><code class="name flex">
-<span>def <span class="ident">document</span></span>(<span>self, args: List) ‑> str</span>
+<span>def <span class="ident">document</span></span>(<span>self, args: List) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Join the all the strings in an .rtf object into a single string representation of the document.</p></div>
@@ -924,13 +1087,14 @@ Discard index sub-entries. Because, we don&#39;t care about indexes when de-enca
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def document(self, args: List) -&gt; str:
+<pre><code class="python">def document(self, args: List) -&gt; bytes:
     &#34;&#34;&#34;Join the all the strings in an .rtf object into a single string representation of the document.&#34;&#34;&#34;
-    return &#34;&#34;.join(args)</code></pre>
+    args = [i for i in args if i is not None]
+    return b&#34;&#34;.join(args)</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.group"><code class="name flex">
-<span>def <span class="ident">group</span></span>(<span>self, grp: List) ‑> str</span>
+<span>def <span class="ident">group</span></span>(<span>self, grp: List) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Join the strings in all group objects.</p></div>
@@ -938,7 +1102,7 @@ Discard index sub-entries. Because, we don&#39;t care about indexes when de-enca
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def group(self, grp: List) -&gt; str:
+<pre><code class="python">def group(self, grp: List) -&gt; bytes:
     &#34;&#34;&#34;Join the strings in all group objects.&#34;&#34;&#34;
     _new_children = []
     for i in grp:
@@ -946,11 +1110,11 @@ Discard index sub-entries. Because, we don&#39;t care about indexes when de-enca
             pass
         else:
             _new_children.append(i)
-    return &#34;&#34;.join(_new_children)</code></pre>
+    return b&#34;&#34;.join(_new_children)</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.htmltag_group"><code class="name flex">
-<span>def <span class="ident">htmltag_group</span></span>(<span>self, strings: List) ‑> str</span>
+<span>def <span class="ident">htmltag_group</span></span>(<span>self, strings: List) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>HTMLTAG processing.</p>
@@ -959,12 +1123,12 @@ Discard index sub-entries. Because, we don&#39;t care about indexes when de-enca
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">    def htmltag_group(self, strings: List) -&gt; str:
+<pre><code class="python">    def htmltag_group(self, strings: List) -&gt; bytes:
         &#34;&#34;&#34;HTMLTAG processing.
 
 Takes any string values within an HTMLTAG and returns them.
         &#34;&#34;&#34;
-        return &#34;&#34;.join(strings)</code></pre>
+        return b&#34;&#34;.join(strings)</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.mhtmltag_group"><code class="name flex">
@@ -991,7 +1155,7 @@ Returns:
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.start"><code class="name flex">
-<span>def <span class="ident">start</span></span>(<span>self, args: List) ‑> str</span>
+<span>def <span class="ident">start</span></span>(<span>self, args: List) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Joins the .rtf object's string representations together at highest level object <code>start</code>.</p>
@@ -1000,15 +1164,15 @@ Returns:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">    def start(self, args: List) -&gt; str:
+<pre><code class="python">    def start(self, args: List) -&gt; bytes:
         &#34;&#34;&#34;Joins the .rtf object&#39;s string representations together at highest level object `start`.
 
 This is the final string combination. &#34;&#34;&#34;
-        return &#34;&#34;.join(args)</code></pre>
+        return b&#34;&#34;.join(args)</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.transformers.RTFCleaner.string"><code class="name flex">
-<span>def <span class="ident">string</span></span>(<span>self, strings: List) ‑> str</span>
+<span>def <span class="ident">string</span></span>(<span>self, strings: List) ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Convert all string objects withing a string group into a single string.</p></div>
@@ -1016,9 +1180,10 @@ This is the final string combination. &#34;&#34;&#34;
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def string(self, strings: List) -&gt; str:
+<pre><code class="python">def string(self, strings: List) -&gt; bytes:
     &#34;&#34;&#34;Convert all string objects withing a string group into a single string.&#34;&#34;&#34;
-    return &#34;&#34;.join(strings)</code></pre>
+    # print(strings)
+    return b&#34;&#34;.join(strings)</code></pre>
 </details>
 </dd>
 </dl>
@@ -1106,7 +1271,7 @@ Args:
 &#34;&#34;&#34;
         children = tree.children
         if len(children) == 0:
-            return &#34;&#34;
+            return b&#34;&#34;
         first_child = children[0]
 
         known_control_groups = [&#34;htmltag_group&#34;]
@@ -1116,13 +1281,15 @@ Args:
         known_non_visible_control_groups = [&#34;mhtmltag_group&#34;]
         if isinstance(first_child, Tree):
             if first_child.data in known_non_visible_control_groups:
-                return &#34;&#34;
+                # print(f&#34;DELETING: {first_child} : because mhtmltag&#34;)
+                return b&#34;&#34;
 
         # process known non-visible groups
-        non_visible_control_words = [&#34;\\context&#34;, &#34;\\colortbl&#34;, &#34;\\fonttbl&#34;]
+        non_visible_control_words = [b&#34;\\context&#34;, b&#34;\\colortbl&#34;, b&#34;\\fonttbl&#34;]
         first_control = self.get_first_controlword(children)
+        # print(f&#34;FIRST: {first_control}&#34;)
         if first_control in non_visible_control_words:
-            return &#34;&#34;
+            return b&#34;&#34;
 
         # Process star escaped groups
         # NOTE: `understood_commands` is where we can include commands we decide to actively process during deencapsulation in the future.
@@ -1137,13 +1304,14 @@ Args:
                     is_star_escaped = True
         control_word = None
         if is_star_escaped is True:
+            # print(f&#34;STAR: {children}&#34;)
             first_token = children[1]
             if isinstance(first_token, Token):
                 if first_token.type == &#34;CONTROLWORD&#34;:
                     control_word = first_token
                     if control_word.value in understood_commands:
                         return tree
-                    return &#34;&#34;
+                    return b&#34;&#34;
         return tree
 
     @staticmethod
@@ -1237,7 +1405,7 @@ Args:
 &#34;&#34;&#34;
         children = tree.children
         if len(children) == 0:
-            return &#34;&#34;
+            return b&#34;&#34;
         first_child = children[0]
 
         known_control_groups = [&#34;htmltag_group&#34;]
@@ -1247,13 +1415,15 @@ Args:
         known_non_visible_control_groups = [&#34;mhtmltag_group&#34;]
         if isinstance(first_child, Tree):
             if first_child.data in known_non_visible_control_groups:
-                return &#34;&#34;
+                # print(f&#34;DELETING: {first_child} : because mhtmltag&#34;)
+                return b&#34;&#34;
 
         # process known non-visible groups
-        non_visible_control_words = [&#34;\\context&#34;, &#34;\\colortbl&#34;, &#34;\\fonttbl&#34;]
+        non_visible_control_words = [b&#34;\\context&#34;, b&#34;\\colortbl&#34;, b&#34;\\fonttbl&#34;]
         first_control = self.get_first_controlword(children)
+        # print(f&#34;FIRST: {first_control}&#34;)
         if first_control in non_visible_control_words:
-            return &#34;&#34;
+            return b&#34;&#34;
 
         # Process star escaped groups
         # NOTE: `understood_commands` is where we can include commands we decide to actively process during deencapsulation in the future.
@@ -1268,13 +1438,14 @@ Args:
                     is_star_escaped = True
         control_word = None
         if is_star_escaped is True:
+            # print(f&#34;STAR: {children}&#34;)
             first_token = children[1]
             if isinstance(first_token, Token):
                 if first_token.type == &#34;CONTROLWORD&#34;:
                     control_word = first_token
                     if control_word.value in understood_commands:
                         return tree
-                    return &#34;&#34;
+                    return b&#34;&#34;
         return tree</code></pre>
 </details>
 </dd>
@@ -1349,6 +1520,7 @@ Returns:
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="RTFDE.transformers.get_stripped_HTMLRTF_values" href="#RTFDE.transformers.get_stripped_HTMLRTF_values">get_stripped_HTMLRTF_values</a></code></li>
+<li><code><a title="RTFDE.transformers.strip_binary_objects" href="#RTFDE.transformers.strip_binary_objects">strip_binary_objects</a></code></li>
 <li><code><a title="RTFDE.transformers.toggle_htmlrtf" href="#RTFDE.transformers.toggle_htmlrtf">toggle_htmlrtf</a></code></li>
 </ul>
 </li>
@@ -1370,6 +1542,7 @@ Returns:
 <li><code><a title="RTFDE.transformers.RTFCleaner.NONBREAKING_SPACE" href="#RTFDE.transformers.RTFCleaner.NONBREAKING_SPACE">NONBREAKING_SPACE</a></code></li>
 <li><code><a title="RTFDE.transformers.RTFCleaner.OPENPAREN" href="#RTFDE.transformers.RTFCleaner.OPENPAREN">OPENPAREN</a></code></li>
 <li><code><a title="RTFDE.transformers.RTFCleaner.OPTIONAL_HYPHEN" href="#RTFDE.transformers.RTFCleaner.OPTIONAL_HYPHEN">OPTIONAL_HYPHEN</a></code></li>
+<li><code><a title="RTFDE.transformers.RTFCleaner.SPACE_SAVE" href="#RTFDE.transformers.RTFCleaner.SPACE_SAVE">SPACE_SAVE</a></code></li>
 <li><code><a title="RTFDE.transformers.RTFCleaner.STAR_ESCAPE" href="#RTFDE.transformers.RTFCleaner.STAR_ESCAPE">STAR_ESCAPE</a></code></li>
 <li><code><a title="RTFDE.transformers.RTFCleaner.STRING" href="#RTFDE.transformers.RTFCleaner.STRING">STRING</a></code></li>
 <li><code><a title="RTFDE.transformers.RTFCleaner.control_symbol" href="#RTFDE.transformers.RTFCleaner.control_symbol">control_symbol</a></code></li>

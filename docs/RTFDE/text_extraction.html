@@ -53,6 +53,7 @@ from lark.tree import Tree
 from RTFDE.exceptions import MalformedRtf
 from RTFDE.utils import is_codeword_with_numeric_arg
 from RTFDE.utils import flatten_tree_to_string_array
+from RTFDE.utils import log_text_extraction
 
 import logging
 log = logging.getLogger(&#34;RTFDE&#34;)
@@ -86,7 +87,7 @@ Returns:
                 continue
             if isinstance(ctrl_value, Token):
                 table_type = ctrl_value.value.strip()
-                if table_type == &#34;\\fonttbl&#34;:
+                if table_type == b&#34;\\fonttbl&#34;:
                     return item
     raise ValueError(&#34;No font table found in tree&#34;)
 
@@ -99,7 +100,7 @@ Returns:
 
 &#34;&#34;&#34;
     try:
-        if is_codeword_with_numeric_arg(token, &#39;\\f&#39;):
+        if is_codeword_with_numeric_arg(token, b&#39;\\f&#39;):
             return True
     except AttributeError: # pragma: no cover
         return False
@@ -135,7 +136,7 @@ Returns:
         238:{&#34;name&#34;:&#34;EE_CHARSET&#34;,&#34;hex&#34;:&#34;0xEE&#34;,&#34;decimal&#34;:238,&#34;id&#34;:1250},
         255:{&#34;name&#34;:&#34;OEM_CHARSET&#34;,&#34;hex&#34;:&#34;0xFF&#34;,&#34;decimal&#34;:255,&#34;id&#34;:None},
 }
-    # print(f&#34;Getting charset for {fcharsetN}&#34;)
+    log_text_extraction(f&#34;Getting charset for {fcharsetN}&#34;)
     charset = charsets.get(fcharsetN, None)
     if charset is not None:
         charset_id = charset.get(&#39;id&#39;, None)
@@ -155,14 +156,14 @@ Returns:
     The default font control number if it exists from the first `\\deffN`. None if not found.
 &#34;&#34;&#34;
     deff_gen = tree.scan_values(
-        lambda v: is_codeword_with_numeric_arg(v, &#39;\\deff&#39;)
+        lambda v: is_codeword_with_numeric_arg(v, b&#39;\\deff&#39;)
     )
     deff_options = list(deff_gen)
     try:
         # We just want the first \\deffN. It shouldn&#39;t be set multiple times.
         deff = deff_options[0]
         deff_num = deff.value[5:]
-        return &#39;\\f&#39; + deff_num
+        return b&#39;\\f&#39; + deff_num
     except IndexError:
         return None
 
@@ -182,12 +183,12 @@ Returns:
             fcharset = None
             cpg_num = None
             for tok in tree.children:
-                if is_codeword_with_numeric_arg(tok, &#39;\\f&#39;):
+                if is_codeword_with_numeric_arg(tok, b&#39;\\f&#39;):
                     fnum = tok.value
-                elif is_codeword_with_numeric_arg(tok, &#39;\\fcharset&#39;):
+                elif is_codeword_with_numeric_arg(tok, b&#39;\\fcharset&#39;):
                     fchar_num = int(tok.value[9:])
                     fcharset = get_codepage_num_from_fcharset(fchar_num)
-                elif is_codeword_with_numeric_arg(tok, &#39;\\cpg&#39;):
+                elif is_codeword_with_numeric_arg(tok, b&#39;\\cpg&#39;):
                     cpg_num = int(tok.value[4:])
             if fnum is not None:
                 # get the codepage
@@ -210,7 +211,7 @@ Returns:
                 else:
                     codec = None
                 # Only add if there is a font definition
-                tree_str =  &#34;&#34;.join(list(flatten_tree_to_string_array(tree)))
+                tree_str =  b&#34;&#34;.join(list(flatten_tree_to_string_array(tree)))
                 parsed_font_tree[fnum] = fontdef(fnum, codepage_num, codec, tree_str)
     return parsed_font_tree
 
@@ -269,7 +270,7 @@ Raises:
 
 
 # UNICODE CHARS
-def unicode_escape_to_chr(item: str) -&gt; str:
+def unicode_escape_to_chr(item: bytes) -&gt; str:
     &#34;&#34;&#34;Convert unicode char from it&#39;s decimal to its unicode character representation. From &#34;\\u[-]NNNNN&#34; to the string representing the character whose Unicode code point that decimal represents.
 
 Args:
@@ -282,7 +283,7 @@ Raises:
     ValueError: The escaped unicode character is not valid.
 &#34;&#34;&#34;
     try:
-        nnnn = int(item.removeprefix(&#39;\\u&#39;)) # raises ValueError if not int.
+        nnnn = int(item.removeprefix(b&#39;\\u&#39;)) # raises ValueError if not int.
     except ValueError as _e:
         raise ValueError(f&#34;`{item}` is not a valid escaped unicode character.&#34;) from _e
     if nnnn &lt; 0: # § -NNNNN is a negative integer expressed in decimal digits
@@ -379,7 +380,7 @@ Returns:
     ascii_map: Dict[Token,List[Token]]  = {}
     new_children = []
     removal_map: List[Token] = []
-    # print(f&#34;Removing unicode replacements on {repr(children)}&#34;)
+    log_text_extraction(f&#34;Removing unicode replacements on {repr(children)}&#34;)
     for child in children:
         if len(removal_map) &gt; 0:
             if isinstance(child, Token):
@@ -412,7 +413,14 @@ Returns:
                     else:
                         # print(f&#34;AC CHILD NOT VALID {repr(ac)}&#34;)
                         new_ansi_children.append(ac)
-                child.children = new_ansi_children
+                # print(f&#34;NEW Children = {new_ansi_children}&#34;)
+                if new_ansi_children == []:
+                    from RTFDE.utils import make_token_replacement
+                    # from RTFDE.utils import embed
+                    # embed()
+                    child = make_token_replacement(&#34;STRING&#34;, b&#34;&#34;, child)
+                else:
+                    child.children = new_ansi_children
                 # print(f&#34;NEW Tree = {child}&#34;)
             # else:
                 # print(f&#34;FOUND ASCII STRING {child} with RM: {removal_map}&#34;)
@@ -434,30 +442,58 @@ Returns:
 
 
 # UNICODE SURROGATE CHARACTERS
-def is_surrogate_high_char(item):
+def is_surrogate_high_char(item: bytes) -&gt; bool:
     &#34;&#34;&#34;Check&#39;s if chr is a is in the high-surrogate code point rage. &#34;High-surrogate code point: A Unicode code point in the range U+D800 to U+DBFF.&#34; High-surrogate also sometimes known as the leading surrogate.
 
-        item (str): A string representing a unicode character. &#34;\\u-10179&#34;
+        item (bytes): A bytes representation of a string representing a unicode character. &#34;\\u-10179&#34;
     &#34;&#34;&#34;
-    if item.startswith(&#34;\\u&#34;):
+    if item.startswith(b&#34;\\u&#34;):
         item = item[2:]
     if 0xD800 &lt;= ord(chr(65536+int(item))) &lt;= 0xDBFF:
         return True
-    return False
-
-def is_surrogate_low_char(item):
-    &#34;&#34;&#34;Check&#39;s if chr is a is in the low-surrogate code point rage. &#34;Low-surrogate code point: A Unicode code point in the range U+DC00 to U+DFFF.&#34;  Low-surrogate also sometimes known as following surrogates.
-
-        item (str): A string representing a unicode character.
-    &#34;&#34;&#34;
-    if item.startswith(&#34;\\u&#34;):
-        item = item[2:]
-    if 0xDC00 &lt;= ord(chr(65536+int(item))) &lt;= 0xDFFF:
+    # In case unicode is NOT using the 16 bit signed integer
+    elif 0xD800 &lt;= int(item) &lt;= 0xDBFF:
         return True
     return False
 
-def is_surrogate_pair(first, second):
+def is_surrogate_low_char(item: bytes) -&gt; bool:
+    &#34;&#34;&#34;Check&#39;s if chr is a is in the low-surrogate code point rage. &#34;Low-surrogate code point: A Unicode code point in the range U+DC00 to U+DFFF.&#34;  Low-surrogate also sometimes known as following surrogates.
+
+        item (bytes): A bytes representation of a string representing a unicode character.
+    &#34;&#34;&#34;
+    if item.startswith(b&#34;\\u&#34;):
+        item = item[2:]
+    if 0xDC00 &lt;= ord(chr(65536+int(item))) &lt;= 0xDFFF:
+        return True
+    # In case unicode is NOT using the 16 bit signed integer
+    elif 0xDC00 &lt;= int(item) &lt;= 0xDFFF:
+        return True
+    return False
+
+def is_surrogate_16bit(item: bytes, cp_range) -&gt; bool:
+    &#34;&#34;&#34;Checks if a unicode char is 16 bit signed integer or the raw unicode char. This should first check if it is a surrogate code using the is_surrogate_XXXX_char functions.
+
+Args:
+    item (bytes): A bytes representation of a string representing a unicode character.
+    cp_range (str): [&#39;low&#39; OR &#39;high&#39;] The code point range (low-surrogate or high-surrogate).
+    &#34;&#34;&#34;
+    if cp_range == &#39;low&#39;:
+        if 0xDC00 &lt;= ord(chr(65536+int(item))) &lt;= 0xDFFF:
+            return True
+    elif cp_range == &#39;high&#39;:
+        if 0xD800 &lt;= ord(chr(65536+int(item))) &lt;= 0xDBFF:
+            return True
+    else:
+        raise ValueError(&#34;cp_range must be either &#39;low&#39; or &#39;high&#39;&#34;)
+    return False
+
+
+def is_surrogate_pair(first: bytes, second: bytes) -&gt; bool:
     &#34;&#34;&#34;Check if a pair of unicode characters are a surrogate pair. Must be passed in the correct order.
+
+Args:
+    first (bytes): A bytes representation of a string representing the high-order byte in a surrogate char.
+    second (bytes): A bytes representation of a string representing the low-order byte in a surrogate char.
     &#34;&#34;&#34;
     if is_surrogate_high_char(first):
         if is_surrogate_low_char(second):
@@ -466,28 +502,36 @@ def is_surrogate_pair(first, second):
             log.info(&#34;RTFDE encountered a standalone high-surrogate point without a corresponding low-surrogate. Standalone surrogate code points have either a high surrogate without an adjacent low surrogate, or vice versa. These code points are invalid and are not supported. Their behavior is undefined. Codepoints encountered: {0}, {1}&#34;.format(first, second))
     return False
 
-def decode_surrogate_pair(high, low, encoding=&#39;utf-16-le&#39;):
+def decode_surrogate_pair(high: bytes, low: bytes, encoding: str =&#39;utf-16-le&#39;) -&gt; bytes:
     &#34;&#34;&#34; Convert a pair of surrogate chars into the corresponding utf-16 encoded text string they should represent.
 
-        high (chr): the high-surrogate code point
-        low (chr): the low-surrogate code point
+Args:
+        high (bytes): the high-surrogate code point
+        low (bytes): the low-surrogate code point
         encoding (str): The encoding to apply to the final value. Defaults to &#39;utf-16-le&#39; because:  Microsoft uses UTF-16, little endian byte order. ( https://learn.microsoft.com/en-us/windows/win32/intl/using-byte-order-marks ) The Msg format is a Microsoft standard. Therefore, man is mortal.
     &#34;&#34;&#34;
     # Equation for turning surrogate pairs into a unicode scalar value which be used with utl-16 can ONLY found in Unicode 3.0.0 standard.
     # Unicode scalar value means the same thing as &#34;code position&#34; or &#34;code point&#34;
      # https://www.unicode.org/versions/Unicode3.0.0/
      # section 3.7 https://www.unicode.org/versions/Unicode3.0.0/ch03.pdf#page=9
-    if high.startswith(&#34;\\u&#34;):
+    if high.startswith(b&#34;\\u&#34;):
         high = high[2:]
-    if low.startswith(&#34;\\u&#34;):
+    if low.startswith(b&#34;\\u&#34;):
         low = low[2:]
-    high = chr(65536+int(high))
-    low = chr(65536+int(low))
-    unicode_scalar_value = ((ord(high) - 0xD800) * 0x400) + (ord(low) - 0xDC00) + 0x10000
+    if is_surrogate_16bit(high, &#34;high&#34;):
+        char_high = chr(65536+int(high))
+    else:
+        char_high = chr(int(high))
+    if is_surrogate_16bit(low, &#34;low&#34;):
+        char_low = chr(65536+int(low))
+    else:
+        char_low = chr(int(low))
+    unicode_scalar_value = ((ord(char_high) - 0xD800) * 0x400) + (ord(char_low) - 0xDC00) + 0x10000
     unicode_bytes = chr(unicode_scalar_value).encode(encoding)
-    return unicode_bytes.decode(encoding)
+    return unicode_bytes.decode(encoding).encode()
 
-def merge_surrogate_chars(children, ascii_map,
+def merge_surrogate_chars(children,
+                          ascii_map,
                           use_ASCII_alternatives_on_unicode_decode_failure = False):
     &#34;&#34;&#34;
 
@@ -520,19 +564,27 @@ Raises:
                                               column=surrogate_high.column,
                                               end_column=surrogate_low.end_column)
                         children[surrogate_start] = surrogate_tok
-                        children[i] = &#34;&#34;
+                        blank_tok = Token(&#39;STRING&#39;,
+                                          b&#34;&#34;,
+                                          start_pos=surrogate_high.start_pos+1,
+                                          end_pos=surrogate_low.end_pos+1,
+                                          line=surrogate_high.line,
+                                          end_line=surrogate_low.end_line,
+                                          column=surrogate_high.column,
+                                          end_column=surrogate_low.end_column)
+                        children[i] = blank_tok
                         surrogate_start = None
                         surrogate_high = None
                     except UnicodeDecodeError as _e:
                         if use_ASCII_alternatives_on_unicode_decode_failure is True:
-                            children[surrogate_start] = &#34;&#34;.join([i.value for i in ascii_map[surrogate_high]])
-                            children[i] = &#34;&#34;.join([i.value for i in ascii_map[surrogate_low]])
+                            children[surrogate_start] = b&#34;&#34;.join([i.value for i in ascii_map[surrogate_high]])
+                            children[i] = b&#34;&#34;.join([i.value for i in ascii_map[surrogate_low]])
                         else:
                             raise _e
                 else:
                     log.info(&#34;RTFDE encountered a standalone high-surrogate point without a corresponding low-surrogate. Standalone surrogate code points have either a high surrogate without an adjacent low surrogate, or vice versa. These code points are invalid and are not supported. Their behavior is undefined. Codepoints encountered: {0}, {1}&#34;.format(surrogate_high, surrogate_low))
                     if use_ASCII_alternatives_on_unicode_decode_failure is True:
-                        children[surrogate_start] = &#34;&#34;.join([i.value for i in ascii_map[surrogate_high]])
+                        children[surrogate_start] = b&#34;&#34;.join([i.value for i in ascii_map[surrogate_high]])
                     else:
                         raise ValueError(&#34;Standalone high-surrogate found. High surrogate followed by a illegal low-surrogate character.&#34;)
     return children
@@ -542,17 +594,18 @@ Raises:
 def is_unicode_char_byte_count(item: Token) -&gt; bool:
     if isinstance(item, Token):
         if item.type == &#34;CONTROLWORD&#34;:
-            if item.value.startswith(&#39;\\uc&#39;):
+            if item.value.startswith(b&#39;\\uc&#39;):
                 return True
     return False
 
-def get_unicode_char_byte_count(item):
+def get_unicode_char_byte_count(item: Token) -&gt; int:
+    item = item.value.decode()
     cur_uc = int(item[3:])
     return cur_uc
 
 
 # Hex Encoded Chars
-def has_hexarray(children):
+def has_hexarray(children: List[Union[Token, Tree]]) -&gt; bool:
     &#34;&#34;&#34;Checks if an tree&#39;s children includes a hexarray tree.
 
     children (array): the children object from a tree.
@@ -577,8 +630,8 @@ def get_bytes_from_hex_encoded(item):
 
     item (str): a hex encoded string in format \\&#39;XX
     &#34;&#34;&#34;
-    hexstring = item.replace(&#34;\\&#39;&#34;, &#34;&#34;)
-    hex_bytes = bytes.fromhex(hexstring)
+    hexstring = item.replace(b&#34;\\&#39;&#34;, b&#34;&#34;)
+    hex_bytes = bytes.fromhex(hexstring.decode())
     return hex_bytes
 
 def decode_hex_char(item, codec):
@@ -587,16 +640,14 @@ def decode_hex_char(item, codec):
     item (bytes): A bytes object.
     codec (str): The name of the codec to use to decode the bytes
     &#34;&#34;&#34;
-    # print(&#34;decoding char {0} with font {1}&#34;.format(item, codec))
+    log_text_extraction(&#34;decoding char {0} with font {1}&#34;.format(item, codec))
     if codec is None:
         # Default to U.S. Windows default codepage
         codec = &#39;CP1252&#39;
     decoded = item.decode(codec)
-    # print(&#34;char {0} decoded into {1} using codec {2}&#34;.format(item, decoded, codec))
+    decoded = decoded.encode()
+    log_text_extraction(&#34;char {0} decoded into {1} using codec {2}&#34;.format(item, decoded, codec))
     return decoded
-
-
-
 
 
 class TextDecoder:
@@ -619,7 +670,7 @@ class TextDecoder:
         self.font_table = {}
 
 
-    def set_font_info(self, obj):
+    def set_font_info(self, obj: Tree):
         &#34;&#34;&#34;
 
         obj (Tree): A lark Tree object. Should be the DeEncapsulator.full_tree.
@@ -628,10 +679,10 @@ class TextDecoder:
         self.font_stack = [self.default_font]
         raw_fonttbl = get_font_table(obj.children[1])
         self.font_table = parse_font_tree(raw_fonttbl)
-        # print(raw_fonttbl)
+        log_text_extraction(f&#34;FONT TABLE FOUND: {raw_fonttbl}&#34;)
 
 
-    def update_children(self, obj):
+    def update_children(self, obj: Tree):
         &#34;&#34;&#34;
 
         obj (Tree): A lark Tree object. Should be the DeEncapsulator.full_tree.
@@ -641,10 +692,10 @@ class TextDecoder:
         children = obj.children
         obj.children = [i for i in self.iterate_on_children(children)]
 
-    def prep_unicode(self, children):
+    def prep_unicode(self, children: List[Token]):
         if includes_unicode_chars(children):
             # Clean out all replacement chars
-            # print(&#34;\n===\nORIGINAL:&#34; + repr(children))
+            # log_text_extraction(&#34;Prepping Unicode Chars:&#34; + repr(children))
             children, ascii_map = remove_unicode_replacements(children,
                                                               byte_count=self.ucbc)
             # print(&#34;===\nCHILD:&#34; + repr(children))
@@ -654,17 +705,15 @@ class TextDecoder:
                                              ascii_map,
                                              self.use_ASCII_alternatives_on_unicode_decode_failure)
             # print(&#34;FINAL CHILDREN&#34;)
-            # print(repr(children))
+            # log_text_extraction(&#34;Replaced Unicode Chars With: &#34; + repr(children))
         return children
 
-
-    def iterate_on_children(self, children):
+    def iterate_on_children(self, children): # Children should be &#39;List[Union[Token,Tree]]&#39; but lark&#39;s Tree typing is defined badly.
         set_fonts = []
-        # print(&#34;Starting to iterate on children&#34;)
-        # print(&#34;PREP-B4: &#34;+repr(children))
+        log_text_extraction(&#34;Starting to iterate on text extraction children...&#34;)
+        log_text_extraction(&#34;PREP-BEFORE: &#34;+repr(children))
         children = self.prep_unicode(children)
-        # print(&#34;PREP-AFTER: &#34;+repr(children))
-
+        log_text_extraction(&#34;PREP-AFTER: &#34;+repr(children))
 
         for item in children:
             if is_font_number(item): # Font Definitions
@@ -675,7 +724,7 @@ class TextDecoder:
             elif is_unicode_char_byte_count(item):
                 bc = get_unicode_char_byte_count(item)
             elif is_unicode_encoded(item): # Unicode Chars
-                decoded = unicode_escape_to_chr(item.value)
+                decoded = unicode_escape_to_chr(item.value).encode()
                 # Convert into STRING token
                 decoded_tok = Token(&#39;STRING&#39;,
                                     decoded,
@@ -685,7 +734,7 @@ class TextDecoder:
                                     end_line=item.end_line,
                                     column=item.column,
                                     end_column=item.end_column)
-                # print(f&#34;UNICODE TOKEN {item}: {decoded_tok}&#34;)
+                print(f&#34;UNICODE TOKEN {item}: {decoded_tok}&#34;)
                 yield decoded_tok
             # Decode a hex array
             elif is_hexarray(item):
@@ -698,7 +747,6 @@ class TextDecoder:
                         base_bytes += get_bytes_from_hex_encoded(hexchild.value)
                 current_fontdef = self.font_table[self.font_stack[-1]]
                 current_codec = current_fontdef.codec
-                # print(current_fontdef)
                 decoded_hex = decode_hex_char(base_bytes, current_codec)
                 # We are replacing a Tree. So, need item.data to access it&#39;s info token
                 decoded_hex_tok = Token(&#39;STRING&#39;,
@@ -790,48 +838,62 @@ codec (str): The name of the codec to use to decode the bytes</p></div>
     item (bytes): A bytes object.
     codec (str): The name of the codec to use to decode the bytes
     &#34;&#34;&#34;
-    # print(&#34;decoding char {0} with font {1}&#34;.format(item, codec))
+    log_text_extraction(&#34;decoding char {0} with font {1}&#34;.format(item, codec))
     if codec is None:
         # Default to U.S. Windows default codepage
         codec = &#39;CP1252&#39;
     decoded = item.decode(codec)
-    # print(&#34;char {0} decoded into {1} using codec {2}&#34;.format(item, decoded, codec))
+    decoded = decoded.encode()
+    log_text_extraction(&#34;char {0} decoded into {1} using codec {2}&#34;.format(item, decoded, codec))
     return decoded</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.text_extraction.decode_surrogate_pair"><code class="name flex">
-<span>def <span class="ident">decode_surrogate_pair</span></span>(<span>high, low, encoding='utf-16-le')</span>
+<span>def <span class="ident">decode_surrogate_pair</span></span>(<span>high: bytes, low: bytes, encoding: str = 'utf-16-le') ‑> bytes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Convert a pair of surrogate chars into the corresponding utf-16 encoded text string they should represent.</p>
-<p>high (chr): the high-surrogate code point
-low (chr): the low-surrogate code point
-encoding (str): The encoding to apply to the final value. Defaults to 'utf-16-le' because:
-Microsoft uses UTF-16, little endian byte order. ( <a href="https://learn.microsoft.com/en-us/windows/win32/intl/using-byte-order-marks">https://learn.microsoft.com/en-us/windows/win32/intl/using-byte-order-marks</a> ) The Msg format is a Microsoft standard. Therefore, man is mortal.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>high</code></strong> :&ensp;<code>bytes</code></dt>
+<dd>the high-surrogate code point</dd>
+<dt><strong><code>low</code></strong> :&ensp;<code>bytes</code></dt>
+<dd>the low-surrogate code point</dd>
+<dt><strong><code>encoding</code></strong> :&ensp;<code>str</code></dt>
+<dd>The encoding to apply to the final value. Defaults to 'utf-16-le' because:
+Microsoft uses UTF-16, little endian byte order. ( <a href="https://learn.microsoft.com/en-us/windows/win32/intl/using-byte-order-marks">https://learn.microsoft.com/en-us/windows/win32/intl/using-byte-order-marks</a> ) The Msg format is a Microsoft standard. Therefore, man is mortal.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def decode_surrogate_pair(high, low, encoding=&#39;utf-16-le&#39;):
+<pre><code class="python">def decode_surrogate_pair(high: bytes, low: bytes, encoding: str =&#39;utf-16-le&#39;) -&gt; bytes:
     &#34;&#34;&#34; Convert a pair of surrogate chars into the corresponding utf-16 encoded text string they should represent.
 
-        high (chr): the high-surrogate code point
-        low (chr): the low-surrogate code point
+Args:
+        high (bytes): the high-surrogate code point
+        low (bytes): the low-surrogate code point
         encoding (str): The encoding to apply to the final value. Defaults to &#39;utf-16-le&#39; because:  Microsoft uses UTF-16, little endian byte order. ( https://learn.microsoft.com/en-us/windows/win32/intl/using-byte-order-marks ) The Msg format is a Microsoft standard. Therefore, man is mortal.
     &#34;&#34;&#34;
     # Equation for turning surrogate pairs into a unicode scalar value which be used with utl-16 can ONLY found in Unicode 3.0.0 standard.
     # Unicode scalar value means the same thing as &#34;code position&#34; or &#34;code point&#34;
      # https://www.unicode.org/versions/Unicode3.0.0/
      # section 3.7 https://www.unicode.org/versions/Unicode3.0.0/ch03.pdf#page=9
-    if high.startswith(&#34;\\u&#34;):
+    if high.startswith(b&#34;\\u&#34;):
         high = high[2:]
-    if low.startswith(&#34;\\u&#34;):
+    if low.startswith(b&#34;\\u&#34;):
         low = low[2:]
-    high = chr(65536+int(high))
-    low = chr(65536+int(low))
-    unicode_scalar_value = ((ord(high) - 0xD800) * 0x400) + (ord(low) - 0xDC00) + 0x10000
+    if is_surrogate_16bit(high, &#34;high&#34;):
+        char_high = chr(65536+int(high))
+    else:
+        char_high = chr(int(high))
+    if is_surrogate_16bit(low, &#34;low&#34;):
+        char_low = chr(65536+int(low))
+    else:
+        char_low = chr(int(low))
+    unicode_scalar_value = ((ord(char_high) - 0xD800) * 0x400) + (ord(char_low) - 0xDC00) + 0x10000
     unicode_bytes = chr(unicode_scalar_value).encode(encoding)
-    return unicode_bytes.decode(encoding)</code></pre>
+    return unicode_bytes.decode(encoding).encode()</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.text_extraction.get_bytes_from_hex_encoded"><code class="name flex">
@@ -849,8 +911,8 @@ Microsoft uses UTF-16, little endian byte order. ( <a href="https://learn.micros
 
     item (str): a hex encoded string in format \\&#39;XX
     &#34;&#34;&#34;
-    hexstring = item.replace(&#34;\\&#39;&#34;, &#34;&#34;)
-    hex_bytes = bytes.fromhex(hexstring)
+    hexstring = item.replace(b&#34;\\&#39;&#34;, b&#34;&#34;)
+    hex_bytes = bytes.fromhex(hexstring.decode())
     return hex_bytes</code></pre>
 </details>
 </dd>
@@ -901,7 +963,7 @@ Returns:
         238:{&#34;name&#34;:&#34;EE_CHARSET&#34;,&#34;hex&#34;:&#34;0xEE&#34;,&#34;decimal&#34;:238,&#34;id&#34;:1250},
         255:{&#34;name&#34;:&#34;OEM_CHARSET&#34;,&#34;hex&#34;:&#34;0xFF&#34;,&#34;decimal&#34;:255,&#34;id&#34;:None},
 }
-    # print(f&#34;Getting charset for {fcharsetN}&#34;)
+    log_text_extraction(f&#34;Getting charset for {fcharsetN}&#34;)
     charset = charsets.get(fcharsetN, None)
     if charset is not None:
         charset_id = charset.get(&#39;id&#39;, None)
@@ -938,14 +1000,14 @@ Returns:
     The default font control number if it exists from the first `\\deffN`. None if not found.
 &#34;&#34;&#34;
     deff_gen = tree.scan_values(
-        lambda v: is_codeword_with_numeric_arg(v, &#39;\\deff&#39;)
+        lambda v: is_codeword_with_numeric_arg(v, b&#39;\\deff&#39;)
     )
     deff_options = list(deff_gen)
     try:
         # We just want the first \\deffN. It shouldn&#39;t be set multiple times.
         deff = deff_options[0]
         deff_num = deff.value[5:]
-        return &#39;\\f&#39; + deff_num
+        return b&#39;\\f&#39; + deff_num
     except IndexError:
         return None</code></pre>
 </details>
@@ -1003,7 +1065,7 @@ Returns:
                 continue
             if isinstance(ctrl_value, Token):
                 table_type = ctrl_value.value.strip()
-                if table_type == &#34;\\fonttbl&#34;:
+                if table_type == b&#34;\\fonttbl&#34;:
                     return item
     raise ValueError(&#34;No font table found in tree&#34;)</code></pre>
 </details>
@@ -1039,7 +1101,7 @@ Returns:
 </details>
 </dd>
 <dt id="RTFDE.text_extraction.get_unicode_char_byte_count"><code class="name flex">
-<span>def <span class="ident">get_unicode_char_byte_count</span></span>(<span>item)</span>
+<span>def <span class="ident">get_unicode_char_byte_count</span></span>(<span>item: lark.lexer.Token) ‑> int</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -1047,13 +1109,14 @@ Returns:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_unicode_char_byte_count(item):
+<pre><code class="python">def get_unicode_char_byte_count(item: Token) -&gt; int:
+    item = item.value.decode()
     cur_uc = int(item[3:])
     return cur_uc</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.text_extraction.has_hexarray"><code class="name flex">
-<span>def <span class="ident">has_hexarray</span></span>(<span>children)</span>
+<span>def <span class="ident">has_hexarray</span></span>(<span>children: List[Union[lark.lexer.Token, lark.tree.Tree]]) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if an tree's children includes a hexarray tree.</p>
@@ -1062,7 +1125,7 @@ Returns:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def has_hexarray(children):
+<pre><code class="python">def has_hexarray(children: List[Union[Token, Tree]]) -&gt; bool:
     &#34;&#34;&#34;Checks if an tree&#39;s children includes a hexarray tree.
 
     children (array): the children object from a tree.
@@ -1123,7 +1186,7 @@ Returns:
 
 &#34;&#34;&#34;
     try:
-        if is_codeword_with_numeric_arg(token, &#39;\\f&#39;):
+        if is_codeword_with_numeric_arg(token, b&#39;\\f&#39;):
             return True
     except AttributeError: # pragma: no cover
         return False
@@ -1181,62 +1244,113 @@ Return:
     return False</code></pre>
 </details>
 </dd>
-<dt id="RTFDE.text_extraction.is_surrogate_high_char"><code class="name flex">
-<span>def <span class="ident">is_surrogate_high_char</span></span>(<span>item)</span>
+<dt id="RTFDE.text_extraction.is_surrogate_16bit"><code class="name flex">
+<span>def <span class="ident">is_surrogate_16bit</span></span>(<span>item: bytes, cp_range) ‑> bool</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Check's if chr is a is in the high-surrogate code point rage. "High-surrogate code point: A Unicode code point in the range U+D800 to U+DBFF." High-surrogate also sometimes known as the leading surrogate.</p>
-<p>item (str): A string representing a unicode character. "\u-10179"</p></div>
+<div class="desc"><p>Checks if a unicode char is 16 bit signed integer or the raw unicode char. This should first check if it is a surrogate code using the is_surrogate_XXXX_char functions.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>item</code></strong> :&ensp;<code>bytes</code></dt>
+<dd>A bytes representation of a string representing a unicode character.</dd>
+<dt><strong><code>cp_range</code></strong> :&ensp;<code>str</code></dt>
+<dd>['low' OR 'high'] The code point range (low-surrogate or high-surrogate).</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_surrogate_high_char(item):
+<pre><code class="python">def is_surrogate_16bit(item: bytes, cp_range) -&gt; bool:
+    &#34;&#34;&#34;Checks if a unicode char is 16 bit signed integer or the raw unicode char. This should first check if it is a surrogate code using the is_surrogate_XXXX_char functions.
+
+Args:
+    item (bytes): A bytes representation of a string representing a unicode character.
+    cp_range (str): [&#39;low&#39; OR &#39;high&#39;] The code point range (low-surrogate or high-surrogate).
+    &#34;&#34;&#34;
+    if cp_range == &#39;low&#39;:
+        if 0xDC00 &lt;= ord(chr(65536+int(item))) &lt;= 0xDFFF:
+            return True
+    elif cp_range == &#39;high&#39;:
+        if 0xD800 &lt;= ord(chr(65536+int(item))) &lt;= 0xDBFF:
+            return True
+    else:
+        raise ValueError(&#34;cp_range must be either &#39;low&#39; or &#39;high&#39;&#34;)
+    return False</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.text_extraction.is_surrogate_high_char"><code class="name flex">
+<span>def <span class="ident">is_surrogate_high_char</span></span>(<span>item: bytes) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check's if chr is a is in the high-surrogate code point rage. "High-surrogate code point: A Unicode code point in the range U+D800 to U+DBFF." High-surrogate also sometimes known as the leading surrogate.</p>
+<p>item (bytes): A bytes representation of a string representing a unicode character. "\u-10179"</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_surrogate_high_char(item: bytes) -&gt; bool:
     &#34;&#34;&#34;Check&#39;s if chr is a is in the high-surrogate code point rage. &#34;High-surrogate code point: A Unicode code point in the range U+D800 to U+DBFF.&#34; High-surrogate also sometimes known as the leading surrogate.
 
-        item (str): A string representing a unicode character. &#34;\\u-10179&#34;
+        item (bytes): A bytes representation of a string representing a unicode character. &#34;\\u-10179&#34;
     &#34;&#34;&#34;
-    if item.startswith(&#34;\\u&#34;):
+    if item.startswith(b&#34;\\u&#34;):
         item = item[2:]
     if 0xD800 &lt;= ord(chr(65536+int(item))) &lt;= 0xDBFF:
+        return True
+    # In case unicode is NOT using the 16 bit signed integer
+    elif 0xD800 &lt;= int(item) &lt;= 0xDBFF:
         return True
     return False</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.text_extraction.is_surrogate_low_char"><code class="name flex">
-<span>def <span class="ident">is_surrogate_low_char</span></span>(<span>item)</span>
+<span>def <span class="ident">is_surrogate_low_char</span></span>(<span>item: bytes) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Check's if chr is a is in the low-surrogate code point rage. "Low-surrogate code point: A Unicode code point in the range U+DC00 to U+DFFF."
 Low-surrogate also sometimes known as following surrogates.</p>
-<p>item (str): A string representing a unicode character.</p></div>
+<p>item (bytes): A bytes representation of a string representing a unicode character.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_surrogate_low_char(item):
+<pre><code class="python">def is_surrogate_low_char(item: bytes) -&gt; bool:
     &#34;&#34;&#34;Check&#39;s if chr is a is in the low-surrogate code point rage. &#34;Low-surrogate code point: A Unicode code point in the range U+DC00 to U+DFFF.&#34;  Low-surrogate also sometimes known as following surrogates.
 
-        item (str): A string representing a unicode character.
+        item (bytes): A bytes representation of a string representing a unicode character.
     &#34;&#34;&#34;
-    if item.startswith(&#34;\\u&#34;):
+    if item.startswith(b&#34;\\u&#34;):
         item = item[2:]
     if 0xDC00 &lt;= ord(chr(65536+int(item))) &lt;= 0xDFFF:
+        return True
+    # In case unicode is NOT using the 16 bit signed integer
+    elif 0xDC00 &lt;= int(item) &lt;= 0xDFFF:
         return True
     return False</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.text_extraction.is_surrogate_pair"><code class="name flex">
-<span>def <span class="ident">is_surrogate_pair</span></span>(<span>first, second)</span>
+<span>def <span class="ident">is_surrogate_pair</span></span>(<span>first: bytes, second: bytes) ‑> bool</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Check if a pair of unicode characters are a surrogate pair. Must be passed in the correct order.</p></div>
+<div class="desc"><p>Check if a pair of unicode characters are a surrogate pair. Must be passed in the correct order.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>first</code></strong> :&ensp;<code>bytes</code></dt>
+<dd>A bytes representation of a string representing the high-order byte in a surrogate char.</dd>
+<dt><strong><code>second</code></strong> :&ensp;<code>bytes</code></dt>
+<dd>A bytes representation of a string representing the low-order byte in a surrogate char.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_surrogate_pair(first, second):
+<pre><code class="python">def is_surrogate_pair(first: bytes, second: bytes) -&gt; bool:
     &#34;&#34;&#34;Check if a pair of unicode characters are a surrogate pair. Must be passed in the correct order.
+
+Args:
+    first (bytes): A bytes representation of a string representing the high-order byte in a surrogate char.
+    second (bytes): A bytes representation of a string representing the low-order byte in a surrogate char.
     &#34;&#34;&#34;
     if is_surrogate_high_char(first):
         if is_surrogate_low_char(second):
@@ -1258,7 +1372,7 @@ Low-surrogate also sometimes known as following surrogates.</p>
 <pre><code class="python">def is_unicode_char_byte_count(item: Token) -&gt; bool:
     if isinstance(item, Token):
         if item.type == &#34;CONTROLWORD&#34;:
-            if item.value.startswith(&#39;\\uc&#39;):
+            if item.value.startswith(b&#39;\\uc&#39;):
                 return True
     return False</code></pre>
 </details>
@@ -1348,7 +1462,8 @@ Return:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def merge_surrogate_chars(children, ascii_map,
+<pre><code class="python">def merge_surrogate_chars(children,
+                          ascii_map,
                           use_ASCII_alternatives_on_unicode_decode_failure = False):
     &#34;&#34;&#34;
 
@@ -1381,19 +1496,27 @@ Raises:
                                               column=surrogate_high.column,
                                               end_column=surrogate_low.end_column)
                         children[surrogate_start] = surrogate_tok
-                        children[i] = &#34;&#34;
+                        blank_tok = Token(&#39;STRING&#39;,
+                                          b&#34;&#34;,
+                                          start_pos=surrogate_high.start_pos+1,
+                                          end_pos=surrogate_low.end_pos+1,
+                                          line=surrogate_high.line,
+                                          end_line=surrogate_low.end_line,
+                                          column=surrogate_high.column,
+                                          end_column=surrogate_low.end_column)
+                        children[i] = blank_tok
                         surrogate_start = None
                         surrogate_high = None
                     except UnicodeDecodeError as _e:
                         if use_ASCII_alternatives_on_unicode_decode_failure is True:
-                            children[surrogate_start] = &#34;&#34;.join([i.value for i in ascii_map[surrogate_high]])
-                            children[i] = &#34;&#34;.join([i.value for i in ascii_map[surrogate_low]])
+                            children[surrogate_start] = b&#34;&#34;.join([i.value for i in ascii_map[surrogate_high]])
+                            children[i] = b&#34;&#34;.join([i.value for i in ascii_map[surrogate_low]])
                         else:
                             raise _e
                 else:
                     log.info(&#34;RTFDE encountered a standalone high-surrogate point without a corresponding low-surrogate. Standalone surrogate code points have either a high surrogate without an adjacent low surrogate, or vice versa. These code points are invalid and are not supported. Their behavior is undefined. Codepoints encountered: {0}, {1}&#34;.format(surrogate_high, surrogate_low))
                     if use_ASCII_alternatives_on_unicode_decode_failure is True:
-                        children[surrogate_start] = &#34;&#34;.join([i.value for i in ascii_map[surrogate_high]])
+                        children[surrogate_start] = b&#34;&#34;.join([i.value for i in ascii_map[surrogate_high]])
                     else:
                         raise ValueError(&#34;Standalone high-surrogate found. High surrogate followed by a illegal low-surrogate character.&#34;)
     return children</code></pre>
@@ -1431,12 +1554,12 @@ Returns:
             fcharset = None
             cpg_num = None
             for tok in tree.children:
-                if is_codeword_with_numeric_arg(tok, &#39;\\f&#39;):
+                if is_codeword_with_numeric_arg(tok, b&#39;\\f&#39;):
                     fnum = tok.value
-                elif is_codeword_with_numeric_arg(tok, &#39;\\fcharset&#39;):
+                elif is_codeword_with_numeric_arg(tok, b&#39;\\fcharset&#39;):
                     fchar_num = int(tok.value[9:])
                     fcharset = get_codepage_num_from_fcharset(fchar_num)
-                elif is_codeword_with_numeric_arg(tok, &#39;\\cpg&#39;):
+                elif is_codeword_with_numeric_arg(tok, b&#39;\\cpg&#39;):
                     cpg_num = int(tok.value[4:])
             if fnum is not None:
                 # get the codepage
@@ -1459,7 +1582,7 @@ Returns:
                 else:
                     codec = None
                 # Only add if there is a font definition
-                tree_str =  &#34;&#34;.join(list(flatten_tree_to_string_array(tree)))
+                tree_str =  b&#34;&#34;.join(list(flatten_tree_to_string_array(tree)))
                 parsed_font_tree[fnum] = fontdef(fnum, codepage_num, codec, tree_str)
     return parsed_font_tree</code></pre>
 </details>
@@ -1507,7 +1630,7 @@ Returns:
     ascii_map: Dict[Token,List[Token]]  = {}
     new_children = []
     removal_map: List[Token] = []
-    # print(f&#34;Removing unicode replacements on {repr(children)}&#34;)
+    log_text_extraction(f&#34;Removing unicode replacements on {repr(children)}&#34;)
     for child in children:
         if len(removal_map) &gt; 0:
             if isinstance(child, Token):
@@ -1540,7 +1663,14 @@ Returns:
                     else:
                         # print(f&#34;AC CHILD NOT VALID {repr(ac)}&#34;)
                         new_ansi_children.append(ac)
-                child.children = new_ansi_children
+                # print(f&#34;NEW Children = {new_ansi_children}&#34;)
+                if new_ansi_children == []:
+                    from RTFDE.utils import make_token_replacement
+                    # from RTFDE.utils import embed
+                    # embed()
+                    child = make_token_replacement(&#34;STRING&#34;, b&#34;&#34;, child)
+                else:
+                    child.children = new_ansi_children
                 # print(f&#34;NEW Tree = {child}&#34;)
             # else:
                 # print(f&#34;FOUND ASCII STRING {child} with RM: {removal_map}&#34;)
@@ -1562,7 +1692,7 @@ Returns:
 </details>
 </dd>
 <dt id="RTFDE.text_extraction.unicode_escape_to_chr"><code class="name flex">
-<span>def <span class="ident">unicode_escape_to_chr</span></span>(<span>item: str) ‑> str</span>
+<span>def <span class="ident">unicode_escape_to_chr</span></span>(<span>item: bytes) ‑> str</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Convert unicode char from it's decimal to its unicode character representation. From "\u[-]NNNNN" to the string representing the character whose Unicode code point that decimal represents.</p>
@@ -1582,7 +1712,7 @@ Returns:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def unicode_escape_to_chr(item: str) -&gt; str:
+<pre><code class="python">def unicode_escape_to_chr(item: bytes) -&gt; str:
     &#34;&#34;&#34;Convert unicode char from it&#39;s decimal to its unicode character representation. From &#34;\\u[-]NNNNN&#34; to the string representing the character whose Unicode code point that decimal represents.
 
 Args:
@@ -1595,7 +1725,7 @@ Raises:
     ValueError: The escaped unicode character is not valid.
 &#34;&#34;&#34;
     try:
-        nnnn = int(item.removeprefix(&#39;\\u&#39;)) # raises ValueError if not int.
+        nnnn = int(item.removeprefix(b&#39;\\u&#39;)) # raises ValueError if not int.
     except ValueError as _e:
         raise ValueError(f&#34;`{item}` is not a valid escaped unicode character.&#34;) from _e
     if nnnn &lt; 0: # § -NNNNN is a negative integer expressed in decimal digits
@@ -1679,7 +1809,7 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
         self.font_table = {}
 
 
-    def set_font_info(self, obj):
+    def set_font_info(self, obj: Tree):
         &#34;&#34;&#34;
 
         obj (Tree): A lark Tree object. Should be the DeEncapsulator.full_tree.
@@ -1688,10 +1818,10 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
         self.font_stack = [self.default_font]
         raw_fonttbl = get_font_table(obj.children[1])
         self.font_table = parse_font_tree(raw_fonttbl)
-        # print(raw_fonttbl)
+        log_text_extraction(f&#34;FONT TABLE FOUND: {raw_fonttbl}&#34;)
 
 
-    def update_children(self, obj):
+    def update_children(self, obj: Tree):
         &#34;&#34;&#34;
 
         obj (Tree): A lark Tree object. Should be the DeEncapsulator.full_tree.
@@ -1701,10 +1831,10 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
         children = obj.children
         obj.children = [i for i in self.iterate_on_children(children)]
 
-    def prep_unicode(self, children):
+    def prep_unicode(self, children: List[Token]):
         if includes_unicode_chars(children):
             # Clean out all replacement chars
-            # print(&#34;\n===\nORIGINAL:&#34; + repr(children))
+            # log_text_extraction(&#34;Prepping Unicode Chars:&#34; + repr(children))
             children, ascii_map = remove_unicode_replacements(children,
                                                               byte_count=self.ucbc)
             # print(&#34;===\nCHILD:&#34; + repr(children))
@@ -1714,17 +1844,15 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
                                              ascii_map,
                                              self.use_ASCII_alternatives_on_unicode_decode_failure)
             # print(&#34;FINAL CHILDREN&#34;)
-            # print(repr(children))
+            # log_text_extraction(&#34;Replaced Unicode Chars With: &#34; + repr(children))
         return children
 
-
-    def iterate_on_children(self, children):
+    def iterate_on_children(self, children): # Children should be &#39;List[Union[Token,Tree]]&#39; but lark&#39;s Tree typing is defined badly.
         set_fonts = []
-        # print(&#34;Starting to iterate on children&#34;)
-        # print(&#34;PREP-B4: &#34;+repr(children))
+        log_text_extraction(&#34;Starting to iterate on text extraction children...&#34;)
+        log_text_extraction(&#34;PREP-BEFORE: &#34;+repr(children))
         children = self.prep_unicode(children)
-        # print(&#34;PREP-AFTER: &#34;+repr(children))
-
+        log_text_extraction(&#34;PREP-AFTER: &#34;+repr(children))
 
         for item in children:
             if is_font_number(item): # Font Definitions
@@ -1735,7 +1863,7 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
             elif is_unicode_char_byte_count(item):
                 bc = get_unicode_char_byte_count(item)
             elif is_unicode_encoded(item): # Unicode Chars
-                decoded = unicode_escape_to_chr(item.value)
+                decoded = unicode_escape_to_chr(item.value).encode()
                 # Convert into STRING token
                 decoded_tok = Token(&#39;STRING&#39;,
                                     decoded,
@@ -1745,7 +1873,7 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
                                     end_line=item.end_line,
                                     column=item.column,
                                     end_column=item.end_column)
-                # print(f&#34;UNICODE TOKEN {item}: {decoded_tok}&#34;)
+                print(f&#34;UNICODE TOKEN {item}: {decoded_tok}&#34;)
                 yield decoded_tok
             # Decode a hex array
             elif is_hexarray(item):
@@ -1758,7 +1886,6 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
                         base_bytes += get_bytes_from_hex_encoded(hexchild.value)
                 current_fontdef = self.font_table[self.font_stack[-1]]
                 current_codec = current_fontdef.codec
-                # print(current_fontdef)
                 decoded_hex = decode_hex_char(base_bytes, current_codec)
                 # We are replacing a Tree. So, need item.data to access it&#39;s info token
                 decoded_hex_tok = Token(&#39;STRING&#39;,
@@ -1791,13 +1918,12 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def iterate_on_children(self, children):
+<pre><code class="python">def iterate_on_children(self, children): # Children should be &#39;List[Union[Token,Tree]]&#39; but lark&#39;s Tree typing is defined badly.
     set_fonts = []
-    # print(&#34;Starting to iterate on children&#34;)
-    # print(&#34;PREP-B4: &#34;+repr(children))
+    log_text_extraction(&#34;Starting to iterate on text extraction children...&#34;)
+    log_text_extraction(&#34;PREP-BEFORE: &#34;+repr(children))
     children = self.prep_unicode(children)
-    # print(&#34;PREP-AFTER: &#34;+repr(children))
-
+    log_text_extraction(&#34;PREP-AFTER: &#34;+repr(children))
 
     for item in children:
         if is_font_number(item): # Font Definitions
@@ -1808,7 +1934,7 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
         elif is_unicode_char_byte_count(item):
             bc = get_unicode_char_byte_count(item)
         elif is_unicode_encoded(item): # Unicode Chars
-            decoded = unicode_escape_to_chr(item.value)
+            decoded = unicode_escape_to_chr(item.value).encode()
             # Convert into STRING token
             decoded_tok = Token(&#39;STRING&#39;,
                                 decoded,
@@ -1818,7 +1944,7 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
                                 end_line=item.end_line,
                                 column=item.column,
                                 end_column=item.end_column)
-            # print(f&#34;UNICODE TOKEN {item}: {decoded_tok}&#34;)
+            print(f&#34;UNICODE TOKEN {item}: {decoded_tok}&#34;)
             yield decoded_tok
         # Decode a hex array
         elif is_hexarray(item):
@@ -1831,7 +1957,6 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
                     base_bytes += get_bytes_from_hex_encoded(hexchild.value)
             current_fontdef = self.font_table[self.font_stack[-1]]
             current_codec = current_fontdef.codec
-            # print(current_fontdef)
             decoded_hex = decode_hex_char(base_bytes, current_codec)
             # We are replacing a Tree. So, need item.data to access it&#39;s info token
             decoded_hex_tok = Token(&#39;STRING&#39;,
@@ -1855,7 +1980,7 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
 </details>
 </dd>
 <dt id="RTFDE.text_extraction.TextDecoder.prep_unicode"><code class="name flex">
-<span>def <span class="ident">prep_unicode</span></span>(<span>self, children)</span>
+<span>def <span class="ident">prep_unicode</span></span>(<span>self, children: List[lark.lexer.Token])</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -1863,10 +1988,10 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def prep_unicode(self, children):
+<pre><code class="python">def prep_unicode(self, children: List[Token]):
     if includes_unicode_chars(children):
         # Clean out all replacement chars
-        # print(&#34;\n===\nORIGINAL:&#34; + repr(children))
+        # log_text_extraction(&#34;Prepping Unicode Chars:&#34; + repr(children))
         children, ascii_map = remove_unicode_replacements(children,
                                                           byte_count=self.ucbc)
         # print(&#34;===\nCHILD:&#34; + repr(children))
@@ -1876,12 +2001,12 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
                                          ascii_map,
                                          self.use_ASCII_alternatives_on_unicode_decode_failure)
         # print(&#34;FINAL CHILDREN&#34;)
-        # print(repr(children))
+        # log_text_extraction(&#34;Replaced Unicode Chars With: &#34; + repr(children))
     return children</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.text_extraction.TextDecoder.set_font_info"><code class="name flex">
-<span>def <span class="ident">set_font_info</span></span>(<span>self, obj)</span>
+<span>def <span class="ident">set_font_info</span></span>(<span>self, obj: lark.tree.Tree)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>obj (Tree): A lark Tree object. Should be the DeEncapsulator.full_tree.</p></div>
@@ -1889,7 +2014,7 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def set_font_info(self, obj):
+<pre><code class="python">def set_font_info(self, obj: Tree):
     &#34;&#34;&#34;
 
     obj (Tree): A lark Tree object. Should be the DeEncapsulator.full_tree.
@@ -1898,11 +2023,11 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
     self.font_stack = [self.default_font]
     raw_fonttbl = get_font_table(obj.children[1])
     self.font_table = parse_font_tree(raw_fonttbl)
-    # print(raw_fonttbl)</code></pre>
+    log_text_extraction(f&#34;FONT TABLE FOUND: {raw_fonttbl}&#34;)</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.text_extraction.TextDecoder.update_children"><code class="name flex">
-<span>def <span class="ident">update_children</span></span>(<span>self, obj)</span>
+<span>def <span class="ident">update_children</span></span>(<span>self, obj: lark.tree.Tree)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>obj (Tree): A lark Tree object. Should be the DeEncapsulator.full_tree.</p></div>
@@ -1910,7 +2035,7 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def update_children(self, obj):
+<pre><code class="python">def update_children(self, obj: Tree):
     &#34;&#34;&#34;
 
     obj (Tree): A lark Tree object. Should be the DeEncapsulator.full_tree.
@@ -1983,6 +2108,7 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
 <li><code><a title="RTFDE.text_extraction.is_font_number" href="#RTFDE.text_extraction.is_font_number">is_font_number</a></code></li>
 <li><code><a title="RTFDE.text_extraction.is_hex_encoded" href="#RTFDE.text_extraction.is_hex_encoded">is_hex_encoded</a></code></li>
 <li><code><a title="RTFDE.text_extraction.is_hexarray" href="#RTFDE.text_extraction.is_hexarray">is_hexarray</a></code></li>
+<li><code><a title="RTFDE.text_extraction.is_surrogate_16bit" href="#RTFDE.text_extraction.is_surrogate_16bit">is_surrogate_16bit</a></code></li>
 <li><code><a title="RTFDE.text_extraction.is_surrogate_high_char" href="#RTFDE.text_extraction.is_surrogate_high_char">is_surrogate_high_char</a></code></li>
 <li><code><a title="RTFDE.text_extraction.is_surrogate_low_char" href="#RTFDE.text_extraction.is_surrogate_low_char">is_surrogate_low_char</a></code></li>
 <li><code><a title="RTFDE.text_extraction.is_surrogate_pair" href="#RTFDE.text_extraction.is_surrogate_pair">is_surrogate_pair</a></code></li>
