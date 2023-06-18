@@ -333,22 +333,35 @@ class TestTextDecoding(unittest.TestCase):
         # print(repr(output_text))
         # print(repr(rtf_obj.content))
 
-    def test_use_small_template(self):
-        raw_rtf = self.get_small_template()
+    def text_hexencode_as_replacement(self):
+        """test that unicode text with hex encoded replacement works."""
+        rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "unicode_HH_replacement.rtf")
+        rtf_obj = self.deencapsulate(rtf_path)
+        correct_repr = b'&#128522;'
+        self.assertEqual(correct_repr, rtf_obj.content)
+        rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "unicode_HH_replacement_01.rtf")
+        rtf_obj = self.deencapsulate(rtf_path)
+        correct_repr = b'&#128522; \xf0\x9f\x93\x9e'
+        self.assertEqual(correct_repr, rtf_obj.content)
+        print(rtf_obj.content)
 
-        # rtf_obj = deencapsulate_string(raw_rtf)
+#     def test_use_small_template(self):
+#         raw_rtf = self.get_small_template()
 
-        # REPLACE_ME
-        small_template = b"""{\\rtf1\\ansi\\ansicpg1252\\deff0\\fromhtml1\\nouicompat\\deflang1033{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}}
-{\\*\\generator Riched20 10.0.16299}\\viewkind4\\uc1
-\\pard\\sa200\\sl276\\slmult1\\f0\\fs22\\lang9
+#         # rtf_obj = deencapsulate_string(raw_rtf)
 
-REPLACE_ME
+#         # REPLACE_ME
+#         small_template = b"""{\\rtf1\\ansi\\ansicpg1252\\deff0\\fromhtml1\\nouicompat\\deflang1033{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}}
+# {\\*\\generator Riched20 10.0.16299}\\viewkind4\\uc1
+# \\pard\\sa200\\sl276\\slmult1\\f0\\fs22\\lang9
 
-{}}"""
+# REPLACE_ME
 
-        # To Test text_extraction
-        # is_font_number :
+# {}}"""
+
+#         # To Test text_extraction
+#         # is_font_number :
+
     def test_font_table_variation(self):
         from RTFDE.text_extraction import get_font_table,parse_font_tree
         raw_rtf = self.get_small_template()

@@ -14,7 +14,8 @@
 # FITNESS FOR A PARTICULAR PURPOSE. See the included LICENSE file for details.
 
 
-from typing import Union, List
+from typing import Union, List, Tuple
+from typing import TypedDict
 #  from Python 3.9 typing.Generator is deprecated in favour of collections.abc.Generator
 from collections.abc import Generator
 
@@ -399,7 +400,6 @@ Returns:
           'start_pos': 56,
           'end_pos': 83,
           'bin_start_pos': 63}"
-
     """
     found_bytes = []
     byte_finder = rb'(\\bin)([0-9]+)[ ]?'
@@ -412,6 +412,7 @@ Returns:
                     "end_pos": bin_start_pos+param,
                     "bin_start_pos": bin_start_pos
                     }
+        # byte_obj : dict[str, Union[bytes, int, Tuple[bytes, bytes]]]
         found_bytes.append(byte_obj)
     new_raw = b''
     start_buffer = 0

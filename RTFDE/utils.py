@@ -129,6 +129,13 @@ def log_transformations(data):
     if logger.level == logging.DEBUG:
         logger.debug(data)
 
+def log_text_extraction(data):
+    """Log additional text decoding/encoding logging only if RTFDE.text_extraction set to debug.
+    """
+    logger = logging.getLogger("RTFDE.text_extraction")
+    if logger.level == logging.DEBUG:
+        logger.debug(data)
+
 def log_htmlrtf_stripping(data: Token):
     """Log HTMLRTF Stripping logging only if RTFDE.HTMLRTF_Stripping_logger set to debug.
 
@@ -233,3 +240,58 @@ Args:
             yield child.value
         else:
             yield child
+
+def make_token_replacement(ttype, value, example):
+    if isinstance(example, Token):
+        fake_tok = Token(ttype,
+                        value,
+                        start_pos=example.start_pos,
+                        end_pos=example.end_pos,
+                        line=example.line,
+                        end_line=example.end_line,
+                        column=example.column,
+                        end_column=example.end_column)
+    elif isinstance(example, Tree):
+        fake_tok = Token(ttype,
+                         value,
+                         start_pos=example.meta.start_pos,
+                         end_pos=example.meta.end_pos,
+                         line=example.meta.line,
+                         end_line=example.meta.end_line,
+                         column=example.meta.column,
+                         end_column=example.meta.end_column)
+
+    return fake_tok
+
+
+def embed():
+    import os
+    import readline
+    import rlcompleter
+    import code
+    import inspect
+    import traceback
+
+    history = os.path.join(os.path.expanduser('~'), '.python_history')
+    if os.path.isfile(history):
+        readline.read_history_file(history)
+
+    frame = inspect.currentframe().f_back
+    namespace = frame.f_locals.copy()
+    namespace.update(frame.f_globals)
+
+    readline.set_completer(rlcompleter.Completer(namespace).complete)
+    readline.parse_and_bind("tab: complete")
+
+    file = frame.f_code.co_filename
+    line = frame.f_lineno
+    function = frame.f_code.co_name
+
+    stack = ''.join(traceback.format_stack()[:-1])
+    print(stack)
+    banner = f" [ {os.path.basename(file)}:{line} in {function}() ]"
+    banner += "\n Entering interactive mode (Ctrl-D to exit) ..."
+    try:
+        code.interact(banner=banner, local=namespace)
+    finally:
+        readline.write_history_file(history)
