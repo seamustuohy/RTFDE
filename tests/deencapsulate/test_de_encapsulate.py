@@ -2,6 +2,7 @@
 """
 
 import unittest
+import secrets
 import quopri # Decode MIME quoted-printable data
 from os.path import join, abspath, isfile
 from os import walk
@@ -82,11 +83,101 @@ class TestPrivateMsgTestCases(unittest.TestCase):
                         f.feed(html_output.decode())
                         html_output_text = f.text
                         f = ExtractHTMLText()
-                        f.feed(rtf_obj.content)
+                        f.feed(rtf_obj.content.decode())
                         rtf_output_text = f.text
                         self.assertEqual(rtf_output_text, html_output_text,
                                          msg=f"\nFailed comparing personal test file: {html_filename}")
 
+
+class TestBinaryData(unittest.TestCase):
+    """Test binary data in RTF files."""
+
+    def test_encoded_bytes_stay_encoded_character(self):
+        """Test that any hexbytes that are not encoded into the RTF stay in the bytes returned without being modified."""
+        raw_rtf = self.get_small_template()
+        bin_data = secrets.token_bytes(1)
+        binary_string = b'This test is one string ' + bin_data + b'that is it.'
+        rep_rtf = raw_rtf.replace(b"REPLACE_ME", binary_string)
+        rtf_obj = self.deencapsulate_string(rep_rtf)
+        self.assertEqual(binary_string,rtf_obj.content)
+
+    def test_bin_data_captured(self):
+        """Tests that binary data is captured.
+        """
+        # Test one bin string
+        raw_rtf = self.get_small_template()
+        bin_data = secrets.token_bytes(20)
+        binary_string = b'This test is one string \\bin20' + bin_data + b'that is it.'
+        rep_rtf = raw_rtf.replace(b"REPLACE_ME", binary_string)
+        rtf_obj = self.deencapsulate_string(rep_rtf)
+
+        self.assertIsNotNone(rtf_obj.found_binary)
+        self.assertEqual(b'This test is one string that is it.',
+                         rtf_obj.content)
+        # Proove that the stripped data contains the bin_data at the right place.
+        # re_built_string = rtf_obj.content[:]
+        bin_dat = rtf_obj.found_binary[0]
+        self.assertEqual(bin_dat['start_pos'], 216)
+        self.assertEqual(bin_dat['end_pos'], 242)
+        self.assertEqual(bin_dat['bin_start_pos'], 222)
+        self.assertEqual(bin_dat['bytes'], bin_data)
+        self.assertEqual(bin_dat['ctrl_char'][0], b'\\bin')
+        self.assertEqual(bin_dat['ctrl_char'][1], b'20')
+
+        # Make sure spaces after the control char are handled correctly
+        binary_string = b'This test is one string \\bin20 ' + bin_data + b'that is it.'
+        rep_rtf = raw_rtf.replace(b"REPLACE_ME", binary_string)
+        rtf_obj = self.deencapsulate_string(rep_rtf)
+        bin_dat = rtf_obj.found_binary[0]
+        self.assertEqual(bin_dat['bytes'], bin_data)
+        self.assertEqual(bin_dat['ctrl_char'][1], b'20')
+        self.assertEqual(bin_dat['start_pos'], 216)
+        self.assertEqual(bin_dat['end_pos'], 243)
+        self.assertEqual(bin_dat['bin_start_pos'], 223)
+
+        # Test multiple bin string in an rtf file
+        bin_addition = b' and more \\bin20 ' + bin_data
+        bin_addition = bin_addition*5
+        binary_string = b'This test is one string ' + bin_addition + b'that is it.'
+        rep_rtf = raw_rtf.replace(b"REPLACE_ME", binary_string)
+        rtf_obj = self.deencapsulate_string(rep_rtf)
+        self.assertEqual(len(rtf_obj.found_binary), 5)
+
+        # Test bin with negative params are ignored as they are invalid (i.e. \\bin-1234)
+        binary_string = b'This test is one string \\bin-20 ' + b'that is it.'
+        rep_rtf = raw_rtf.replace(b"REPLACE_ME", binary_string)
+        rtf_obj = self.deencapsulate_string(rep_rtf)
+        with self.assertRaises(AttributeError):
+            _test = rtf_obj.found_binary
+
+        # Test bin with no params are ignored as they are invalid
+        binary_string = b'This test is one string \\bin ' + b'that is it.'
+        rep_rtf = raw_rtf.replace(b"REPLACE_ME", binary_string)
+        rtf_obj = self.deencapsulate_string(rep_rtf)
+        with self.assertRaises(AttributeError):
+            _test = rtf_obj.found_binary
+
+        # Test bin with 0 length params only include 0 length bytes (i.e. \\bin0 AND \\bin00000000 )
+        binary_string = b'This test is one string \\bin0 \\bin0000000' + b'that is it.'
+        rep_rtf = raw_rtf.replace(b"REPLACE_ME", binary_string)
+        rtf_obj = self.deencapsulate_string(rep_rtf)
+        self.assertEqual(len(rtf_obj.found_binary), 2)
+        for byte_obj in rtf_obj.found_binary:
+            self.assertEqual(byte_obj['bytes'], b'')
+
+
+    def deencapsulate_string(self, raw_rtf):
+        rtf_obj = DeEncapsulator(raw_rtf)
+        rtf_obj.deencapsulate()
+        return rtf_obj
+
+    def get_small_template(self):
+        template_path =  join(DATA_BASE_DIR,
+                              "rtf_parsing",
+                              "small_template.rtf")
+        with open(template_path, 'rb') as fp:
+            raw_rtf = fp.read()
+        return raw_rtf
 
 class TestTextCleanDeEncapsulate(unittest.TestCase):
     """ Test minimal deviation of original and de-encapsulated plain text content.
@@ -96,8 +187,8 @@ class TestTextCleanDeEncapsulate(unittest.TestCase):
     def test_japanese_encoded_text(self):
         """ """
         rtf_path = join(DATA_BASE_DIR, "plain_text", "japanese_iso_2022.rtf")
-        original_body = "すみません。\n"
-        with open(rtf_path, 'r') as fp:
+        original_body = "すみません。\n".encode()
+        with open(rtf_path, 'rb') as fp:
             raw_rtf = fp.read()
             rtf_obj = DeEncapsulator(raw_rtf)
             rtf_obj.deencapsulate()
@@ -110,10 +201,10 @@ class TestTextCleanDeEncapsulate(unittest.TestCase):
         This test checks that it is STILL NOT IMPLEMENTED. So, if you fix it this test will expose that and we will need to change the test."""
         quote_printable_rtf_path = join(DATA_BASE_DIR, "plain_text", "quoted_printable_01.rtf")
         quote_printable_txt_path = join(DATA_BASE_DIR, "plain_text", "quoted_printable_01.txt")
-        with open(quote_printable_txt_path, 'r') as fp:
+        with open(quote_printable_txt_path, 'rb') as fp:
             raw_text = fp.read()
             original_decoded_text = raw_text
-        with open(quote_printable_rtf_path, 'r') as fp:
+        with open(quote_printable_rtf_path, 'rb') as fp:
             raw_rtf = fp.read()
             rtf_obj = DeEncapsulator(raw_rtf)
             rtf_obj.deencapsulate()
@@ -125,16 +216,16 @@ class TestTextCleanDeEncapsulate(unittest.TestCase):
         quote_printable_rtf_path = join(DATA_BASE_DIR, "plain_text", "quoted_printable_01.rtf")
         quote_printable_txt_path = join(DATA_BASE_DIR, "plain_text", "quoted_printable_01.txt")
         charset = "cp1251"
-        with open(quote_printable_txt_path, 'r') as fp:
+        with open(quote_printable_txt_path, 'rb') as fp:
             raw_text = fp.read()
             original_decoded_text = quopri.decodestring(raw_text)
             original_decoded_text = original_decoded_text.decode(charset)
-        with open(quote_printable_rtf_path, 'r') as fp:
+        with open(quote_printable_rtf_path, 'rb') as fp:
             raw_rtf = fp.read()
             rtf_obj = DeEncapsulator(raw_rtf)
             rtf_obj.deencapsulate()
             output_text = rtf_obj.text
-        self.assertEqual(original_decoded_text, output_text)
+        self.assertEqual(original_decoded_text, output_text.decode())
 
 
 
@@ -144,8 +235,8 @@ class TestTextDecoding(unittest.TestCase):
     def test_theta(self):
         """ """
         rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "theta.rtf")
-        original_body = 'ф\n'
-        with open(rtf_path, 'r') as fp:
+        original_body = '  ф\n'.encode()
+        with open(rtf_path, 'rb') as fp:
             raw_rtf = fp.read()
             rtf_obj = DeEncapsulator(raw_rtf)
             rtf_obj.deencapsulate()
@@ -157,8 +248,8 @@ class TestTextDecoding(unittest.TestCase):
     def test_translated_by(self):
         """ """
         rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "translated_by.rtf")
-        original_body = 'ترجمة: سمير المجذوب\n'
-        with open(rtf_path, 'r') as fp:
+        original_body = 'ترجمة: سمير المجذوب\n'.encode()
+        with open(rtf_path, 'rb') as fp:
             raw_rtf = fp.read()
             rtf_obj = DeEncapsulator(raw_rtf)
             rtf_obj.deencapsulate()
@@ -170,94 +261,130 @@ class TestTextDecoding(unittest.TestCase):
 
     def test_unicode_decoding(self):
         """ """
-        print("\n")
+        # print("\n")
         rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "surrogates.rtf")
         rtf_obj = self.deencapsulate(rtf_path)
-        self.assertTrue("😊" in rtf_obj.content)
+        self.assertTrue("😊".encode() in rtf_obj.content)
         rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "surrogate_pairs.rtf")
         rtf_obj = self.deencapsulate(rtf_path)
-        correct_repr = "'Ǣ?\\nǢ\\n😊\\n😊??\\n😊\\n'"
-        self.assertEqual(correct_repr, repr(rtf_obj.content))
+        correct_repr = 'Ǣ?\nǢ\n😊\n😊??\n😊\n'.encode()
+        # print(correct_repr)
+        # print(rtf_obj.content)
+        self.assertEqual(correct_repr, rtf_obj.content)
 
         # Test that non unicode chars do not decode
         from RTFDE.text_extraction import unicode_escape_to_chr
-        surh = "\\u-10179"
-        surl = "\\u-8694"
+        surh = b"\\u-10179"
+        surl = b"\\u-8694"
         bad_encodings = [
-            "0x000000A9",
-            "0x00A9",
-            "0xC2 0xA9",
-            "&copy;",
-            "&#xA9;",
-            "&#169;"
+            b"0x000000A9",
+            b"0x00A9",
+            b"0xC2 0xA9",
+            b"&copy;",
+            b"&#xA9;",
+            b"&#169;"
         ]
         for bad in bad_encodings:
             with self.assertRaises(ValueError):
                 unicode_escape_to_chr(bad)
-        surrogate_encodings = ["\\u-10179", "\\u-8694"]
+        surrogate_encodings = [b"\\u-10179", b"\\u-8694"]
         for sur in surrogate_encodings:
             self.assertIsInstance(unicode_escape_to_chr(sur), str)
 
+
+    def test_surrogate_in_htmlrtf(self):
+        """Don't show surrogate text within htmlrtf block."""
+        rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "surrogate_pairs_02.rtf")
+        rtf_obj = self.deencapsulate(rtf_path)
+        correct_repr = b'&#128522;'
+        self.assertEqual(correct_repr, rtf_obj.content)
+        print(rtf_obj.content)
+
+    def test_surrogate_without_16bitsigned(self):
+        """Test surrogate which doesn't use a 16 signed integer."""
+        rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "surrogate_pairs_03.rtf")
+        rtf_obj = self.deencapsulate(rtf_path)
+        print(rtf_obj.content)
+        correct_repr =  b'&#128522;'
+        self.assertEqual(correct_repr, rtf_obj.content)
+        rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "surrogate_pairs_04.rtf")
+        rtf_obj = self.deencapsulate(rtf_path)
+        correct_repr = b'&#128522; \xf0\x9f\x93\x9e'
+        self.assertEqual(correct_repr, rtf_obj.content)
+
     def test_hexencoded(self):
-        original_body = '【 This is a test 】'
+        original_body = '【 This is a test 】'.encode()
         raw_rtf = self.get_small_template()
         # print(raw_rtf)
         # Add fontdef
-        font_def = """{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fswiss\\fcharset128 "PMingLiU";}{\\f2\\fnil\\fcharset1 Arial;}}"""
-        base = """{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}}"""
+        font_def = b"""{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fswiss\\fcharset128 "PMingLiU";}{\\f2\\fnil\\fcharset1 Arial;}}"""
+        base = b"""{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}}"""
         new_rtf = raw_rtf.replace(base, font_def)
         # print(new_rtf)
         # Add hec encoded item
-        hex_encoded_text = """{\\lang1028 \\f1 \\'81\\'79} This is a test {\\lang1028 \\f1 \\'81\\'7a}"""
-        rep_rtf = new_rtf.replace("REPLACE_ME", hex_encoded_text)
+        hex_encoded_text = b"""{\\lang1028 \\f1 \\'81\\'79} This is a test {\\lang1028 \\f1 \\'81\\'7a}"""
+        rep_rtf = new_rtf.replace(b"REPLACE_ME", hex_encoded_text)
         # print(rep_rtf)
         rtf_obj = self.deencapsulate_string(rep_rtf)
-        rtf_obj.deencapsulate()
+        # rtf_obj.deencapsulate()
         output_text = rtf_obj.content
         # 'not a valid ANSI representation'
         self.assertEqual(output_text, original_body)
-        print(repr(output_text))
-        print(repr(rtf_obj.content))
+        # print(repr(output_text))
+        # print(repr(rtf_obj.content))
 
-    def test_use_small_template(self):
-        raw_rtf = self.get_small_template()
+    def text_hexencode_as_replacement(self):
+        """test that unicode text with hex encoded replacement works."""
+        rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "unicode_HH_replacement.rtf")
+        rtf_obj = self.deencapsulate(rtf_path)
+        correct_repr = b'&#128522;'
+        self.assertEqual(correct_repr, rtf_obj.content)
+        rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "unicode_HH_replacement_01.rtf")
+        rtf_obj = self.deencapsulate(rtf_path)
+        correct_repr = b'&#128522; \xf0\x9f\x93\x9e'
+        self.assertEqual(correct_repr, rtf_obj.content)
+        print(rtf_obj.content)
 
-        # rtf_obj = deencapsulate_string(raw_rtf)
+#     def test_use_small_template(self):
+#         raw_rtf = self.get_small_template()
 
-        # REPLACE_ME
-        small_template = """{\\rtf1\\ansi\\ansicpg1252\\deff0\\fromhtml1\\nouicompat\\deflang1033{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}}
-{\\*\\generator Riched20 10.0.16299}\\viewkind4\\uc1
-\\pard\\sa200\\sl276\\slmult1\\f0\\fs22\\lang9
+#         # rtf_obj = deencapsulate_string(raw_rtf)
 
-REPLACE_ME
+#         # REPLACE_ME
+#         small_template = b"""{\\rtf1\\ansi\\ansicpg1252\\deff0\\fromhtml1\\nouicompat\\deflang1033{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}}
+# {\\*\\generator Riched20 10.0.16299}\\viewkind4\\uc1
+# \\pard\\sa200\\sl276\\slmult1\\f0\\fs22\\lang9
 
-{}}"""
+# REPLACE_ME
 
-        # To Test text_extraction
-        # is_font_number :
+# {}}"""
+
+#         # To Test text_extraction
+#         # is_font_number :
+
     def test_font_table_variation(self):
         from RTFDE.text_extraction import get_font_table,parse_font_tree
         raw_rtf = self.get_small_template()
-        base = """{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}}"""
+        base = b"""{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}}"""
 
         # Test \\cpg is consistant with fcharset
-        base_w_cpg = """{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}{\\f2\\cpg1253\\fcharset161 Arial;}}"""
+        base_w_cpg = b"""{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}{\\f2\\cpg1253\\fcharset161 Arial;}}"""
         new_rtf = raw_rtf.replace(base, base_w_cpg)
         rtf_obj = self.full_tree_from_string(new_rtf)
         raw_font_table = get_font_table(rtf_obj.full_tree.children[1])
         font_table = parse_font_tree(raw_font_table)
         # print(repr(font_table))
         # print(type(font_table))
-        self.assertEqual(font_table['\\f2'].codepage, 1253)
+        self.assertEqual(font_table[b'\\f2'].codepage, 1253)
 
         # Test \\fcharset takes precedence over \\cpg
-        base_w_cpg = """{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}{\\f2\\cpg1253\\fcharset204 Arial;}}"""
+        base_w_cpg = b"""{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}{\\f2\\cpg1253\\fcharset204 Arial;}}"""
         new_rtf = raw_rtf.replace(base, base_w_cpg)
         rtf_obj = self.full_tree_from_string(new_rtf)
         raw_font_table = get_font_table(rtf_obj.full_tree.children[1])
         font_table = parse_font_tree(raw_font_table)
         # \\fcharset204 == codepage 1251
-        self.assertEqual(font_table['\\f2'].codepage, 1251)
+        self.assertEqual(font_table[b'\\f2'].codepage, 1251)
 
     def test_text_decoder(self):
         from RTFDE.text_extraction import TextDecoder
@@ -268,16 +395,16 @@ REPLACE_ME
         raw_rtf = self.get_small_template()
 
         # set_font_info with missing deff0
-        new_rtf = raw_rtf.replace('\\deff0', '')
+        new_rtf = raw_rtf.replace(b'\\deff0', b'')
         rtf_obj = self.deencapsulate_string(new_rtf)
         # deff0 is not required
         self.assertIsNone(get_default_font(rtf_obj.full_tree))
 
         # multiple deff0 is fine. Only use the first found
-        new_rtf = raw_rtf.replace('\\deff0', '\\deff0\\deff1\\deff2')
+        new_rtf = raw_rtf.replace(b'\\deff0', b'\\deff0\\deff1\\deff2')
         rtf_obj = self.deencapsulate_string(new_rtf)
         self.assertEqual(get_default_font(rtf_obj.full_tree),
-                         '\\f0')
+                         b'\\f0')
 
 
 
@@ -302,7 +429,7 @@ REPLACE_ME
         template_path =  join(DATA_BASE_DIR,
                               "rtf_parsing",
                               "small_template.rtf")
-        with open(template_path, 'r') as fp:
+        with open(template_path, 'rb') as fp:
             raw_rtf = fp.read()
         return raw_rtf
 
@@ -318,7 +445,7 @@ REPLACE_ME
         return rtf_obj
 
     def deencapsulate(self, rtf_path):
-        with open(rtf_path, 'r') as fp:
+        with open(rtf_path, 'rb') as fp:
             raw_rtf = fp.read()
             rtf_obj = DeEncapsulator(raw_rtf)
             rtf_obj.deencapsulate()

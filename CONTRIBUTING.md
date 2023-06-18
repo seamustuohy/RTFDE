@@ -98,6 +98,19 @@ log = logging.getLogger("RTFDE.HTMLRTF_Stripping_logger")
 log.setLevel(logging.DEBUG)
 ```
 
+### HTMLRTF Stripping Logging
+
+If you are having difficulty tracking down some sort of text-transformation/decoding issue then you can use the text_extraction logging to show you FAR more information about what is occuring during text extraction. WARNING: This log is a flood of information!
+
+Here is how you enable this log.
+```
+log = logging.getLogger("RTFDE.text_extraction")
+log.setLevel(logging.DEBUG)
+```
+
+
+
+
 ### Grammar Debugging
 
 RTFDE

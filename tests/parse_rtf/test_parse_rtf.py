@@ -36,28 +36,44 @@ Ensure that:
                                           "rtf_parsing",
                                           "from_header_template.rtf")
         # Has 20 control words
-        ctrl_words = ("\\deff0"*16) + "\\fromhtml1"
+        ctrl_words = (b"\\deff0"*16) + b"\\fromhtml1"
         rtf = self.replace_text_in_template(template_path, ctrl_words)
         output = self.run_parsing(rtf)
         ctrl_wds = output.get_header_control_words_before_first_group()
         ctrl_wds =[i.value.strip() for i in ctrl_wds]
-        correct_ctrl = ['\\rtf1', '\\ansi', '\\ansicpg1252', '\\deff0', '\\deff0', '\\deff0',
-                        '\\deff0', '\\deff0', '\\deff0', '\\deff0', '\\deff0', '\\deff0',
-                        '\\deff0', '\\deff0', '\\deff0', '\\deff0', '\\deff0', '\\deff0',
-                        '\\deff0', '\\fromhtml1']
+        correct_ctrl = [b'\\rtf1',
+                        b'\\ansi',
+                        b'\\ansicpg1252',
+                        b'\\deff0',
+                        b'\\deff0',
+                        b'\\deff0',
+                        b'\\deff0',
+                        b'\\deff0',
+                        b'\\deff0',
+                        b'\\deff0',
+                        b'\\deff0',
+                        b'\\deff0',
+                        b'\\deff0',
+                        b'\\deff0',
+                        b'\\deff0',
+                        b'\\deff0',
+                        b'\\deff0',
+                        b'\\deff0',
+                        b'\\deff0',
+                        b'\\fromhtml1']
         self.assertEqual(ctrl_wds, correct_ctrl)
 
         # group comes before 20 control words
-        ctrl_words = ("\\deff0"*5) + "\\fromhtml1 \\deff0" + '{\colortbl\red0\green0\blue0;\red5\green99\blue193;}'
+        ctrl_words = (b"\\deff0"*5) + b"\\fromhtml1 \\deff0" + b'{\colortbl\red0\green0\blue0;\red5\green99\blue193;}'
         rtf = self.replace_text_in_template(template_path, ctrl_words)
         output = self.run_parsing(rtf)
         ctrl_wds = output.get_header_control_words_before_first_group()
         ctrl_wds = [i.value.strip() for i in ctrl_wds]
-        correct_ctrl = ['\\rtf1', '\\ansi', '\\ansicpg1252', '\\deff0', '\\deff0', '\\deff0', '\\deff0', '\\deff0', '\\fromhtml1', '\\deff0']
+        correct_ctrl = [b'\\rtf1', b'\\ansi', b'\\ansicpg1252', b'\\deff0', b'\\deff0', b'\\deff0', b'\\deff0', b'\\deff0', b'\\fromhtml1', b'\\deff0']
         self.assertEqual(ctrl_wds, correct_ctrl)
 
         # fromhtml header parsing not affected by this function
-        ctrl_words = '{\\colortbl\\red0\\green0\\blue0;\\red5\\green99\\blue193;}' + "\\fromhtml1 \\deff0"
+        ctrl_words = b'{\\colortbl\\red0\\green0\\blue0;\\red5\\green99\\blue193;}' + b"\\fromhtml1 \\deff0"
         rtf = self.replace_text_in_template(template_path, ctrl_words)
         # The fromhtml header needs to be in the first 10 tokens. Tokens includes groups in this case. So this should succeed.
         self.check_deencapsulate_validity(rtf,
@@ -70,10 +86,10 @@ Ensure that:
                               "from_header_template.rtf")
 
         # bad
-        bad_charsets = ["\\ansicpg1234", "\\ansicpg"]
+        bad_charsets = [b"\\ansicpg1234", b"\\ansicpg"]
         for badchar in bad_charsets:
-            rtf = self.replace_text_in_template(template_path, "\\fromhtml1")
-            rtf = self.replace_text_in_template(None, badchar, rep_str="\\ansicpg1252", string=rtf)
+            rtf = self.replace_text_in_template(template_path, b"\\fromhtml1")
+            rtf = self.replace_text_in_template(None, badchar, rep_str=b"\\ansicpg1252", string=rtf)
             self.check_deencapsulate_validity(rtf,
                                               expect_error=MalformedRtf,
                                               name="bad codepage keyword: {0}".format(badchar))
@@ -91,8 +107,8 @@ Ensure that:
             self.assertNotEqual(codec, 'utf8')
 
         # Codepage is optional. Therefore a missing codepage number is fine.
-        rtf = self.replace_text_in_template(template_path, "\\fromhtml1")
-        rtf = self.replace_text_in_template(None, "", rep_str="\\ansicpg1252", string=rtf)
+        rtf = self.replace_text_in_template(template_path, b"\\fromhtml1")
+        rtf = self.replace_text_in_template(None, b"", rep_str=b"\\ansicpg1252", string=rtf)
         self.check_deencapsulate_validity(rtf,
                                           expect_error=None,
                                           name="Ansi codepage num is optional")
@@ -103,54 +119,54 @@ Ensure that:
                               "from_header_template.rtf")
 
         # Bad charset
-        bad_charsets = ["\\ANSI", "ansi", "\\PC", "\\osx"]
+        bad_charsets = [b"\\ANSI", b"ansi", b"\\PC", b"\\osx"]
         for badchar in bad_charsets:
-            rtf = self.replace_text_in_template(template_path, "\\fromhtml1")
-            rtf = self.replace_text_in_template(None, badchar, rep_str="\\ansi", string=rtf)
+            rtf = self.replace_text_in_template(template_path, b"\\fromhtml1")
+            rtf = self.replace_text_in_template(None, badchar, rep_str=b"\\ansi", string=rtf)
             self.check_deencapsulate_validity(rtf,
                                               expect_error=MalformedRtf,
                                               name="bad charset keyword: {0}".format(badchar))
 
         # Good charset
         # included \\ after the charset keyword to ensure we don't capture the \\ansicpg
-        good_charsets = ["\\ansi\\", "\\mac\\", "\\pc\\", "\\pca\\"]
+        good_charsets = [b"\\ansi\\", b"\\mac\\", b"\\pc\\", b"\\pca\\"]
         for goodchar in good_charsets:
-            rtf = self.replace_text_in_template(template_path, "\\fromhtml1")
-            rtf = self.replace_text_in_template(None, goodchar, rep_str="\\ansi\\", string=rtf)
+            rtf = self.replace_text_in_template(template_path, b"\\fromhtml1")
+            rtf = self.replace_text_in_template(None, goodchar, rep_str=b"\\ansi\\", string=rtf)
             self.check_deencapsulate_validity(rtf,
                                               expect_error=None,
                                               name="Good charset keyword: {0}".format(goodchar))
 
         # group before charset
-        new_front = '{\\rtf1{\\colortbl\\red0\\green0\\blue0;\\red5\\green99\\blue193;}'
-        rtf = self.replace_text_in_template(template_path, "\\fromhtml1")
+        new_front = b'{\\rtf1{\\colortbl\\red0\\green0\\blue0;\\red5\\green99\\blue193;}'
+        rtf = self.replace_text_in_template(template_path, b"\\fromhtml1")
         rtf = new_front + rtf[6:] # Replaces `{\\rtf1`
         self.check_deencapsulate_validity(rtf,
                                           expect_error=MalformedRtf,
                                           name="no groups before charset")
 
         # Missing
-        rtf = self.replace_text_in_template(template_path, "\\fromhtml1")
-        rtf = self.replace_text_in_template(None, "\\", rep_str="\\ansi\\", string=rtf)
+        rtf = self.replace_text_in_template(template_path, b"\\fromhtml1")
+        rtf = self.replace_text_in_template(None, b"\\", rep_str=b"\\ansi\\", string=rtf)
         self.check_deencapsulate_validity(rtf,
                                           expect_error=MalformedRtf,
                                           name="missing charset")
         # Test missing using default fallback to ansi
         output = self.run_parsing(rtf)
         charset = output.validate_charset(fallback_to_default=True)
-        self.assertEqual("\\ansi", charset)
+        self.assertEqual(b"\\ansi", charset)
 
     def test_get_python_codec(self):
         """Test getting correct python codec."""
         template_path =  join(DATA_BASE_DIR,
                               "rtf_parsing",
                               "from_header_template.rtf")
-        base = self.replace_text_in_template(template_path, "\\fromhtml1")
+        base = self.replace_text_in_template(template_path, b"\\fromhtml1")
         # Big-5
         big5string = b'\xb3o\xacO\xa4@\xad\xd3\xa4\xe5\xa5\xbb\xa6r\xb2\xc5\xa6\xea\xa1C'
         rtf = self.replace_text_in_template(None,
-                                       replacement="\\ansicpg10002",
-                                       rep_str="\\ansicpg1252",
+                                       replacement=b"\\ansicpg10002",
+                                       rep_str=b"\\ansicpg1252",
                                        string=base)
 
         output = self.run_parsing(rtf)
@@ -166,8 +182,8 @@ Ensure that:
         # Hebrew
         hebrew = b'\xe6\xe4\xe5 \xee\xe7\xf8\xe5\xe6\xfa \xe8\xf7\xf1\xe8.'
         rtf = self.replace_text_in_template(None,
-                                       replacement="\\ansicpg10005",
-                                       rep_str="\\ansicpg1252",
+                                       replacement=b"\\ansicpg10005",
+                                       rep_str=b"\\ansicpg1252",
                                        string=base)
         output = self.run_parsing(rtf)
         ansicpg_header = output.get_ansicpg_header()
@@ -182,7 +198,7 @@ Ensure that:
         from_html =  join(DATA_BASE_DIR,
                           "rtf_parsing",
                           "from_header_template.rtf")
-        rtf = self.replace_text_in_template(from_html, "\\fromhtml1")
+        rtf = self.replace_text_in_template(from_html, b"\\fromhtml1")
         self.check_deencapsulate_validity(rtf,
                                           expect_error=None,
                                           name="working fromheaderhtml")
@@ -192,7 +208,7 @@ Ensure that:
         from_text =  join(DATA_BASE_DIR,
                           "rtf_parsing",
                           "from_header_template.rtf")
-        rtf = self.replace_text_in_template(from_text, "\\fromtext")
+        rtf = self.replace_text_in_template(from_text, b"\\fromtext")
         self.check_deencapsulate_validity(rtf,
                                           expect_error=None,
                                           name="working fromheader text")
@@ -202,7 +218,7 @@ Ensure that:
         missing_from =  join(DATA_BASE_DIR,
                              "rtf_parsing",
                              "from_header_template.rtf")
-        rtf = self.replace_text_in_template(missing_from, "")
+        rtf = self.replace_text_in_template(missing_from, b"")
         self.check_deencapsulate_validity(rtf,
                                           expect_error=NotEncapsulatedRtf,
                                           name="missing fromheader text")
@@ -210,9 +226,9 @@ Ensure that:
         missing_but_one_in_body =  join(DATA_BASE_DIR,
                                      "rtf_parsing",
                                      "from_header_template.rtf")
-        rtf = self.replace_text_in_template(missing_but_one_in_body, "")
-        rtf = self.replace_text_in_template(None, "\\fromtext",
-                                       rep_str="INSERT_BODY_TEXT_HERE",
+        rtf = self.replace_text_in_template(missing_but_one_in_body, b"")
+        rtf = self.replace_text_in_template(None, b"\\fromtext",
+                                       rep_str=b"INSERT_BODY_TEXT_HERE",
                                        string=rtf)
         self.check_deencapsulate_validity(rtf,
                                           expect_error=NotEncapsulatedRtf,
@@ -223,7 +239,7 @@ Ensure that:
         multiple_from_html =  join(DATA_BASE_DIR,
                                    "rtf_parsing",
                                    "from_header_template.rtf")
-        rtf = self.replace_text_in_template(multiple_from_html, "\\fromhtml1\\fromhtml1")
+        rtf = self.replace_text_in_template(multiple_from_html, b"\\fromhtml1\\fromhtml1")
         self.check_deencapsulate_validity(rtf,
                                           expect_error=MalformedEncapsulatedRtf,
                                           name="multiple FROM headers means malformed")
@@ -231,7 +247,7 @@ Ensure that:
         multiple_from_html_first =  join(DATA_BASE_DIR,
                                          "rtf_parsing",
                                          "from_header_template.rtf")
-        rtf = self.replace_text_in_template(multiple_from_html_first, "\\fromhtml1\\fromtext")
+        rtf = self.replace_text_in_template(multiple_from_html_first, b"\\fromhtml1\\fromtext")
         self.check_deencapsulate_validity(rtf,
                                           expect_error=MalformedEncapsulatedRtf,
                                           name="multiple FROM headers means malformed")
@@ -239,7 +255,7 @@ Ensure that:
         multiple_from_txt_first =  join(DATA_BASE_DIR,
                                         "rtf_parsing",
                                         "from_header_template.rtf")
-        rtf = self.replace_text_in_template(multiple_from_txt_first, "\\fromtext\\fromhtml1")
+        rtf = self.replace_text_in_template(multiple_from_txt_first, b"\\fromtext\\fromhtml1")
         self.check_deencapsulate_validity(rtf,
                                           expect_error=MalformedEncapsulatedRtf,
                                           name="multiple FROM headers means malformed")
@@ -249,9 +265,10 @@ Ensure that:
         missing_from =  join(DATA_BASE_DIR,
                              "rtf_parsing",
                              "from_header_template.rtf")
-        rtf = self.replace_text_in_template(missing_from, "")
+        rtf = self.replace_text_in_template(missing_from, b"")
         # Append a new curly and the control word to the start of the rtf file
-        rtf = "{\\fromhtml1" + rtf[1:]
+        # TODO: Fix this array use on a bytes object
+        rtf = b"{\\fromhtml1" + rtf[1:]
         self.check_deencapsulate_validity(rtf,
                                           expect_error=MalformedRtf,
                                           name="from header before magic")
@@ -261,22 +278,25 @@ Ensure that:
         missing_from =  join(DATA_BASE_DIR,
                              "rtf_parsing",
                              "from_header_template.rtf")
-        rtf = self.replace_text_in_template(missing_from, "\\fromhtml1")
+        rtf = self.replace_text_in_template(missing_from, b"\\fromhtml1")
         # Append a new curly and broken rtf to the start of the rtf file
-        rtf_no_one = "{\\rtf" + rtf[6:] # Removes `{\\rtf1`
+        # TODO: Fix this array use on a bytes object
+        rtf_no_one = b"{\\rtf" + rtf[6:] # Removes `{\\rtf1`
         self.check_deencapsulate_validity(rtf_no_one,
                                           expect_error=MalformedRtf,
                                           name="malformed file magic")
-
-        rtf_two = "{\\rtf2" + rtf[6:]
+        # TODO: Fix this array use on a bytes object
+        rtf_two = b"{\\rtf2" + rtf[6:]
         self.check_deencapsulate_validity(rtf_two,
                                           expect_error=MalformedRtf,
                                           name="malformed file magic")
-        RTF = "{\\RTF1" + rtf[6:]
+        # TODO: Fix this array use on a bytes object
+        RTF = b"{\\RTF1" + rtf[6:]
         self.check_deencapsulate_validity(RTF,
                                           expect_error=MalformedRtf,
                                           name="malformed file magic")
-        PiRTF = "{\\ARRRRRR-TEEE-FFF" + rtf[6:] # Because Pirates
+        # TODO: Fix this array use on a bytes object
+        PiRTF = b"{\\ARRRRRR-TEEE-FFF" + rtf[6:] # Because Pirates
         self.check_deencapsulate_validity(PiRTF,
                                           expect_error=MalformedRtf,
                                           name="Ahoy, matey! this here file magic be broken")
@@ -292,7 +312,7 @@ Ensure that:
                               "rtf_parsing",
                               "from_header_template.rtf")
 
-        early_font_table = '{\\fonttbl\n{\\f0\\fswiss Arial;}\n{\\f1\\fmodern Courier New;}\n{\\f2\\fnil\\fcharset2 Symbol;}\n{\\f3\\fmodern\\fcharset0 Courier New;}}' + "\\fromhtml1 \\deff0"
+        early_font_table = b'{\\fonttbl\n{\\f0\\fswiss Arial;}\n{\\f1\\fmodern Courier New;}\n{\\f2\\fnil\\fcharset2 Symbol;}\n{\\f3\\fmodern\\fcharset0 Courier New;}}' + b"\\fromhtml1 \\deff0"
         rtf = self.replace_text_in_template(template_path, early_font_table)
         self.check_deencapsulate_validity(rtf,
                                           expect_error=MalformedEncapsulatedRtf,
@@ -304,12 +324,12 @@ Ensure that:
                               "rtf_parsing",
                               "font_table_template.rtf")
 
-        no_font_table = ""
+        no_font_table = b""
         rtf = self.replace_text_in_template(template_path,
                                             no_font_table,
-                                            rep_str="REPLACE_FONT_TABLE_HERE")
-        NA = "REPLACE_FONT_TABLE_HERE"
-        default = """{\\fonttbl
+                                            rep_str=b"REPLACE_FONT_TABLE_HERE")
+        NA = b"REPLACE_FONT_TABLE_HERE"
+        default = b"""{\\fonttbl
 {\\f0\\fswiss Arial;}
 {\\f1\\fmodern Courier New;}
 {\\f2\\fnil\\fcharset2 Symbol;}
@@ -327,23 +347,23 @@ Ensure that:
         template_data =  join(DATA_BASE_DIR,
                           "rtf_parsing",
                           "from_header_template.rtf")
-        rtf = self.replace_text_in_template(template_data, "\\fromhtml1")
+        rtf = self.replace_text_in_template(template_data, b"\\fromhtml1")
         output = DeEncapsulator(rtf)
         output.deencapsulate()
         self.assertEqual('html', output.get_content_type())
 
-        rtf = self.replace_text_in_template(template_data, "\\fromtext")
+        rtf = self.replace_text_in_template(template_data, b"\\fromtext")
         output = DeEncapsulator(rtf)
         output.deencapsulate()
         self.assertEqual('text', output.get_content_type())
 
          # Try with them back to back. First should win.
-        rtf = self.replace_text_in_template(template_data, "\\fromtext\\fromhtml1")
+        rtf = self.replace_text_in_template(template_data, b"\\fromtext\\fromhtml1")
         self.check_deencapsulate_validity(rtf,
                                           expect_error=MalformedEncapsulatedRtf,
                                           name="multiple FROM headers means malformed")
 
-        rtf = self.replace_text_in_template(template_data, "\\fromhtml1\\fromtext")
+        rtf = self.replace_text_in_template(template_data, b"\\fromhtml1\\fromtext")
         self.check_deencapsulate_validity(rtf,
                                           expect_error=MalformedEncapsulatedRtf,
                                           name="multiple FROM headers means malformed")
@@ -355,7 +375,7 @@ Ensure that:
                      "rtf_parsing",
                      "control_chars.rtf")
         if path is not None:
-            with open(path, 'r') as fp:
+            with open(path, 'rb') as fp:
                 rtf = fp.read()
         self.check_deencapsulate_validity(rtf,
                                           expect_error=None,
@@ -368,7 +388,7 @@ Ensure that:
                      "rtf_parsing",
                      "five_spaces.rtf")
         if path is not None:
-            with open(path, 'r') as fp:
+            with open(path, 'rb') as fp:
                 rtf = fp.read()
         self.check_deencapsulate_validity(rtf,
                                           expect_error=None,
@@ -376,7 +396,7 @@ Ensure that:
         output = DeEncapsulator(rtf)
         output.deencapsulate()
         # self.maxDiff = None
-        self.assertEqual('INSERT_BODY_TEXT_HERE     ', output.text)
+        self.assertEqual(b'INSERT_BODY_TEXT_HERE     ', output.text)
 
     def test_parse_multiple_features(self):
         """Correctly parse spaces when in their own groups
@@ -389,10 +409,10 @@ Ensure that:
                         "encapsulated_example.html")
 
         if path is not None:
-            with open(path, 'r') as fp:
+            with open(path, 'rb') as fp:
                 rtf = fp.read()
         if htmlpath is not None:
-            with open(htmlpath, 'r') as fp:
+            with open(htmlpath, 'rb') as fp:
                 html = fp.read()
 
         self.check_deencapsulate_validity(rtf,
@@ -404,6 +424,10 @@ Ensure that:
         output.deencapsulate()
         # print("RUNNING DIFF")
         # print(repr(html))
+        # The CR+LF newlines should not match.
+        self.assertNotEqual(html, output.html)
+        # The LF newlines should be replaced.
+        html = html.replace(b'\r\n', b'\n')
         self.assertEqual(html, output.html)
 
 
@@ -431,10 +455,10 @@ Ensure that:
         return True
 
     def replace_text_in_template(self, path, replacement,
-                            rep_str="REPLACE_FROM_HEADER_HERE",
+                            rep_str=b"REPLACE_FROM_HEADER_HERE",
                             string=None):
         if path is not None:
-            with open(path, 'r') as fp:
+            with open(path, 'rb') as fp:
                 raw_rtf = fp.read()
         else:
             raw_rtf = string
