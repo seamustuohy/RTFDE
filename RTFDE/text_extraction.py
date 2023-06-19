@@ -706,7 +706,7 @@ class TextDecoder:
                                     end_line=item.end_line,
                                     column=item.column,
                                     end_column=item.end_column)
-                print(f"UNICODE TOKEN {item}: {decoded_tok}")
+                log_text_extraction(f"UNICODE TOKEN {item}: {decoded_tok}")
                 yield decoded_tok
             # Decode a hex array
             elif is_hexarray(item):
