@@ -19,6 +19,7 @@ from io import BufferedReader
 from lark import Lark
 from lark.tree import Tree
 from lark.lexer import Token
+from lark.exceptions import UnexpectedInput
 
 from RTFDE.transformers import RTFCleaner, StripControlWords
 from RTFDE.transformers import StripNonVisibleRTFGroups
@@ -109,7 +110,10 @@ Once you have loaded in the raw rtf this function will set the properties contai
             log.info("Binary data found and extracted from rtf file.")
         escaped_rtf = encode_escaped_control_chars(non_binary_rtf)
         log_transformations(escaped_rtf)
-        self.parse_rtf(escaped_rtf)
+        try:
+            self.parse_rtf(escaped_rtf)
+        except UnexpectedInput as _e:
+            raise MalformedEncapsulatedRtf(f"Malformed encapsulated RTF discovered:") from _e
         Decoder = TextDecoder()
         Decoder.update_children(self.full_tree)
         self.get_doc_tree()

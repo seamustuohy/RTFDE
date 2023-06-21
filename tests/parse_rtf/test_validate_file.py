@@ -8,9 +8,10 @@ Ensure that:
 
 import unittest
 from os.path import join
-from RTFDE.exceptions import MalformedRtf
+from RTFDE.exceptions import MalformedRtf, MalformedEncapsulatedRtf
 from RTFDE.deencapsulate import DeEncapsulator
 from tests.test_utils import DATA_BASE_DIR
+
 
 class TestInputValidity(unittest.TestCase):
     """ Tests basic valid and invalid inputs."""
@@ -61,6 +62,16 @@ class TestInputValidity(unittest.TestCase):
             self.check_deencapsulate_validity(fp,
                                               expect_error=TypeError,
                                               name="rtf file pointer")
+
+    def test_far_too_minimal_rtf_file(self):
+        raw_rtf = b"{\\rtf1}}"
+        self.check_deencapsulate_validity(raw_rtf,
+                                          expect_error=MalformedEncapsulatedRtf,
+                                          name="rtf with an extra brace")
+        raw_rtf = b"{\\rtf1}1"
+        self.check_deencapsulate_validity(raw_rtf,
+                                          expect_error=MalformedEncapsulatedRtf,
+                                          name="rtf with an extra 1")
 
     def check_deencapsulate_validity(self, data, expect_error=None, name="test"):
         """Helper to check if a test input raises or doesn't raise an error."""
