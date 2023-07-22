@@ -25,7 +25,7 @@ from lark.tree import Tree
 from lark.lexer import Token
 import re
 
-from RTFDE.utils import log_htmlrtf_stripping
+from RTFDE.utils import log_htmlrtf_stripping, is_logger_on
 
 import logging
 log = logging.getLogger("RTFDE")
@@ -321,7 +321,8 @@ Returns:
                     if (i.start_pos == token.start_pos and
                         i.end_pos == token.end_pos and
                         i.value == token.value):
-                        log_htmlrtf_stripping(i)
+                        if is_logger_on("RTFDE.HTMLRTF_Stripping_logger") is True:
+                            log_htmlrtf_stripping(i)
                         # print(f"DELETING: {i}")
                         return Discard
         return token

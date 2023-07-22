@@ -25,7 +25,7 @@ from lark.tree import Tree
 from RTFDE.exceptions import MalformedRtf
 from RTFDE.utils import is_codeword_with_numeric_arg
 from RTFDE.utils import flatten_tree_to_string_array
-from RTFDE.utils import log_text_extraction
+from RTFDE.utils import log_text_extraction, is_logger_on
 
 import logging
 log = logging.getLogger("RTFDE")
@@ -108,7 +108,8 @@ Returns:
         238:{"name":"EE_CHARSET","hex":"0xEE","decimal":238,"id":1250},
         255:{"name":"OEM_CHARSET","hex":"0xFF","decimal":255,"id":None},
 }
-    log_text_extraction(f"Getting charset for {fcharsetN}")
+    if is_logger_on("RTFDE.text_extraction") is True:
+        log_text_extraction(f"Getting charset for {fcharsetN}")
     charset = charsets.get(fcharsetN, None)
     if charset is not None:
         charset_id = charset.get('id', None)
@@ -352,7 +353,8 @@ Returns:
     ascii_map: Dict[Token,List[Token]]  = {}
     new_children = []
     removal_map: List[Token] = []
-    log_text_extraction(f"Removing unicode replacements on {repr(children)}")
+    if is_logger_on("RTFDE.text_extraction") is True:
+        log_text_extraction(f"Removing unicode replacements on {repr(children)}")
     for child in children:
         if len(removal_map) > 0:
             if isinstance(child, Token):
@@ -612,13 +614,15 @@ def decode_hex_char(item, codec):
     item (bytes): A bytes object.
     codec (str): The name of the codec to use to decode the bytes
     """
-    log_text_extraction("decoding char {0} with font {1}".format(item, codec))
+    if is_logger_on("RTFDE.text_extraction") is True:
+        log_text_extraction("decoding char {0} with font {1}".format(item, codec))
     if codec is None:
         # Default to U.S. Windows default codepage
         codec = 'CP1252'
     decoded = item.decode(codec)
     decoded = decoded.encode()
-    log_text_extraction("char {0} decoded into {1} using codec {2}".format(item, decoded, codec))
+    if is_logger_on("RTFDE.text_extraction") is True:
+        log_text_extraction("char {0} decoded into {1} using codec {2}".format(item, decoded, codec))
     return decoded
 
 
@@ -651,7 +655,8 @@ class TextDecoder:
         self.font_stack = [self.default_font]
         raw_fonttbl = get_font_table(obj.children[1])
         self.font_table = parse_font_tree(raw_fonttbl)
-        log_text_extraction(f"FONT TABLE FOUND: {raw_fonttbl}")
+        if is_logger_on("RTFDE.text_extraction") is True:
+            log_text_extraction(f"FONT TABLE FOUND: {raw_fonttbl}")
 
 
     def update_children(self, obj: Tree):
@@ -682,10 +687,12 @@ class TextDecoder:
 
     def iterate_on_children(self, children): # Children should be 'List[Union[Token,Tree]]' but lark's Tree typing is defined badly.
         set_fonts = []
-        log_text_extraction("Starting to iterate on text extraction children...")
-        log_text_extraction("PREP-BEFORE: "+repr(children))
+        if is_logger_on("RTFDE.text_extraction") is True:
+            log_text_extraction("Starting to iterate on text extraction children...")
+            log_text_extraction("PREP-BEFORE: "+repr(children))
         children = self.prep_unicode(children)
-        log_text_extraction("PREP-AFTER: "+repr(children))
+        if is_logger_on("RTFDE.text_extraction") is True:
+            log_text_extraction("PREP-AFTER: "+repr(children))
 
         for item in children:
             if is_font_number(item): # Font Definitions
@@ -706,7 +713,8 @@ class TextDecoder:
                                     end_line=item.end_line,
                                     column=item.column,
                                     end_column=item.end_column)
-                log_text_extraction(f"UNICODE TOKEN {item}: {decoded_tok}")
+                if is_logger_on("RTFDE.text_extraction") is True:
+                    log_text_extraction(f"UNICODE TOKEN {item}: {decoded_tok}")
                 yield decoded_tok
             # Decode a hex array
             elif is_hexarray(item):

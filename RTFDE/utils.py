@@ -129,6 +129,14 @@ def log_transformations(data):
     if logger.level == logging.DEBUG:
         logger.debug(data)
 
+def is_logger_on(logger_name, level=logging.DEBUG):
+    """Check if a logger is enabled and on debug.
+    """
+    logger = logging.getLogger(logger_name)
+    if logger.level == level:
+        return True
+    return False
+
 def log_text_extraction(data):
     """Log additional text decoding/encoding logging only if RTFDE.text_extraction set to debug.
     """

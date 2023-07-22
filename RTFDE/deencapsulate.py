@@ -109,7 +109,8 @@ Once you have loaded in the raw rtf this function will set the properties contai
             self.found_binary = found_binary
             log.info("Binary data found and extracted from rtf file.")
         escaped_rtf = encode_escaped_control_chars(non_binary_rtf)
-        log_transformations(escaped_rtf)
+        if is_logger_on("RTFDE.transform_logger") is True:
+            log_transformations(escaped_rtf)
         try:
             self.parse_rtf(escaped_rtf)
         except UnexpectedInput as _e:
@@ -236,7 +237,8 @@ Args:
                            # debug=True,
                            propagate_positions=True)
         self.full_tree = self.parser.parse(rtf)
-        log_transformations(self.full_tree)
+        if is_logger_on("RTFDE.transform_logger") is True:
+            log_transformations(self.full_tree)
 
 
     def strip_htmlrtf_tokens(self) -> Tree:
@@ -293,7 +295,8 @@ Raises:
                 operating_tokens.append(token)
             else:
                 operating_tokens += list(token.scan_values(lambda t: t.type == 'CONTROLWORD'))
-        log_validators(f"Header tokens being evaluated: {operating_tokens}")
+        if is_logger_on("RTFDE.validation_logger") is True:
+            log_validators(f"Header tokens being evaluated: {operating_tokens}")
 
         for token in operating_tokens:
             cw_found,found_token = self.check_from_token(token=token, cw_found=cw_found)
@@ -362,7 +365,8 @@ Raises:
         first_token = doc_tree.children[0].value
         if first_token != b"\\rtf1":
             log.debug("RTF stream does not contain valid valid RTF document heading. The file must start with \"{\\rtf1\"")
-            log_validators(f"First child object in document tree is: {first_token!r}")
+            if is_logger_on("RTFDE.validation_logger") is True:
+                log_validators(f"First child object in document tree is: {first_token!r}")
             raise MalformedRtf("RTF stream does not start with {\\rtf1")
 
     @staticmethod
