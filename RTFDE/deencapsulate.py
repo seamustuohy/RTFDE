@@ -25,7 +25,7 @@ from RTFDE.transformers import RTFCleaner, StripControlWords
 from RTFDE.transformers import StripNonVisibleRTFGroups
 from RTFDE.transformers import StripUnusedSpecialCharacters
 from RTFDE.utils import encode_escaped_control_chars
-from RTFDE.utils import log_validators, log_transformations
+from RTFDE.utils import log_validators, log_transformations, is_logger_on
 from RTFDE.transformers import get_stripped_HTMLRTF_values, DeleteTokensFromTree, strip_binary_objects
 from RTFDE.grammar import make_concise_grammar
 from RTFDE.text_extraction import TextDecoder

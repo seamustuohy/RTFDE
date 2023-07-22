@@ -99,7 +99,12 @@ class TestBinaryData(unittest.TestCase):
         binary_string = b'This test is one string ' + bin_data + b'that is it.'
         rep_rtf = raw_rtf.replace(b"REPLACE_ME", binary_string)
         rtf_obj = self.deencapsulate_string(rep_rtf)
-        self.assertEqual(binary_string,rtf_obj.content)
+        self.assertEqual(binary_string, rtf_obj.content)
+        if not (binary_string == rtf_obj.content):
+            with open('/tmp/bin_data_fail_input.bytes', 'wb') as fp:
+                fp.write(binary_string)
+            with open('/tmp/bin_data_fail_output.bytes', 'wb') as fp:
+                fp.write(rtf_obj.content)
 
     def test_bin_data_captured(self):
         """Tests that binary data is captured.
@@ -298,13 +303,13 @@ class TestTextDecoding(unittest.TestCase):
         rtf_obj = self.deencapsulate(rtf_path)
         correct_repr = b'&#128522;'
         self.assertEqual(correct_repr, rtf_obj.content)
-        print(rtf_obj.content)
+        #print(rtf_obj.content)
 
     def test_surrogate_without_16bitsigned(self):
         """Test surrogate which doesn't use a 16 signed integer."""
         rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "surrogate_pairs_03.rtf")
         rtf_obj = self.deencapsulate(rtf_path)
-        print(rtf_obj.content)
+        #print(rtf_obj.content)
         correct_repr =  b'&#128522;'
         self.assertEqual(correct_repr, rtf_obj.content)
         rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "surrogate_pairs_04.rtf")
@@ -343,24 +348,21 @@ class TestTextDecoding(unittest.TestCase):
         rtf_obj = self.deencapsulate(rtf_path)
         correct_repr = b'&#128522; \xf0\x9f\x93\x9e'
         self.assertEqual(correct_repr, rtf_obj.content)
-        print(rtf_obj.content)
 
-#     def test_use_small_template(self):
-#         raw_rtf = self.get_small_template()
+    def test_windows_950_codec(self):
+        """
 
-#         # rtf_obj = deencapsulate_string(raw_rtf)
-
-#         # REPLACE_ME
-#         small_template = b"""{\\rtf1\\ansi\\ansicpg1252\\deff0\\fromhtml1\\nouicompat\\deflang1033{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}}
-# {\\*\\generator Riched20 10.0.16299}\\viewkind4\\uc1
-# \\pard\\sa200\\sl276\\slmult1\\f0\\fs22\\lang9
-
-# REPLACE_ME
-
-# {}}"""
-
-#         # To Test text_extraction
-#         # is_font_number :
+        https://github.com/seamustuohy/RTFDE/issues/19
+        """
+        rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "windows_950.rtf")
+        # Word successfully parses this, showing "Hello" followed by a space then a single character, though it's either one it doesn't know how to render or is meant to look like a box.
+        original_body = "Hello ??" # TODO: Fix once we know what the char is.
+        with open(rtf_path, 'rb') as fp:
+            raw_rtf = fp.read()
+            rtf_obj = DeEncapsulator(raw_rtf)
+            rtf_obj.deencapsulate()
+            output_text = rtf_obj.text
+        # self.assertEqual(output_text, original_body) # TODO Add back in once we get past the error.
 
     def test_font_table_variation(self):
         from RTFDE.text_extraction import get_font_table,parse_font_tree
@@ -387,6 +389,7 @@ class TestTextDecoding(unittest.TestCase):
         self.assertEqual(font_table[b'\\f2'].codepage, 1251)
 
     def test_text_decoder(self):
+        # TODO
         from RTFDE.text_extraction import TextDecoder
         pass
 
