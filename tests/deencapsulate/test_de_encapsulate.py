@@ -350,7 +350,7 @@ class TestTextDecoding(unittest.TestCase):
         self.assertEqual(correct_repr, rtf_obj.content)
 
     def test_windows_950_codec(self):
-        """
+        """Windows 950 codec's currently fail. Ensure that they still fail in tests so we can identify when the underlying libraries fix this.
 
         https://github.com/seamustuohy/RTFDE/issues/19
         """
@@ -360,9 +360,8 @@ class TestTextDecoding(unittest.TestCase):
         with open(rtf_path, 'rb') as fp:
             raw_rtf = fp.read()
             rtf_obj = DeEncapsulator(raw_rtf)
-            rtf_obj.deencapsulate()
-            output_text = rtf_obj.text
-        # self.assertEqual(output_text, original_body) # TODO Add back in once we get past the error.
+            with self.assertRaises(UnicodeDecodeError):
+                rtf_obj.deencapsulate()
 
     def test_font_table_variation(self):
         from RTFDE.text_extraction import get_font_table,parse_font_tree
