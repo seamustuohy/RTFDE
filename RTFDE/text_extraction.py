@@ -199,14 +199,6 @@ Args:
 Returns:
     The name of the codec in the Python codec registry. Used as the name for enacoding/decoding.
 """
-    if codepage_num == 950:
-        # See if an implementation has been added for windows-950. If it has, use that.
-        try:
-            codecs.lookup('windows-950') # Raises LookupError if not found.
-            log.debug('Found python codec corresponding to code page {0}: windows-950'.format(codepage_num))
-            return 'windows-950'
-        except LookupError:
-            pass
     text_codec = codepages.codepage2codec(codepage_num)
     log.debug('Found python codec corresponding to code page {0}: {1}'.format(codepage_num, text_codec))
     return text_codec
