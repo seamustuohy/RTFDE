@@ -13,96 +13,90 @@
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE. See the included LICENSE file for details.
 
-import re
-from lark.visitors import Transformer, Visitor_Recursive, v_args
+
+from typing import Union, List, Tuple
+from typing import TypedDict
+#  from Python 3.9 typing.Generator is deprecated in favour of collections.abc.Generator
+from collections.abc import Generator
+
+from lark.visitors import Transformer
+from lark.visitors import v_args, Discard
 from lark.tree import Tree
 from lark.lexer import Token
+import re
 
+from RTFDE.utils import log_htmlrtf_stripping, is_logger_on
 
-class RTFUnicodeDecoder(Visitor_Recursive):
-    """Visits each Token in provided RTF Trees and decodes any/all unicode characters which it finds.
-    """
-
-    def __init__(self):
-        """Create the initial \\ucN keyword stack with the default scope included."""
-        # A default of 1 should be assumed if no \uc keyword has been seen in the current or outer scopes. - RTF Spec
-        self.cur_uc = [1]
-
-    def visit_topdown(self, tree:Tree) -> Tree:
-        """Visit each Token in the RTF Tree to decode any/all unicode characters.
-
-        This decoder starts at the root of the tree, and ends at the leaves (top-down) so it can track the state of the '\\ucN' keyword. The \\ucN keyword identifies when the count of bytes for how Unicode characters translate into ANSI character streams differ from the current Unicode Character Byte Count. When unicode encodings (\\uNNNN) are  encountered, the code has to ignore the first N bytes, where N corresponds to the last \\ucN value encountered. If that sounds overly complex to you then then we are in agreement.
-
-        Parameters:
-            tree: (Tree): An RTF Tree object which needs its values decoded.
-        """
-        self._call_userfunc(tree)
-        cur_uc = None
-        for child in tree.children:
-            # The bytelen values (\ucN) are scoped like character properties. That is, a \ucN keyword applies only to text following the keyword, and within the same (or deeper) nested braces.
-            # This is covered in more detail in the RTF spec. No matter how much detail it goes into doesn't make up for how much I hate this kludge they implemented.
-            if isinstance(child, Token) and child.value.startswith('\\uc'):
-                strip_int = re.compile('^[^0-9]+([0-9]+)$')
-                cur_uc = int(strip_int.search(child.value).groups()[0])
-                self.cur_uc.append(cur_uc)
-            elif isinstance(child, Tree):
-                self.visit_topdown(child)
-            else:
-                strip_u = re.compile(r'\\u[-]?[0-9]+[\s]?\??')
-                rtfencoded = strip_u.findall(child.value)
-                for enc_str in rtfencoded:
-                    char_num = int(enc_str[2:].strip("?").strip())
-                    if char_num < 0:
-                        # RTF control words generally accept signed 16-bit numbers as arguments. For this reason, Unicode decimal values greater than 32767 must be expressed as negative numbers. For example, if Hexdecimal value is 1D703 then the decimal value (120579) is greater than 32767 so the negative Hex-decimal value (03B8) is used and its decimal code is 952
-                        # The value of \ucN which appears before a \u-NNNN (a negative decimal unicode char) will tell us how many bytes the -NNNN value occupies when converted to a Unicode character.
-                        # For instance, \uc1 would be one byte, thus while \u-3913 would convert to 0xF0B7 (U+F0B7 PRIVATE USE CHARACTER) if it were simply converted into unicode once only one byte (\uc1) is extracted it becomes 0xB7 (U+00B7 MIDDLE DOT) which is the correct character.
-                        char = chr(bytearray(chr(65536+char_num).encode())[-self.cur_uc[-1]])
-                    else:
-                        char = chr(char_num)
-                    child.value = child.value.replace(enc_str, char)
-        # On exiting the group, the previous \uc value is restored. When leaving an RTF group which specified a \uc value, the reader must revert to the previous value.
-        # If we captured a unicode bytelen in this scope we get rid of it when we exit the scope.
-        if cur_uc is not None:
-            self.cur_uc.pop()
-        return tree
-
+import logging
+log = logging.getLogger("RTFDE")
 
 class StripNonVisibleRTFGroups(Transformer):
     """Visits each Token in provided RTF Trees and strips out any RTF groups which are non-visible when de-encapsulated into HTML.
     """
 
     @v_args(tree=True)
-    def group(self, tree):
+    def group(self, tree: Tree):
         """Transformer which aggressively seeks out possible non-visible RTF groups and replaces them with empty strings.
 
-        NOTE: Currently deleting all groups that don't have an htmltag. Please file an issue if you find one that should be included in de-encapsulated HTML. I will refine what gets deleted and what is converted based on identified needs for greater functionality or specific issues which need to be addressed.
+NOTE: Currently deleting all groups that don't have an htmltag. Please file an issue if you find one that should be included in de-encapsulated HTML. I will refine what gets deleted and what is converted based on identified needs for greater functionality or specific issues which need to be addressed.
 
-        Parameters:
-            tree: (Tree): An RTF Tree object which needs its values decoded.
-        """
-        args = tree.children
-        first_control = self._first_controlword(args)
-        non_visible_control_words = ["\\context", "\\colortbl", "\\fonttbl"]
-        if args == []:
-            return ''
-        # "Ignore all groups with the RTF ignore control symbol that are not used in RTF<->HTML conversions"
-        # See:  https://docs.microsoft.com/en-us/openspecs/exchange_server_protocols/ms-oxrtfex/752835a4-ad5e-49e3-acce-6b654b828de5
-        if isinstance(args[1], Token) and args[1].value == "\\*":
-            if not first_control.startswith("\\htmltag"):
-                return ""
-        # Currently deleting all groups that don't have an htmltag.
-        elif args[1].type == "CONTROLWORD":
-            if not first_control.startswith("\\htmltag"):
-                return ""
-        # Removing known non-visible objects
-        # TODO: Add more based on research you haven't done yet
-        elif first_control in non_visible_control_words:
-            return ""
+Args:
+        tree: A .rtf group (Tree object) which needs its contents decoded.
+"""
+        children = tree.children
+        if len(children) == 0:
+            return b""
+        first_child = children[0]
+
+        known_control_groups = ["htmltag_group"]
+        if isinstance(first_child, Tree):
+            if first_child.data in known_control_groups:
+                return tree
+        known_non_visible_control_groups = ["mhtmltag_group"]
+        if isinstance(first_child, Tree):
+            if first_child.data in known_non_visible_control_groups:
+                # print(f"DELETING: {first_child} : because mhtmltag")
+                return b""
+
+        # process known non-visible groups
+        non_visible_control_words = [b"\\context", b"\\colortbl", b"\\fonttbl"]
+        first_control = self.get_first_controlword(children)
+        # print(f"FIRST: {first_control}")
+        if first_control in non_visible_control_words:
+            return b""
+
+        # Process star escaped groups
+        # NOTE: `understood_commands` is where we can include commands we decide to actively process during deencapsulation in the future.
+        # For example, if we added support for `destination text` we would need to add '\\bkmkstart' and '\\ud' so our processor doesn't delete those groups
+        understood_commands: List[str] = []
+        is_star_escaped = None
+        if (isinstance(first_child, Tree) and
+             len(first_child.children) != 0 ):
+            first_item = first_child.children[0]
+            if isinstance(first_item, Token):
+                if first_item.type == "STAR_ESCAPE":
+                    is_star_escaped = True
+        control_word = None
+        if is_star_escaped is True:
+            # print(f"STAR: {children}")
+            first_token = children[1]
+            if isinstance(first_token, Token):
+                if first_token.type == "CONTROLWORD":
+                    control_word = first_token
+                    if control_word.value in understood_commands:
+                        return tree
+                    return b""
         return tree
 
     @staticmethod
-    def _first_controlword(children) -> str:
-        """Extracts the first control word from a group to make identifying groups easier.
+    def get_first_controlword(children: List) -> Union[str,None]:
+        """Extracts the first control word from a .rtf group.
+
+Args:
+        children: A list of child objects within a .rtf group
+
+Returns:
+        The first controlword found in a group. Returns None if no controls words are found.
         """
         for i in children:
             try:
@@ -110,111 +104,321 @@ class StripNonVisibleRTFGroups(Transformer):
                     return i.value
             except AttributeError:
                 continue
+        return None
 
 class RTFCleaner(Transformer):
     """Visits each Token in provided RTF Trees. Converts all tokens that need converting. Deletes all tokens that shouldn't be visible. And, joins all strings that are left into one final string.
     """
 
-    def __init__(self, rtf_codec=None):
-        """Setup the RTF codec.
+    def start(self, args: List) -> bytes:
+        """Joins the .rtf object's string representations together at highest level object `start`.
 
-        Parameters:
-            rtf_codec: (str): The python codec to use when decoding strings.
-        """
-        if rtf_codec is None:
-            self.rtf_codec = 'CP1252'
-        else:
-            self.rtf_codec = rtf_codec
+This is the final string combination. """
+        return b"".join(args)
 
-    def group(self, args):
-        """Join the strings in all groups."""
-        return "".join(args)
+    def STRING(self, string: Token) -> bytes:
+        """Convert a string object into a raw string."""
+        if string.value is not None:
+            return string.value
+        return b""
 
-    def document(self, args):
-        """Join the final set of strings to make the final html string."""
-        return "".join(args)
+    def SPACE_SAVE(self, string: Token) -> bytes:
+        return string.value
 
-    def OPENPAREN(self, args):
+    def string(self, strings: List) -> bytes:
+        """Convert all string objects withing a string group into a single string."""
+        # print(strings)
+        return b"".join(strings)
+
+    def group(self, grp: List) -> bytes:
+        """Join the strings in all group objects."""
+        _new_children = []
+        for i in grp:
+            if isinstance(i, type(Discard)):
+                pass
+            else:
+                _new_children.append(i)
+        return b"".join(_new_children)
+
+    def document(self, args: List) -> bytes:
+        """Join the all the strings in an .rtf object into a single string representation of the document."""
+        args = [i for i in args if i is not None]
+        return b"".join(args)
+
+    def OPENPAREN(self, args: Token) -> bytes:
         """Delete all open parens."""
-        return ""
+        return b""
 
-    def CLOSEPAREN(self, args):
+    def CLOSEPAREN(self, args: Token) -> bytes:
         """Delete all closed parens."""
-        return ""
+        return b""
 
-    def CONTROLSYMBOL(self, args):
-        """Convert encoded chars which are mis-categorized as control symbols into their respective chars. Delete all the other ones.
+    def mhtmltag_group(self, args: List):
+        """Process MHTMLTAG groups
+
+        Currently discarding because they don't need to be processed.
+
+Returns:
+        Always returns a discard object."""
+        return Discard
+
+    def htmltag_group(self, strings: List) -> bytes:
+        """HTMLTAG processing.
+
+Takes any string values within an HTMLTAG and returns them.
         """
+        return b"".join(strings)
+
+    def HTMLTAG(self, htmltag: Token) -> bytes:
+        """Delete all HTMLTAG objects"""
+        return b""
+
+    def STAR_ESCAPE(self, char: Token) -> bytes:
+        """Delete all star escape objects"""
+        # '\\*': ''
+        return b""
+
+    def control_symbol(self, symbols: List) -> bytes:
+        """Join all visible symbols from in control symbol groups."""
+        return b"".join(symbols)
+
+    def NONBREAKING_SPACE(self, args: Token) -> bytes:
+        """Convert non-breaking spaces into visible representation."""
+        # '\\~': '\u00A0',
+        return u'\u00A0'.encode()
+
+    def NONBREAKING_HYPHEN(self, args: Token) -> bytes:
+        """Convert non-breaking hyphens into visible representation."""
+        # '\\_': '\u00AD'
+        return u'\u00AD'.encode()
+
+    def OPTIONAL_HYPHEN(self, args: Token) -> bytes:
+        """Convert hyphen control char into visible representation."""
+        # '\\-': '\u2027'
+        return u'\u2027'.encode()
+
+    def FORMULA_CHARACTER(self, args: Token) -> bytes:
+        """Convert a formula character into an empty string.
+
+If we are attempting to represent formula characters the scope for this library has grown too inclusive. This was only used by Word 5.1 for the Macintosh as the beginning delimiter for a string of formula typesetting commands."""
+        return b""
+
+    def INDEX_SUBENTRY(self, args: Token) -> bytes:
+        """Process index subentry items
+
+Discard index sub-entries. Because, we don't care about indexes when de-encapsulating at this time."""
+        return b""
+
+    def CONTROLSYMBOL(self, args: Token) -> bytes:
+        """Convert encoded chars which are mis-categorized as control symbols into their respective chars. Delete all the other ones."""
         symbols = {
-            '\\{': '\x7B',
-            '\\}': '\x7D',
-            '\\\\': '\x5C',
-            '\\~': '\u00A0',
-            '\\_': '\u00AD'
+            b'\\{': b'\x7B',
+            b'\\}': b'\x7D',
+            b'\\\\': b'\x5C',
         }
         replacement = symbols.get(args.value, None)
         # If this is simply a character to replace then return the value
         if replacement is not None:
             return replacement
-        else:
-            return ""
+        return b""
 
-    def CONTROLWORD(self, args):
+    def CONTROLWORD(self, args: Token) -> bytes:
         """Convert encoded chars which are mis-categorized as control words into their respective chars. Delete all the other ones.
         """
         words = {
-            '\\par': '\n',
-            '\\tab': '\t',
-            '\\line': '\n',
-            '\\lquote': '\u2018',
-            '\\rquote': '\u2019',
-            '\\ldblquote': '\u201C',
-            '\\rdblquote': '\u201D',
-            '\\bullet': '\u2022',
-            '\\endash': '\u2013',
-            '\\emdash': '\u2014'
+            b'\\par': b'\n',
+            b'\\tab': b'\t',
+            b'\\line': b'\n',
+            b'\\lquote': b'\u2018',
+            b'\\rquote': b'\u2019',
+            b'\\ldblquote': b'\u201C',
+            b'\\rdblquote': b'\u201D',
+            b'\\bullet': b'\u2022',
+            b'\\endash': b'\u2013',
+            b'\\emdash': b'\u2014'
         }
         replacement = words.get(args.value, None)
         # If this is simply a character to replace then return the value as a string
         if replacement is not None:
             return replacement
-        return ""
+        return b""
 
-    def RTFESCAPE(self, args):
-        """Decode hex encoded chars using the codec provided. Insert unicode chars directly since we already decoded those earlier.
-        """
-        if args.value.startswith("\\'"):
-            hexstring = args.value.replace("\\'", "")
-            hex_bytes = bytes.fromhex(hexstring)
-            decoded = hex_bytes.decode(self.rtf_codec)
+def get_stripped_HTMLRTF_values(tree: Tree, current_state: Union[bool,None] = None) -> Generator:
+    """Get a list of Tokens which should be suppressed by HTMLRTF control words.
 
-            return decoded
-        # \\u RTFEscapes need to have the \ucN value identified in order to do byte manipulation before being converted. So, we converted those previously in RTFUnicodeDecoder.
+
+    NOTE: This de-encapsulation supports the HTMLRTF control word within nested groups. The state of the HTMLRTF control word transfers when entering groups and is restored when exiting groups, as specified in [MSFT-RTF].
+
+Returns:
+    A list of Tokens which should be suppressed by HTMLRTF control words.
+    """
+    if current_state is None:
+        htmlrtf_stack = [False]
+    else:
+        htmlrtf_stack = [current_state]
+    for child in tree.children:
+        is_htmlrtf = None
+        if isinstance(child, Tree):
+            # A de-encapsulating RTF reader MUST support the HTMLRTF control word within nested groups. The state of the HTMLRTF control word MUST transfer when entering groups and be restored when exiting groups, as specified in [MSFT-RTF].
+            for toggle in get_stripped_HTMLRTF_values(child, htmlrtf_stack[-1]):
+                yield toggle
         else:
-            # We should have handled all escaped chars by here
-            # We can simply insert the values from \u RTF Escapes now
-            return args.value
+            is_htmlrtf = toggle_htmlrtf(child)
+            if is_htmlrtf is not None:
+                htmlrtf_stack.append(is_htmlrtf)
+                yield child
+            elif htmlrtf_stack[-1] is True:
+                yield child
 
-    def TEXT(self, args):
-        """Converts escaped values in text and then return the text as a raw string."""
-        escapes = {
-            '\\par': '\n',
-            '\\tab': '\t',
-            '\\line': '\n',
-            '\\lquote': '\u2018;',
-            '\\rquote': '\u2019;',
-            '\\ldblquote': '\u201C;',
-            '\\rdblquote': '\u201D;',
-            '\\bullet': '\u2022;',
-            '\\endash': '\u2013;',
-            '\\emdash': '\u2014;',
-            '\\{': '\x7B',
-            '\\}': '\x7D',
-            '\\\\': '\x5C',
-            '\\~': '\u00A0',
-            '\\_': '\u00AD'
-        }
-        text = args.value
-        for match,rep in escapes.items():
-            text = text.replace(match, rep)
-        return text
+def toggle_htmlrtf(child: Union[Token,str]) -> Union[bool,None]:
+    """Identify if htmlrtf is being turned on or off.
+
+Returns:
+    Bool representing if htmlrtf is being enabled or disabled. None if object is not an HTMLRTF token.
+"""
+    if isinstance(child, Token):
+        if child.type == "HTMLRTF":
+            htmlrtfstr = child.value.decode().strip()
+            if (len(htmlrtfstr) > 0 and htmlrtfstr[-1] == "0"):
+                return False
+            return True
+    return None
+
+class DeleteTokensFromTree(Transformer):
+    """Removes a series of tokens from a Tree.
+
+Parameters:
+    tokens_to_delete: A list of tokens to delete from the Tree object. (sets self.to_delete)
+
+Attributes:
+    to_delete: A list of tokens to delete from the Tree object.
+    delete_start_pos: The starting position for all the identified tokens. Used to identify which tokens to delete.
+"""
+
+    def __init__(self, tokens_to_delete: List[Token]):
+        """Setup attributes including token start_pos tracking.
+
+Args:
+    tokens_to_delete: A list of tokens to delete from the Tree object. (sets self.to_delete)
+"""
+        super().__init__()
+        self.to_delete = tokens_to_delete
+        self.delete_start_pos = {i.start_pos for i in self.to_delete}
+
+    def __default_token__(self, token: Token):
+        """Discard any identified tokens.
+
+Args:
+        token: All tokens within the transformed tree.
+
+Returns:
+        Returns all non-identified tokens. Returns Discard objects for any identified tokens.
+"""
+        # print"(Evaluating token {0} at {1} to consider deleting".format(child.value, child.end_pos))
+        if isinstance(token, Token):
+            if token.start_pos in self.delete_start_pos:
+                for i in self.to_delete:
+                    if (i.start_pos == token.start_pos and
+                        i.end_pos == token.end_pos and
+                        i.value == token.value):
+                        if is_logger_on("RTFDE.HTMLRTF_Stripping_logger") is True:
+                            log_htmlrtf_stripping(i)
+                        # print(f"DELETING: {i}")
+                        return Discard
+        return token
+
+class StripUnusedSpecialCharacters(Transformer):
+    """Strip all unused tokens which lark has extracted from the RTF.
+
+These tokens are largely artifacts of the RTF format.
+
+We have to do this because we use the "keep_all_tokens" option in our lark parser. It's better to be explicit then to allow for ambiguity because of the grammar.
+    """
+
+    def _LBRACE(self, token: Token):
+        """Remove RTF braces.
+
+Returns:
+        Always returns a discard object."""
+        return Discard
+
+    def _RBRACE(self, token: Token):
+        """Remove RTF braces.
+
+Returns:
+        Always returns a discard object."""
+        return Discard
+
+    def _SPACE_DELETE(self, token: Token):
+        """Remove spaces which are not a part of the content
+
+These are mostly spaces used to separate control words from the content they precede.
+
+Returns:
+        Always returns a discard object.
+        """
+        return Discard
+
+
+class StripControlWords(Transformer):
+    """Visits each control word and strips the whitespace from around it.
+    """
+
+    def CONTROLWORD(self, token: Token):
+        """Strips the whitespace from around a provided control word.
+
+Args:
+        token: A CONTROLWORD token to strip whitespace from.
+        """
+        tok = token.update(value=token.value.strip())
+        return tok
+
+
+def strip_binary_objects(raw_rtf: bytes) -> tuple:
+    """Extracts binary objects from a rtf file.
+
+Parameters:
+    raw_rtf: (bytes): It's the raw RTF file as bytes.
+
+Returns:
+    A tuple containing (new_raw, found_bytes)
+        new_raw: (bytes) A bytes object where any binary data has been removed.
+        found_bytes: (list) List of dictionaries containing binary data extracted from the rtf file. Each dictionary includes the data extracted, where it was extracted from in the original rtf file and where it can be inserted back into the stripped output.
+
+    Description of found_bytes dictionaries:
+
+        "bytes": (bytes) The binary data contained which was extracted.
+        "ctrl_char": (tuple) Tuple containing the binary control word and its numeric parameter
+        "start_pos": (int) The position (in the original raw rtf data) where the binary control word started.
+        "bin_start_pos": (int) The position (in the original raw rtf data) where the binary data starts.
+        "end_pos": (int) The position (in the original raw rtf data) where the binary data ends.
+
+    Here is an example of what this looks like (by displaying the printable representation so you can see the bytes and then splitting the dict keys on new lines to make it readable.)
+        >> print(repr(found_bytes))
+
+        "{'bytes': b'\\xf4UP\\x13\\xdb\\xe4\\xe6CO\\xa8\\x16\\x10\\x8b\\n\\xfbA\\x9d\\xc5\\xd1C',
+          'ctrl_char': (b'\\\\bin', b'20'),
+          'start_pos': 56,
+          'end_pos': 83,
+          'bin_start_pos': 63}"
+    """
+    found_bytes = []
+    byte_finder = rb'(\\bin)([0-9]+)[ ]?'
+    for matchitem in re.finditer(byte_finder, raw_rtf):
+        param = int(matchitem[2])
+        bin_start_pos = matchitem.span()[-1]
+        byte_obj = {"bytes": raw_rtf[bin_start_pos:bin_start_pos+param],
+                    "ctrl_char": matchitem.groups(),
+                    "start_pos": matchitem.span()[0],
+                    "end_pos": bin_start_pos+param,
+                    "bin_start_pos": bin_start_pos
+                    }
+        # byte_obj : dict[str, Union[bytes, int, Tuple[bytes, bytes]]]
+        found_bytes.append(byte_obj)
+    new_raw = b''
+    start_buffer = 0
+    for new_bytes in found_bytes:
+        new_raw += raw_rtf[start_buffer:new_bytes["start_pos"]]
+        start_buffer = new_bytes["end_pos"]
+    new_raw += raw_rtf[start_buffer:]
+    return (new_raw, found_bytes)

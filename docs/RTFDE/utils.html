@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>RTFDE.utils API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>RTFDE.utils</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# This file is part of package name, a package description short.
+# Copyright © 2022 seamus tuohy, &lt;code@seamustuohy.com&gt;
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the included LICENSE file for details.
+
+import difflib
+import sys
+import re
+from typing import Union, AnyStr, Any
+#  from Python 3.9 typing.Generator is deprecated in favour of collections.abc.Generator
+from collections.abc import Generator
+from lark.lexer import Token
+from lark.tree import Tree
+from lark import Lark
+
+
+import logging
+log = logging.getLogger(&#34;RTFDE&#34;)
+
+def get_control_parameter_as_hex_strings(control_parameter: Union[str,int]) -&gt; str:
+    &#34;&#34;&#34;Returns the hex encoded value of a .rtf control parameter.
+
+Args:
+    control_parameter: (int/str) Int or a string which represents an int.
+
+Returns:
+    Zero padded 6 char long hexedecimal string.
+&#34;&#34;&#34;
+    try:
+        return f&#34;{control_parameter:#06x}&#34;
+    except ValueError:
+        # If passed as string convert first
+        control_parameter = int(control_parameter)
+        return f&#34;{control_parameter:#06x}&#34;
+
+def print_to_tmp_file(data: Union[AnyStr,bytes,bytearray], path: str):
+    &#34;&#34;&#34;Prints binary object to a dump file for quick debugging.
+
+Warning: Not for normal use. Only use when debugging.
+
+Args:
+    data (bytes|str): Data to write to path
+    path (str): The file path to write data to
+    &#34;&#34;&#34;
+    # Be able to print binary objects easily
+    if isinstance(data, (bytes, bytearray)) is True:
+        open_as = &#39;wb+&#39;
+    else:
+        open_as = &#39;w+&#39;
+    with open(path, open_as) as fp:
+        original_stdout = sys.stdout
+        sys.stdout = fp
+        print(data)
+        sys.stdout = original_stdout
+
+def encode_escaped_control_chars(raw_text: bytes) -&gt; bytes:
+    &#34;&#34;&#34;Replaces escaped control chars within the text with their RTF encoded versions \\&#39;HH.
+
+Args:
+    raw_text (str): string which needs escape characters encoded
+
+Returns:
+    A string with escaped control chars
+    &#34;&#34;&#34;
+    cleaned = raw_text.replace(b&#39;\\\\&#39;, b&#34;\\&#39;5c&#34;)
+    cleaned = cleaned.replace(b&#39;\\{&#39;, b&#34;\\&#39;7b&#34;)
+    cleaned = cleaned.replace(b&#39;\\}&#39;, b&#34;\\&#39;7d&#34;)
+    return cleaned
+
+def is_codeword_with_numeric_arg(token: Union[Token,Any], codeword: bytes) -&gt; bool:
+    &#34;&#34;&#34;Checks if a Token is a codeword with a numeric argument.
+
+Returns:
+    True if a Token is a codeword with a numeric argument. False if not.
+&#34;&#34;&#34;
+    try:
+        val = token.value.strip()
+        # print(val, codeword)
+        if (val.startswith(codeword) and
+            val[len(codeword):].isdigit()):
+            return True
+    except AttributeError:
+        return False
+    return False
+
+def print_lark_parser_evaluated_grammar(parser):
+    &#34;&#34;&#34;Prints the final evaluated grammar.
+
+Can be useful for debugging possible errors in grammar evaluation.
+
+Args:
+    parser (Lark obj): Lark object to extract grammar from.
+    &#34;&#34;&#34;
+    if not isinstance(parser, Lark):
+        raise ValueError(&#34;Requires a Lark object.&#34;)
+    eq = &#34;=&#34;*15
+    eq = &#34; &#34; + eq + &#34; &#34;
+    print(eq + &#34;RULES&#34; + eq + &#34;\n&#34;)
+    for i in parser.rules:
+        print(&#34;    &#34; + i)
+    print(eq + &#34;TERMINALS&#34; + eq + &#34;\n&#34;)
+    for i in parser.terminals:
+        print(&#34;    &#34; + i)
+    print(eq + &#34;IGNORED TOKENS&#34; + eq + &#34;\n&#34;)
+    for i in parser.ignore_tokens:
+        print(&#34;    &#34; + i)
+
+def log_validators(data):
+    &#34;&#34;&#34;Log validator logging only if RTFDE.validation_logger set to debug.
+    &#34;&#34;&#34;
+    logger = logging.getLogger(&#34;RTFDE.validation_logger&#34;)
+    if logger.level == logging.DEBUG:
+        logger.debug(data)
+
+def log_transformations(data):
+    &#34;&#34;&#34;Log transform logging only if RTFDE.transform_logger set to debug.
+    &#34;&#34;&#34;
+    logger = logging.getLogger(&#34;RTFDE.transform_logger&#34;)
+    if logger.level == logging.DEBUG:
+        logger.debug(data)
+
+def log_text_extraction(data):
+    &#34;&#34;&#34;Log additional text decoding/encoding logging only if RTFDE.text_extraction set to debug.
+    &#34;&#34;&#34;
+    logger = logging.getLogger(&#34;RTFDE.text_extraction&#34;)
+    if logger.level == logging.DEBUG:
+        logger.debug(data)
+
+def log_htmlrtf_stripping(data: Token):
+    &#34;&#34;&#34;Log HTMLRTF Stripping logging only if RTFDE.HTMLRTF_Stripping_logger set to debug.
+
+Raises:
+    AttributeError: Will occur if you pass this something that is not a token.
+&#34;&#34;&#34;
+    logger = logging.getLogger(&#34;RTFDE.HTMLRTF_Stripping_logger&#34;)
+    if logger.level == logging.DEBUG:
+        if not isinstance(data, Token):
+            raise AttributeError(&#34;HTMLRTF Stripping logger only logs Tokens&#34;)
+        tok_desc = &#34;HTMLRTF Removed: {value}, {line}, {end_line}, {start_pos}, {end_pos}&#34;
+        log_msg = tok_desc.format(value=data.value,
+                                  line=data.line,
+                                  end_line=data.end_line,
+                                  start_pos=data.start_pos,
+                                  end_pos = data.end_pos)
+        logger.debug(log_msg)
+
+def log_string_diff(original: bytes, revised: bytes, sep: Union[bytes,None] = None):
+    &#34;&#34;&#34;Log diff of two strings. Defaults to splitting by newlines and keeping the ends.
+
+Logs the result in the main RTFDE logger as a debug log. Warning: Only use when debugging as this is too verbose to be used in regular logging.
+
+Args:
+    original: The original string
+    revised: The changed version of the string
+    sep (string): A pattern to split the string by. Uses re.split under the hood. NOTE: Deletes all empty strings before diffing to make the diff more concise.
+&#34;&#34;&#34;
+    log.debug(get_string_diff(original, revised, sep))
+
+def get_string_diff(original: bytes, revised: bytes, sep: Union[bytes,None] = None):
+    &#34;&#34;&#34;Get the diff of two strings. Defaults to splitting by newlines and keeping the ends.
+
+Args:
+    original: The original string
+    revised: The changed version of the string
+    sep (string): A pattern to split the string by. Uses re.split under the hood. NOTE: Deletes all empty strings before diffing to make the diff more concise.
+
+Returns:
+    A string object representing the diff of the two strings provided.
+&#34;&#34;&#34;
+    if sep is None:
+        orig_split = original.decode().splitlines(keepends=True)
+        revised_split = revised.decode().splitlines(keepends=True)
+    else:
+        original = original.replace(b&#39;\n&#39;,b&#39;&#39;)
+        revised = revised.replace(b&#39;\n&#39;,b&#39;&#39;)
+        orig_split = [i.decode() for i in re.split(sep, original) if i != b&#39;&#39;]
+        revised_split = [i.decode() for i in re.split(sep, revised) if i != b&#39;&#39;]
+    return &#34;\n&#34;.join(list(difflib.context_diff(orig_split,
+                                               revised_split)))
+
+def get_tree_diff(original: Tree, revised: Tree):
+    &#34;&#34;&#34;Get the diff of two trees.
+
+Args:
+    original (lark Tree): A lark tree before transformation
+    revised (lark Tree): A lark tree after transformation
+
+Returns:
+    A string object representing the diff of the two Trees provided.
+
+Example:
+    rtf_obj = DeEncapsulator(raw_rtf)
+    rtf_obj.deencapsulate()
+    transformed_tree = SomeTransformer.transform(rtf_obj.full_tree)
+    get_tree_diff(rtf_obj.full_tree, transformed_tree)
+
+    &#34;&#34;&#34;
+    log = logging.getLogger(&#34;RTFDE&#34;)
+    flat_original  = list(flatten_tree(original))
+    flat_revised  = list(flatten_tree(revised))
+    return &#34;\n&#34;.join(list(difflib.context_diff(flat_original,
+                                               flat_revised)))
+def flatten_tree(tree: Tree) -&gt; Generator:
+    &#34;&#34;&#34;Flatten a lark Tree into a list of repr&#39;s of tree objects.
+
+Args:
+    tree (lark Tree): A lark tree
+&#34;&#34;&#34;
+    yield f&#34;Tree(&#39;{tree.data}&#39;)&#34;
+    for child in tree.children:
+        if isinstance(child, Token):
+            yield repr(child)
+        elif isinstance(child, Tree):
+            for i in flatten_tree(child):
+                yield i
+        else:
+            yield repr(child)
+
+def flatten_tree_to_string_array(tree: Tree) -&gt; Generator:
+    &#34;&#34;&#34;Flatten a lark Tree into a list of repr&#39;s of tree objects.
+
+Args:
+    tree (lark Tree): A lark tree
+&#34;&#34;&#34;
+    for child in tree.children:
+        if isinstance(child, Tree):
+            for i in flatten_tree_to_string_array(child):
+                yield i
+        elif isinstance(child, Token):
+            yield child.value
+        else:
+            yield child
+
+def make_token_replacement(ttype, value, example):
+    if isinstance(example, Token):
+        fake_tok = Token(ttype,
+                        value,
+                        start_pos=example.start_pos,
+                        end_pos=example.end_pos,
+                        line=example.line,
+                        end_line=example.end_line,
+                        column=example.column,
+                        end_column=example.end_column)
+    elif isinstance(example, Tree):
+        fake_tok = Token(ttype,
+                         value,
+                         start_pos=example.meta.start_pos,
+                         end_pos=example.meta.end_pos,
+                         line=example.meta.line,
+                         end_line=example.meta.end_line,
+                         column=example.meta.column,
+                         end_column=example.meta.end_column)
+
+    return fake_tok
+
+
+def embed():
+    import os
+    import readline
+    import rlcompleter
+    import code
+    import inspect
+    import traceback
+
+    history = os.path.join(os.path.expanduser(&#39;~&#39;), &#39;.python_history&#39;)
+    if os.path.isfile(history):
+        readline.read_history_file(history)
+
+    frame = inspect.currentframe().f_back
+    namespace = frame.f_locals.copy()
+    namespace.update(frame.f_globals)
+
+    readline.set_completer(rlcompleter.Completer(namespace).complete)
+    readline.parse_and_bind(&#34;tab: complete&#34;)
+
+    file = frame.f_code.co_filename
+    line = frame.f_lineno
+    function = frame.f_code.co_name
+
+    stack = &#39;&#39;.join(traceback.format_stack()[:-1])
+    print(stack)
+    banner = f&#34; [ {os.path.basename(file)}:{line} in {function}() ]&#34;
+    banner += &#34;\n Entering interactive mode (Ctrl-D to exit) ...&#34;
+    try:
+        code.interact(banner=banner, local=namespace)
+    finally:
+        readline.write_history_file(history)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="RTFDE.utils.embed"><code class="name flex">
+<span>def <span class="ident">embed</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def embed():
+    import os
+    import readline
+    import rlcompleter
+    import code
+    import inspect
+    import traceback
+
+    history = os.path.join(os.path.expanduser(&#39;~&#39;), &#39;.python_history&#39;)
+    if os.path.isfile(history):
+        readline.read_history_file(history)
+
+    frame = inspect.currentframe().f_back
+    namespace = frame.f_locals.copy()
+    namespace.update(frame.f_globals)
+
+    readline.set_completer(rlcompleter.Completer(namespace).complete)
+    readline.parse_and_bind(&#34;tab: complete&#34;)
+
+    file = frame.f_code.co_filename
+    line = frame.f_lineno
+    function = frame.f_code.co_name
+
+    stack = &#39;&#39;.join(traceback.format_stack()[:-1])
+    print(stack)
+    banner = f&#34; [ {os.path.basename(file)}:{line} in {function}() ]&#34;
+    banner += &#34;\n Entering interactive mode (Ctrl-D to exit) ...&#34;
+    try:
+        code.interact(banner=banner, local=namespace)
+    finally:
+        readline.write_history_file(history)</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.encode_escaped_control_chars"><code class="name flex">
+<span>def <span class="ident">encode_escaped_control_chars</span></span>(<span>raw_text: bytes) ‑> bytes</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Replaces escaped control chars within the text with their RTF encoded versions 'HH.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>raw_text</code></strong> :&ensp;<code>str</code></dt>
+<dd>string which needs escape characters encoded</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A string with escaped control chars</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def encode_escaped_control_chars(raw_text: bytes) -&gt; bytes:
+    &#34;&#34;&#34;Replaces escaped control chars within the text with their RTF encoded versions \\&#39;HH.
+
+Args:
+    raw_text (str): string which needs escape characters encoded
+
+Returns:
+    A string with escaped control chars
+    &#34;&#34;&#34;
+    cleaned = raw_text.replace(b&#39;\\\\&#39;, b&#34;\\&#39;5c&#34;)
+    cleaned = cleaned.replace(b&#39;\\{&#39;, b&#34;\\&#39;7b&#34;)
+    cleaned = cleaned.replace(b&#39;\\}&#39;, b&#34;\\&#39;7d&#34;)
+    return cleaned</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.flatten_tree"><code class="name flex">
+<span>def <span class="ident">flatten_tree</span></span>(<span>tree: lark.tree.Tree) ‑> collections.abc.Generator</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Flatten a lark Tree into a list of repr's of tree objects.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>tree</code></strong> :&ensp;<code>lark Tree</code></dt>
+<dd>A lark tree</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def flatten_tree(tree: Tree) -&gt; Generator:
+    &#34;&#34;&#34;Flatten a lark Tree into a list of repr&#39;s of tree objects.
+
+Args:
+    tree (lark Tree): A lark tree
+&#34;&#34;&#34;
+    yield f&#34;Tree(&#39;{tree.data}&#39;)&#34;
+    for child in tree.children:
+        if isinstance(child, Token):
+            yield repr(child)
+        elif isinstance(child, Tree):
+            for i in flatten_tree(child):
+                yield i
+        else:
+            yield repr(child)</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.flatten_tree_to_string_array"><code class="name flex">
+<span>def <span class="ident">flatten_tree_to_string_array</span></span>(<span>tree: lark.tree.Tree) ‑> collections.abc.Generator</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Flatten a lark Tree into a list of repr's of tree objects.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>tree</code></strong> :&ensp;<code>lark Tree</code></dt>
+<dd>A lark tree</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def flatten_tree_to_string_array(tree: Tree) -&gt; Generator:
+    &#34;&#34;&#34;Flatten a lark Tree into a list of repr&#39;s of tree objects.
+
+Args:
+    tree (lark Tree): A lark tree
+&#34;&#34;&#34;
+    for child in tree.children:
+        if isinstance(child, Tree):
+            for i in flatten_tree_to_string_array(child):
+                yield i
+        elif isinstance(child, Token):
+            yield child.value
+        else:
+            yield child</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.get_control_parameter_as_hex_strings"><code class="name flex">
+<span>def <span class="ident">get_control_parameter_as_hex_strings</span></span>(<span>control_parameter: Union[str, int]) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the hex encoded value of a .rtf control parameter.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>control_parameter</code></strong></dt>
+<dd>(int/str) Int or a string which represents an int.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>Zero padded 6 char long hexedecimal string.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_control_parameter_as_hex_strings(control_parameter: Union[str,int]) -&gt; str:
+    &#34;&#34;&#34;Returns the hex encoded value of a .rtf control parameter.
+
+Args:
+    control_parameter: (int/str) Int or a string which represents an int.
+
+Returns:
+    Zero padded 6 char long hexedecimal string.
+&#34;&#34;&#34;
+    try:
+        return f&#34;{control_parameter:#06x}&#34;
+    except ValueError:
+        # If passed as string convert first
+        control_parameter = int(control_parameter)
+        return f&#34;{control_parameter:#06x}&#34;</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.get_string_diff"><code class="name flex">
+<span>def <span class="ident">get_string_diff</span></span>(<span>original: bytes, revised: bytes, sep: Optional[bytes] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the diff of two strings. Defaults to splitting by newlines and keeping the ends.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>original</code></strong></dt>
+<dd>The original string</dd>
+<dt><strong><code>revised</code></strong></dt>
+<dd>The changed version of the string</dd>
+<dt><strong><code>sep</code></strong> :&ensp;<code>string</code></dt>
+<dd>A pattern to split the string by. Uses re.split under the hood. NOTE: Deletes all empty strings before diffing to make the diff more concise.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A string object representing the diff of the two strings provided.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_string_diff(original: bytes, revised: bytes, sep: Union[bytes,None] = None):
+    &#34;&#34;&#34;Get the diff of two strings. Defaults to splitting by newlines and keeping the ends.
+
+Args:
+    original: The original string
+    revised: The changed version of the string
+    sep (string): A pattern to split the string by. Uses re.split under the hood. NOTE: Deletes all empty strings before diffing to make the diff more concise.
+
+Returns:
+    A string object representing the diff of the two strings provided.
+&#34;&#34;&#34;
+    if sep is None:
+        orig_split = original.decode().splitlines(keepends=True)
+        revised_split = revised.decode().splitlines(keepends=True)
+    else:
+        original = original.replace(b&#39;\n&#39;,b&#39;&#39;)
+        revised = revised.replace(b&#39;\n&#39;,b&#39;&#39;)
+        orig_split = [i.decode() for i in re.split(sep, original) if i != b&#39;&#39;]
+        revised_split = [i.decode() for i in re.split(sep, revised) if i != b&#39;&#39;]
+    return &#34;\n&#34;.join(list(difflib.context_diff(orig_split,
+                                               revised_split)))</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.get_tree_diff"><code class="name flex">
+<span>def <span class="ident">get_tree_diff</span></span>(<span>original: lark.tree.Tree, revised: lark.tree.Tree)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the diff of two trees.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>original</code></strong> :&ensp;<code>lark Tree</code></dt>
+<dd>A lark tree before transformation</dd>
+<dt><strong><code>revised</code></strong> :&ensp;<code>lark Tree</code></dt>
+<dd>A lark tree after transformation</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A string object representing the diff of the two Trees provided.</p>
+<h2 id="example">Example</h2>
+<p>rtf_obj = DeEncapsulator(raw_rtf)
+rtf_obj.deencapsulate()
+transformed_tree = SomeTransformer.transform(rtf_obj.full_tree)
+get_tree_diff(rtf_obj.full_tree, transformed_tree)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_tree_diff(original: Tree, revised: Tree):
+    &#34;&#34;&#34;Get the diff of two trees.
+
+Args:
+    original (lark Tree): A lark tree before transformation
+    revised (lark Tree): A lark tree after transformation
+
+Returns:
+    A string object representing the diff of the two Trees provided.
+
+Example:
+    rtf_obj = DeEncapsulator(raw_rtf)
+    rtf_obj.deencapsulate()
+    transformed_tree = SomeTransformer.transform(rtf_obj.full_tree)
+    get_tree_diff(rtf_obj.full_tree, transformed_tree)
+
+    &#34;&#34;&#34;
+    log = logging.getLogger(&#34;RTFDE&#34;)
+    flat_original  = list(flatten_tree(original))
+    flat_revised  = list(flatten_tree(revised))
+    return &#34;\n&#34;.join(list(difflib.context_diff(flat_original,
+                                               flat_revised)))</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.is_codeword_with_numeric_arg"><code class="name flex">
+<span>def <span class="ident">is_codeword_with_numeric_arg</span></span>(<span>token: Union[lark.lexer.Token, Any], codeword: bytes) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a Token is a codeword with a numeric argument.</p>
+<h2 id="returns">Returns</h2>
+<p>True if a Token is a codeword with a numeric argument. False if not.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_codeword_with_numeric_arg(token: Union[Token,Any], codeword: bytes) -&gt; bool:
+    &#34;&#34;&#34;Checks if a Token is a codeword with a numeric argument.
+
+Returns:
+    True if a Token is a codeword with a numeric argument. False if not.
+&#34;&#34;&#34;
+    try:
+        val = token.value.strip()
+        # print(val, codeword)
+        if (val.startswith(codeword) and
+            val[len(codeword):].isdigit()):
+            return True
+    except AttributeError:
+        return False
+    return False</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.log_htmlrtf_stripping"><code class="name flex">
+<span>def <span class="ident">log_htmlrtf_stripping</span></span>(<span>data: lark.lexer.Token)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Log HTMLRTF Stripping logging only if RTFDE.HTMLRTF_Stripping_logger set to debug.</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AttributeError</code></dt>
+<dd>Will occur if you pass this something that is not a token.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def log_htmlrtf_stripping(data: Token):
+    &#34;&#34;&#34;Log HTMLRTF Stripping logging only if RTFDE.HTMLRTF_Stripping_logger set to debug.
+
+Raises:
+    AttributeError: Will occur if you pass this something that is not a token.
+&#34;&#34;&#34;
+    logger = logging.getLogger(&#34;RTFDE.HTMLRTF_Stripping_logger&#34;)
+    if logger.level == logging.DEBUG:
+        if not isinstance(data, Token):
+            raise AttributeError(&#34;HTMLRTF Stripping logger only logs Tokens&#34;)
+        tok_desc = &#34;HTMLRTF Removed: {value}, {line}, {end_line}, {start_pos}, {end_pos}&#34;
+        log_msg = tok_desc.format(value=data.value,
+                                  line=data.line,
+                                  end_line=data.end_line,
+                                  start_pos=data.start_pos,
+                                  end_pos = data.end_pos)
+        logger.debug(log_msg)</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.log_string_diff"><code class="name flex">
+<span>def <span class="ident">log_string_diff</span></span>(<span>original: bytes, revised: bytes, sep: Optional[bytes] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Log diff of two strings. Defaults to splitting by newlines and keeping the ends.</p>
+<p>Logs the result in the main RTFDE logger as a debug log. Warning: Only use when debugging as this is too verbose to be used in regular logging.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>original</code></strong></dt>
+<dd>The original string</dd>
+<dt><strong><code>revised</code></strong></dt>
+<dd>The changed version of the string</dd>
+<dt><strong><code>sep</code></strong> :&ensp;<code>string</code></dt>
+<dd>A pattern to split the string by. Uses re.split under the hood. NOTE: Deletes all empty strings before diffing to make the diff more concise.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def log_string_diff(original: bytes, revised: bytes, sep: Union[bytes,None] = None):
+    &#34;&#34;&#34;Log diff of two strings. Defaults to splitting by newlines and keeping the ends.
+
+Logs the result in the main RTFDE logger as a debug log. Warning: Only use when debugging as this is too verbose to be used in regular logging.
+
+Args:
+    original: The original string
+    revised: The changed version of the string
+    sep (string): A pattern to split the string by. Uses re.split under the hood. NOTE: Deletes all empty strings before diffing to make the diff more concise.
+&#34;&#34;&#34;
+    log.debug(get_string_diff(original, revised, sep))</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.log_text_extraction"><code class="name flex">
+<span>def <span class="ident">log_text_extraction</span></span>(<span>data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Log additional text decoding/encoding logging only if RTFDE.text_extraction set to debug.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def log_text_extraction(data):
+    &#34;&#34;&#34;Log additional text decoding/encoding logging only if RTFDE.text_extraction set to debug.
+    &#34;&#34;&#34;
+    logger = logging.getLogger(&#34;RTFDE.text_extraction&#34;)
+    if logger.level == logging.DEBUG:
+        logger.debug(data)</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.log_transformations"><code class="name flex">
+<span>def <span class="ident">log_transformations</span></span>(<span>data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Log transform logging only if RTFDE.transform_logger set to debug.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def log_transformations(data):
+    &#34;&#34;&#34;Log transform logging only if RTFDE.transform_logger set to debug.
+    &#34;&#34;&#34;
+    logger = logging.getLogger(&#34;RTFDE.transform_logger&#34;)
+    if logger.level == logging.DEBUG:
+        logger.debug(data)</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.log_validators"><code class="name flex">
+<span>def <span class="ident">log_validators</span></span>(<span>data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Log validator logging only if RTFDE.validation_logger set to debug.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def log_validators(data):
+    &#34;&#34;&#34;Log validator logging only if RTFDE.validation_logger set to debug.
+    &#34;&#34;&#34;
+    logger = logging.getLogger(&#34;RTFDE.validation_logger&#34;)
+    if logger.level == logging.DEBUG:
+        logger.debug(data)</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.make_token_replacement"><code class="name flex">
+<span>def <span class="ident">make_token_replacement</span></span>(<span>ttype, value, example)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def make_token_replacement(ttype, value, example):
+    if isinstance(example, Token):
+        fake_tok = Token(ttype,
+                        value,
+                        start_pos=example.start_pos,
+                        end_pos=example.end_pos,
+                        line=example.line,
+                        end_line=example.end_line,
+                        column=example.column,
+                        end_column=example.end_column)
+    elif isinstance(example, Tree):
+        fake_tok = Token(ttype,
+                         value,
+                         start_pos=example.meta.start_pos,
+                         end_pos=example.meta.end_pos,
+                         line=example.meta.line,
+                         end_line=example.meta.end_line,
+                         column=example.meta.column,
+                         end_column=example.meta.end_column)
+
+    return fake_tok</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.print_lark_parser_evaluated_grammar"><code class="name flex">
+<span>def <span class="ident">print_lark_parser_evaluated_grammar</span></span>(<span>parser)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Prints the final evaluated grammar.</p>
+<p>Can be useful for debugging possible errors in grammar evaluation.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>parser</code></strong> :&ensp;<code>Lark obj</code></dt>
+<dd>Lark object to extract grammar from.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def print_lark_parser_evaluated_grammar(parser):
+    &#34;&#34;&#34;Prints the final evaluated grammar.
+
+Can be useful for debugging possible errors in grammar evaluation.
+
+Args:
+    parser (Lark obj): Lark object to extract grammar from.
+    &#34;&#34;&#34;
+    if not isinstance(parser, Lark):
+        raise ValueError(&#34;Requires a Lark object.&#34;)
+    eq = &#34;=&#34;*15
+    eq = &#34; &#34; + eq + &#34; &#34;
+    print(eq + &#34;RULES&#34; + eq + &#34;\n&#34;)
+    for i in parser.rules:
+        print(&#34;    &#34; + i)
+    print(eq + &#34;TERMINALS&#34; + eq + &#34;\n&#34;)
+    for i in parser.terminals:
+        print(&#34;    &#34; + i)
+    print(eq + &#34;IGNORED TOKENS&#34; + eq + &#34;\n&#34;)
+    for i in parser.ignore_tokens:
+        print(&#34;    &#34; + i)</code></pre>
+</details>
+</dd>
+<dt id="RTFDE.utils.print_to_tmp_file"><code class="name flex">
+<span>def <span class="ident">print_to_tmp_file</span></span>(<span>data: Union[~AnyStr, bytes, bytearray], path: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Prints binary object to a dump file for quick debugging.</p>
+<p>Warning: Not for normal use. Only use when debugging.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt>data (bytes|str): Data to write to path</dt>
+<dt><strong><code>path</code></strong> :&ensp;<code>str</code></dt>
+<dd>The file path to write data to</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def print_to_tmp_file(data: Union[AnyStr,bytes,bytearray], path: str):
+    &#34;&#34;&#34;Prints binary object to a dump file for quick debugging.
+
+Warning: Not for normal use. Only use when debugging.
+
+Args:
+    data (bytes|str): Data to write to path
+    path (str): The file path to write data to
+    &#34;&#34;&#34;
+    # Be able to print binary objects easily
+    if isinstance(data, (bytes, bytearray)) is True:
+        open_as = &#39;wb+&#39;
+    else:
+        open_as = &#39;w+&#39;
+    with open(path, open_as) as fp:
+        original_stdout = sys.stdout
+        sys.stdout = fp
+        print(data)
+        sys.stdout = original_stdout</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="RTFDE" href="index.html">RTFDE</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="RTFDE.utils.embed" href="#RTFDE.utils.embed">embed</a></code></li>
+<li><code><a title="RTFDE.utils.encode_escaped_control_chars" href="#RTFDE.utils.encode_escaped_control_chars">encode_escaped_control_chars</a></code></li>
+<li><code><a title="RTFDE.utils.flatten_tree" href="#RTFDE.utils.flatten_tree">flatten_tree</a></code></li>
+<li><code><a title="RTFDE.utils.flatten_tree_to_string_array" href="#RTFDE.utils.flatten_tree_to_string_array">flatten_tree_to_string_array</a></code></li>
+<li><code><a title="RTFDE.utils.get_control_parameter_as_hex_strings" href="#RTFDE.utils.get_control_parameter_as_hex_strings">get_control_parameter_as_hex_strings</a></code></li>
+<li><code><a title="RTFDE.utils.get_string_diff" href="#RTFDE.utils.get_string_diff">get_string_diff</a></code></li>
+<li><code><a title="RTFDE.utils.get_tree_diff" href="#RTFDE.utils.get_tree_diff">get_tree_diff</a></code></li>
+<li><code><a title="RTFDE.utils.is_codeword_with_numeric_arg" href="#RTFDE.utils.is_codeword_with_numeric_arg">is_codeword_with_numeric_arg</a></code></li>
+<li><code><a title="RTFDE.utils.log_htmlrtf_stripping" href="#RTFDE.utils.log_htmlrtf_stripping">log_htmlrtf_stripping</a></code></li>
+<li><code><a title="RTFDE.utils.log_string_diff" href="#RTFDE.utils.log_string_diff">log_string_diff</a></code></li>
+<li><code><a title="RTFDE.utils.log_text_extraction" href="#RTFDE.utils.log_text_extraction">log_text_extraction</a></code></li>
+<li><code><a title="RTFDE.utils.log_transformations" href="#RTFDE.utils.log_transformations">log_transformations</a></code></li>
+<li><code><a title="RTFDE.utils.log_validators" href="#RTFDE.utils.log_validators">log_validators</a></code></li>
+<li><code><a title="RTFDE.utils.make_token_replacement" href="#RTFDE.utils.make_token_replacement">make_token_replacement</a></code></li>
+<li><code><a title="RTFDE.utils.print_lark_parser_evaluated_grammar" href="#RTFDE.utils.print_lark_parser_evaluated_grammar">print_lark_parser_evaluated_grammar</a></code></li>
+<li><code><a title="RTFDE.utils.print_to_tmp_file" href="#RTFDE.utils.print_to_tmp_file">print_to_tmp_file</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

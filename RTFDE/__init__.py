@@ -17,22 +17,19 @@
 """
 RTFDE: A python3 library for extracting HTML content from RTF encapsulated HTML.
 
-https://github.com/seamustuohy/RTF_De-Encapsulator
+https://github.com/seamustuohy/RTFDE
 """
 
 __author__ = 'seamus tuohy'
-__date__ = '2020-12-05'
-__version__ = '0.00.1'
+__date__ = '2023-06-18'
+__version__ = '0.1.0'
 
 import logging
+from logging import NullHandler
 
-FORMAT = "%(levelname)s [%(filename)s:%(lineno)s - %(funcName)s() ] %(message)s"
-formatter = logging.Formatter(FORMAT)
-default_handler = logging.StreamHandler()
-default_handler.setFormatter(formatter)
+logging.getLogger(__name__).addHandler(NullHandler())
+logging.getLogger(__name__ + ".tree_logger").addHandler(NullHandler())
 
-logger = logging.getLogger(__name__)
-logger.addHandler(default_handler)
-logger.setLevel(logging.WARNING)
+
 
 from RTFDE.deencapsulate import DeEncapsulator

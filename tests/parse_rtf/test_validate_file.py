@@ -8,20 +8,21 @@ Ensure that:
 
 import unittest
 from os.path import join
-from RTFDE.exceptions import MalformedRtf
+from RTFDE.exceptions import MalformedRtf, MalformedEncapsulatedRtf
 from RTFDE.deencapsulate import DeEncapsulator
 from tests.test_utils import DATA_BASE_DIR
+
 
 class TestInputValidity(unittest.TestCase):
     """ Tests basic valid and invalid inputs."""
 
     def test_valid_rtf_string(self):
-        """ Check that a valid encapsulated rtf string returns 0 exit status."""
+        """ Check that opening an rtf file as a string returns a TypeError."""
         quote_printable_rtf_path = join(DATA_BASE_DIR, "plain_text", "quoted_printable_01.rtf")
         with open(quote_printable_rtf_path, 'r') as fp:
             raw_rtf = fp.read()
             self.check_deencapsulate_validity(raw_rtf,
-                                              expect_error=None,
+                                              expect_error=TypeError,
                                               name="quoted_printable_01.rtf")
 
     def test_valid_rtf_bytes(self):
@@ -35,7 +36,7 @@ class TestInputValidity(unittest.TestCase):
 
     def test_invalid_none(self):
         """ Check that passing nothing returns a non-zero exit status."""
-        self.check_deencapsulate_validity("",
+        self.check_deencapsulate_validity(b"",
                                           expect_error=MalformedRtf,
                                           name="empty string")
         self.check_deencapsulate_validity(b"",
@@ -61,6 +62,16 @@ class TestInputValidity(unittest.TestCase):
             self.check_deencapsulate_validity(fp,
                                               expect_error=TypeError,
                                               name="rtf file pointer")
+
+    def test_far_too_minimal_rtf_file(self):
+        raw_rtf = b"{\\rtf1}}"
+        self.check_deencapsulate_validity(raw_rtf,
+                                          expect_error=MalformedEncapsulatedRtf,
+                                          name="rtf with an extra brace")
+        raw_rtf = b"{\\rtf1}1"
+        self.check_deencapsulate_validity(raw_rtf,
+                                          expect_error=MalformedEncapsulatedRtf,
+                                          name="rtf with an extra 1")
 
     def check_deencapsulate_validity(self, data, expect_error=None, name="test"):
         """Helper to check if a test input raises or doesn't raise an error."""
