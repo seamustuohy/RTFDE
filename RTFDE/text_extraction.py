@@ -256,7 +256,12 @@ Raises:
     ValueError: The escaped unicode character is not valid.
 """
     try:
-        nnnn = int(item.removeprefix(b'\\u')) # raises ValueError if not int.
+        prefix = b'\\u'
+        if item.startswith(prefix):
+            nnnn = item[len(prefix):]
+        else:
+            nnnn = item
+        nnnn = int(nnnn) # raises ValueError if not int.
     except ValueError as _e:
         raise ValueError(f"`{item}` is not a valid escaped unicode character.") from _e
     if nnnn < 0: # § -NNNNN is a negative integer expressed in decimal digits
