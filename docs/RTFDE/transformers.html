@@ -26,14 +26,13 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+<pre><code class="python"># -*- coding: utf-8 -*-
 #
 # This file is part of RTFDE, a RTF De-Encapsulator.
 # Copyright © 2020 seamus tuohy, &lt;code@seamustuohy.com&gt;
 #
 # This program is free software: you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the Free
+# under the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation, either version 3 of the License, or (at your option)
 # any later version.
 #
@@ -53,7 +52,7 @@ from lark.tree import Tree
 from lark.lexer import Token
 import re
 
-from RTFDE.utils import log_htmlrtf_stripping
+from RTFDE.utils import log_htmlrtf_stripping, is_logger_on
 
 import logging
 log = logging.getLogger(&#34;RTFDE&#34;)
@@ -349,7 +348,8 @@ Returns:
                     if (i.start_pos == token.start_pos and
                         i.end_pos == token.end_pos and
                         i.value == token.value):
-                        log_htmlrtf_stripping(i)
+                        if is_logger_on(&#34;RTFDE.HTMLRTF_Stripping_logger&#34;) is True:
+                            log_htmlrtf_stripping(i)
                         # print(f&#34;DELETING: {i}&#34;)
                         return Discard
         return token
@@ -676,7 +676,8 @@ Returns:
                     if (i.start_pos == token.start_pos and
                         i.end_pos == token.end_pos and
                         i.value == token.value):
-                        log_htmlrtf_stripping(i)
+                        if is_logger_on(&#34;RTFDE.HTMLRTF_Stripping_logger&#34;) is True:
+                            log_htmlrtf_stripping(i)
                         # print(f&#34;DELETING: {i}&#34;)
                         return Discard
         return token</code></pre>

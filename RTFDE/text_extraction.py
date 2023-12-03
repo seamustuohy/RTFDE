@@ -1,11 +1,10 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # This file is part of RTFDE, a RTF De-Encapsulator.
 # Copyright © 2022 seamus tuohy, <code@seamustuohy.com>
 #
 # This program is free software: you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the Free
+# under the terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation, either version 3 of the License, or (at your option)
 # any later version.
 #
@@ -257,7 +256,12 @@ Raises:
     ValueError: The escaped unicode character is not valid.
 """
     try:
-        nnnn = int(item.removeprefix(b'\\u')) # raises ValueError if not int.
+        prefix = b'\\u'
+        if item.startswith(prefix):
+            nnnn = item[len(prefix):]
+        else:
+            nnnn = item
+        nnnn = int(nnnn) # raises ValueError if not int.
     except ValueError as _e:
         raise ValueError(f"`{item}` is not a valid escaped unicode character.") from _e
     if nnnn < 0: # § -NNNNN is a negative integer expressed in decimal digits

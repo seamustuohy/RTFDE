@@ -79,6 +79,10 @@ Functions
         True if a Token is a codeword with a numeric argument. False if not.
 
     
+`is_logger_on(logger_name, level=10)`
+:   Check if a logger is enabled and on debug.
+
+    
 `log_htmlrtf_stripping(data: lark.lexer.Token)`
 :   Log HTMLRTF Stripping logging only if RTFDE.HTMLRTF_Stripping_logger set to debug.
     
