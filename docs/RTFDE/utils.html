@@ -26,8 +26,7 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+<pre><code class="python"># -*- coding: utf-8 -*-
 #
 # This file is part of package name, a package description short.
 # Copyright © 2022 seamus tuohy, &lt;code@seamustuohy.com&gt;
@@ -156,6 +155,14 @@ def log_transformations(data):
     logger = logging.getLogger(&#34;RTFDE.transform_logger&#34;)
     if logger.level == logging.DEBUG:
         logger.debug(data)
+
+def is_logger_on(logger_name, level=logging.DEBUG):
+    &#34;&#34;&#34;Check if a logger is enabled and on debug.
+    &#34;&#34;&#34;
+    logger = logging.getLogger(logger_name)
+    if logger.level == level:
+        return True
+    return False
 
 def log_text_extraction(data):
     &#34;&#34;&#34;Log additional text decoding/encoding logging only if RTFDE.text_extraction set to debug.
@@ -617,6 +624,24 @@ Returns:
     return False</code></pre>
 </details>
 </dd>
+<dt id="RTFDE.utils.is_logger_on"><code class="name flex">
+<span>def <span class="ident">is_logger_on</span></span>(<span>logger_name, level=10)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if a logger is enabled and on debug.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_logger_on(logger_name, level=logging.DEBUG):
+    &#34;&#34;&#34;Check if a logger is enabled and on debug.
+    &#34;&#34;&#34;
+    logger = logging.getLogger(logger_name)
+    if logger.level == level:
+        return True
+    return False</code></pre>
+</details>
+</dd>
 <dt id="RTFDE.utils.log_htmlrtf_stripping"><code class="name flex">
 <span>def <span class="ident">log_htmlrtf_stripping</span></span>(<span>data: lark.lexer.Token)</span>
 </code></dt>
@@ -866,6 +891,7 @@ Args:
 <li><code><a title="RTFDE.utils.get_string_diff" href="#RTFDE.utils.get_string_diff">get_string_diff</a></code></li>
 <li><code><a title="RTFDE.utils.get_tree_diff" href="#RTFDE.utils.get_tree_diff">get_tree_diff</a></code></li>
 <li><code><a title="RTFDE.utils.is_codeword_with_numeric_arg" href="#RTFDE.utils.is_codeword_with_numeric_arg">is_codeword_with_numeric_arg</a></code></li>
+<li><code><a title="RTFDE.utils.is_logger_on" href="#RTFDE.utils.is_logger_on">is_logger_on</a></code></li>
 <li><code><a title="RTFDE.utils.log_htmlrtf_stripping" href="#RTFDE.utils.log_htmlrtf_stripping">log_htmlrtf_stripping</a></code></li>
 <li><code><a title="RTFDE.utils.log_string_diff" href="#RTFDE.utils.log_string_diff">log_string_diff</a></code></li>
 <li><code><a title="RTFDE.utils.log_text_extraction" href="#RTFDE.utils.log_text_extraction">log_text_extraction</a></code></li>
