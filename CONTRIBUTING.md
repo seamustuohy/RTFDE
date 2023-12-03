@@ -109,14 +109,6 @@ log.setLevel(logging.DEBUG)
 ```
 
 
-
-
-### Grammar Debugging
-
-RTFDE
-
-
-
 ### Lark Debug Logs
 If you want to see underlying Lark language parsing toolkit's logging you can activate its logger like this.
 

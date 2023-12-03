@@ -26,8 +26,7 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+<pre><code class="python"># -*- coding: utf-8 -*-
 #
 # This file is part of RTFDE, a RTF De-Encapsulator.
 # Copyright © 2020 seamus tuohy, &lt;code@seamustuohy.com&gt;
@@ -47,12 +46,13 @@ from io import BufferedReader
 from lark import Lark
 from lark.tree import Tree
 from lark.lexer import Token
+from lark.exceptions import UnexpectedInput
 
 from RTFDE.transformers import RTFCleaner, StripControlWords
 from RTFDE.transformers import StripNonVisibleRTFGroups
 from RTFDE.transformers import StripUnusedSpecialCharacters
 from RTFDE.utils import encode_escaped_control_chars
-from RTFDE.utils import log_validators, log_transformations
+from RTFDE.utils import log_validators, log_transformations, is_logger_on
 from RTFDE.transformers import get_stripped_HTMLRTF_values, DeleteTokensFromTree, strip_binary_objects
 from RTFDE.grammar import make_concise_grammar
 from RTFDE.text_extraction import TextDecoder
@@ -136,8 +136,12 @@ Once you have loaded in the raw rtf this function will set the properties contai
             self.found_binary = found_binary
             log.info(&#34;Binary data found and extracted from rtf file.&#34;)
         escaped_rtf = encode_escaped_control_chars(non_binary_rtf)
-        log_transformations(escaped_rtf)
-        self.parse_rtf(escaped_rtf)
+        if is_logger_on(&#34;RTFDE.transform_logger&#34;) is True:
+            log_transformations(escaped_rtf)
+        try:
+            self.parse_rtf(escaped_rtf)
+        except UnexpectedInput as _e:
+            raise MalformedEncapsulatedRtf(f&#34;Malformed encapsulated RTF discovered:&#34;) from _e
         Decoder = TextDecoder()
         Decoder.update_children(self.full_tree)
         self.get_doc_tree()
@@ -260,7 +264,8 @@ Args:
                            # debug=True,
                            propagate_positions=True)
         self.full_tree = self.parser.parse(rtf)
-        log_transformations(self.full_tree)
+        if is_logger_on(&#34;RTFDE.transform_logger&#34;) is True:
+            log_transformations(self.full_tree)
 
 
     def strip_htmlrtf_tokens(self) -&gt; Tree:
@@ -317,7 +322,8 @@ Raises:
                 operating_tokens.append(token)
             else:
                 operating_tokens += list(token.scan_values(lambda t: t.type == &#39;CONTROLWORD&#39;))
-        log_validators(f&#34;Header tokens being evaluated: {operating_tokens}&#34;)
+        if is_logger_on(&#34;RTFDE.validation_logger&#34;) is True:
+            log_validators(f&#34;Header tokens being evaluated: {operating_tokens}&#34;)
 
         for token in operating_tokens:
             cw_found,found_token = self.check_from_token(token=token, cw_found=cw_found)
@@ -386,7 +392,8 @@ Raises:
         first_token = doc_tree.children[0].value
         if first_token != b&#34;\\rtf1&#34;:
             log.debug(&#34;RTF stream does not contain valid valid RTF document heading. The file must start with \&#34;{\\rtf1\&#34;&#34;)
-            log_validators(f&#34;First child object in document tree is: {first_token!r}&#34;)
+            if is_logger_on(&#34;RTFDE.validation_logger&#34;) is True:
+                log_validators(f&#34;First child object in document tree is: {first_token!r}&#34;)
             raise MalformedRtf(&#34;RTF stream does not start with {\\rtf1&#34;)
 
     @staticmethod
@@ -540,8 +547,12 @@ Once you have loaded in the raw rtf this function will set the properties contai
             self.found_binary = found_binary
             log.info(&#34;Binary data found and extracted from rtf file.&#34;)
         escaped_rtf = encode_escaped_control_chars(non_binary_rtf)
-        log_transformations(escaped_rtf)
-        self.parse_rtf(escaped_rtf)
+        if is_logger_on(&#34;RTFDE.transform_logger&#34;) is True:
+            log_transformations(escaped_rtf)
+        try:
+            self.parse_rtf(escaped_rtf)
+        except UnexpectedInput as _e:
+            raise MalformedEncapsulatedRtf(f&#34;Malformed encapsulated RTF discovered:&#34;) from _e
         Decoder = TextDecoder()
         Decoder.update_children(self.full_tree)
         self.get_doc_tree()
@@ -664,7 +675,8 @@ Args:
                            # debug=True,
                            propagate_positions=True)
         self.full_tree = self.parser.parse(rtf)
-        log_transformations(self.full_tree)
+        if is_logger_on(&#34;RTFDE.transform_logger&#34;) is True:
+            log_transformations(self.full_tree)
 
 
     def strip_htmlrtf_tokens(self) -&gt; Tree:
@@ -721,7 +733,8 @@ Raises:
                 operating_tokens.append(token)
             else:
                 operating_tokens += list(token.scan_values(lambda t: t.type == &#39;CONTROLWORD&#39;))
-        log_validators(f&#34;Header tokens being evaluated: {operating_tokens}&#34;)
+        if is_logger_on(&#34;RTFDE.validation_logger&#34;) is True:
+            log_validators(f&#34;Header tokens being evaluated: {operating_tokens}&#34;)
 
         for token in operating_tokens:
             cw_found,found_token = self.check_from_token(token=token, cw_found=cw_found)
@@ -790,7 +803,8 @@ Raises:
         first_token = doc_tree.children[0].value
         if first_token != b&#34;\\rtf1&#34;:
             log.debug(&#34;RTF stream does not contain valid valid RTF document heading. The file must start with \&#34;{\\rtf1\&#34;&#34;)
-            log_validators(f&#34;First child object in document tree is: {first_token!r}&#34;)
+            if is_logger_on(&#34;RTFDE.validation_logger&#34;) is True:
+                log_validators(f&#34;First child object in document tree is: {first_token!r}&#34;)
             raise MalformedRtf(&#34;RTF stream does not start with {\\rtf1&#34;)
 
     @staticmethod
@@ -952,7 +966,8 @@ Raises:
         first_token = doc_tree.children[0].value
         if first_token != b&#34;\\rtf1&#34;:
             log.debug(&#34;RTF stream does not contain valid valid RTF document heading. The file must start with \&#34;{\\rtf1\&#34;&#34;)
-            log_validators(f&#34;First child object in document tree is: {first_token!r}&#34;)
+            if is_logger_on(&#34;RTFDE.validation_logger&#34;) is True:
+                log_validators(f&#34;First child object in document tree is: {first_token!r}&#34;)
             raise MalformedRtf(&#34;RTF stream does not start with {\\rtf1&#34;)</code></pre>
 </details>
 </dd>
@@ -981,8 +996,12 @@ Once you have loaded in the raw rtf this function will set the properties contai
             self.found_binary = found_binary
             log.info(&#34;Binary data found and extracted from rtf file.&#34;)
         escaped_rtf = encode_escaped_control_chars(non_binary_rtf)
-        log_transformations(escaped_rtf)
-        self.parse_rtf(escaped_rtf)
+        if is_logger_on(&#34;RTFDE.transform_logger&#34;) is True:
+            log_transformations(escaped_rtf)
+        try:
+            self.parse_rtf(escaped_rtf)
+        except UnexpectedInput as _e:
+            raise MalformedEncapsulatedRtf(f&#34;Malformed encapsulated RTF discovered:&#34;) from _e
         Decoder = TextDecoder()
         Decoder.update_children(self.full_tree)
         self.get_doc_tree()
@@ -1148,7 +1167,8 @@ Args:
                            # debug=True,
                            propagate_positions=True)
         self.full_tree = self.parser.parse(rtf)
-        log_transformations(self.full_tree)</code></pre>
+        if is_logger_on(&#34;RTFDE.transform_logger&#34;) is True:
+            log_transformations(self.full_tree)</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.deencapsulate.DeEncapsulator.set_content"><code class="name flex">
@@ -1234,7 +1254,8 @@ Raises:
                 operating_tokens.append(token)
             else:
                 operating_tokens += list(token.scan_values(lambda t: t.type == &#39;CONTROLWORD&#39;))
-        log_validators(f&#34;Header tokens being evaluated: {operating_tokens}&#34;)
+        if is_logger_on(&#34;RTFDE.validation_logger&#34;) is True:
+            log_validators(f&#34;Header tokens being evaluated: {operating_tokens}&#34;)
 
         for token in operating_tokens:
             cw_found,found_token = self.check_from_token(token=token, cw_found=cw_found)
