@@ -26,8 +26,7 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+<pre><code class="python"># -*- coding: utf-8 -*-
 #
 # This file is part of RTFDE, a RTF De-Encapsulator.
 # Copyright © 2022 seamus tuohy, &lt;code@seamustuohy.com&gt;
@@ -41,6 +40,7 @@
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE. See the included LICENSE file for details.
 
+import codecs
 import re
 from collections import namedtuple
 from typing import Union, Any, List, Tuple, Dict
@@ -53,7 +53,7 @@ from lark.tree import Tree
 from RTFDE.exceptions import MalformedRtf
 from RTFDE.utils import is_codeword_with_numeric_arg
 from RTFDE.utils import flatten_tree_to_string_array
-from RTFDE.utils import log_text_extraction
+from RTFDE.utils import log_text_extraction, is_logger_on
 
 import logging
 log = logging.getLogger(&#34;RTFDE&#34;)
@@ -136,7 +136,8 @@ Returns:
         238:{&#34;name&#34;:&#34;EE_CHARSET&#34;,&#34;hex&#34;:&#34;0xEE&#34;,&#34;decimal&#34;:238,&#34;id&#34;:1250},
         255:{&#34;name&#34;:&#34;OEM_CHARSET&#34;,&#34;hex&#34;:&#34;0xFF&#34;,&#34;decimal&#34;:255,&#34;id&#34;:None},
 }
-    log_text_extraction(f&#34;Getting charset for {fcharsetN}&#34;)
+    if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+        log_text_extraction(f&#34;Getting charset for {fcharsetN}&#34;)
     charset = charsets.get(fcharsetN, None)
     if charset is not None:
         charset_id = charset.get(&#39;id&#39;, None)
@@ -283,7 +284,12 @@ Raises:
     ValueError: The escaped unicode character is not valid.
 &#34;&#34;&#34;
     try:
-        nnnn = int(item.removeprefix(b&#39;\\u&#39;)) # raises ValueError if not int.
+        prefix = b&#39;\\u&#39;
+        if item.startswith(prefix):
+            nnnn = item[len(prefix):]
+        else:
+            nnnn = item
+        nnnn = int(nnnn) # raises ValueError if not int.
     except ValueError as _e:
         raise ValueError(f&#34;`{item}` is not a valid escaped unicode character.&#34;) from _e
     if nnnn &lt; 0: # § -NNNNN is a negative integer expressed in decimal digits
@@ -380,7 +386,8 @@ Returns:
     ascii_map: Dict[Token,List[Token]]  = {}
     new_children = []
     removal_map: List[Token] = []
-    log_text_extraction(f&#34;Removing unicode replacements on {repr(children)}&#34;)
+    if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+        log_text_extraction(f&#34;Removing unicode replacements on {repr(children)}&#34;)
     for child in children:
         if len(removal_map) &gt; 0:
             if isinstance(child, Token):
@@ -640,13 +647,15 @@ def decode_hex_char(item, codec):
     item (bytes): A bytes object.
     codec (str): The name of the codec to use to decode the bytes
     &#34;&#34;&#34;
-    log_text_extraction(&#34;decoding char {0} with font {1}&#34;.format(item, codec))
+    if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+        log_text_extraction(&#34;decoding char {0} with font {1}&#34;.format(item, codec))
     if codec is None:
         # Default to U.S. Windows default codepage
         codec = &#39;CP1252&#39;
     decoded = item.decode(codec)
     decoded = decoded.encode()
-    log_text_extraction(&#34;char {0} decoded into {1} using codec {2}&#34;.format(item, decoded, codec))
+    if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+        log_text_extraction(&#34;char {0} decoded into {1} using codec {2}&#34;.format(item, decoded, codec))
     return decoded
 
 
@@ -679,7 +688,8 @@ class TextDecoder:
         self.font_stack = [self.default_font]
         raw_fonttbl = get_font_table(obj.children[1])
         self.font_table = parse_font_tree(raw_fonttbl)
-        log_text_extraction(f&#34;FONT TABLE FOUND: {raw_fonttbl}&#34;)
+        if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+            log_text_extraction(f&#34;FONT TABLE FOUND: {raw_fonttbl}&#34;)
 
 
     def update_children(self, obj: Tree):
@@ -710,10 +720,12 @@ class TextDecoder:
 
     def iterate_on_children(self, children): # Children should be &#39;List[Union[Token,Tree]]&#39; but lark&#39;s Tree typing is defined badly.
         set_fonts = []
-        log_text_extraction(&#34;Starting to iterate on text extraction children...&#34;)
-        log_text_extraction(&#34;PREP-BEFORE: &#34;+repr(children))
+        if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+            log_text_extraction(&#34;Starting to iterate on text extraction children...&#34;)
+            log_text_extraction(&#34;PREP-BEFORE: &#34;+repr(children))
         children = self.prep_unicode(children)
-        log_text_extraction(&#34;PREP-AFTER: &#34;+repr(children))
+        if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+            log_text_extraction(&#34;PREP-AFTER: &#34;+repr(children))
 
         for item in children:
             if is_font_number(item): # Font Definitions
@@ -734,7 +746,8 @@ class TextDecoder:
                                     end_line=item.end_line,
                                     column=item.column,
                                     end_column=item.end_column)
-                print(f&#34;UNICODE TOKEN {item}: {decoded_tok}&#34;)
+                if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+                    log_text_extraction(f&#34;UNICODE TOKEN {item}: {decoded_tok}&#34;)
                 yield decoded_tok
             # Decode a hex array
             elif is_hexarray(item):
@@ -838,13 +851,15 @@ codec (str): The name of the codec to use to decode the bytes</p></div>
     item (bytes): A bytes object.
     codec (str): The name of the codec to use to decode the bytes
     &#34;&#34;&#34;
-    log_text_extraction(&#34;decoding char {0} with font {1}&#34;.format(item, codec))
+    if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+        log_text_extraction(&#34;decoding char {0} with font {1}&#34;.format(item, codec))
     if codec is None:
         # Default to U.S. Windows default codepage
         codec = &#39;CP1252&#39;
     decoded = item.decode(codec)
     decoded = decoded.encode()
-    log_text_extraction(&#34;char {0} decoded into {1} using codec {2}&#34;.format(item, decoded, codec))
+    if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+        log_text_extraction(&#34;char {0} decoded into {1} using codec {2}&#34;.format(item, decoded, codec))
     return decoded</code></pre>
 </details>
 </dd>
@@ -963,7 +978,8 @@ Returns:
         238:{&#34;name&#34;:&#34;EE_CHARSET&#34;,&#34;hex&#34;:&#34;0xEE&#34;,&#34;decimal&#34;:238,&#34;id&#34;:1250},
         255:{&#34;name&#34;:&#34;OEM_CHARSET&#34;,&#34;hex&#34;:&#34;0xFF&#34;,&#34;decimal&#34;:255,&#34;id&#34;:None},
 }
-    log_text_extraction(f&#34;Getting charset for {fcharsetN}&#34;)
+    if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+        log_text_extraction(f&#34;Getting charset for {fcharsetN}&#34;)
     charset = charsets.get(fcharsetN, None)
     if charset is not None:
         charset_id = charset.get(&#39;id&#39;, None)
@@ -1630,7 +1646,8 @@ Returns:
     ascii_map: Dict[Token,List[Token]]  = {}
     new_children = []
     removal_map: List[Token] = []
-    log_text_extraction(f&#34;Removing unicode replacements on {repr(children)}&#34;)
+    if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+        log_text_extraction(f&#34;Removing unicode replacements on {repr(children)}&#34;)
     for child in children:
         if len(removal_map) &gt; 0:
             if isinstance(child, Token):
@@ -1725,7 +1742,12 @@ Raises:
     ValueError: The escaped unicode character is not valid.
 &#34;&#34;&#34;
     try:
-        nnnn = int(item.removeprefix(b&#39;\\u&#39;)) # raises ValueError if not int.
+        prefix = b&#39;\\u&#39;
+        if item.startswith(prefix):
+            nnnn = item[len(prefix):]
+        else:
+            nnnn = item
+        nnnn = int(nnnn) # raises ValueError if not int.
     except ValueError as _e:
         raise ValueError(f&#34;`{item}` is not a valid escaped unicode character.&#34;) from _e
     if nnnn &lt; 0: # § -NNNNN is a negative integer expressed in decimal digits
@@ -1818,7 +1840,8 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
         self.font_stack = [self.default_font]
         raw_fonttbl = get_font_table(obj.children[1])
         self.font_table = parse_font_tree(raw_fonttbl)
-        log_text_extraction(f&#34;FONT TABLE FOUND: {raw_fonttbl}&#34;)
+        if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+            log_text_extraction(f&#34;FONT TABLE FOUND: {raw_fonttbl}&#34;)
 
 
     def update_children(self, obj: Tree):
@@ -1849,10 +1872,12 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
 
     def iterate_on_children(self, children): # Children should be &#39;List[Union[Token,Tree]]&#39; but lark&#39;s Tree typing is defined badly.
         set_fonts = []
-        log_text_extraction(&#34;Starting to iterate on text extraction children...&#34;)
-        log_text_extraction(&#34;PREP-BEFORE: &#34;+repr(children))
+        if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+            log_text_extraction(&#34;Starting to iterate on text extraction children...&#34;)
+            log_text_extraction(&#34;PREP-BEFORE: &#34;+repr(children))
         children = self.prep_unicode(children)
-        log_text_extraction(&#34;PREP-AFTER: &#34;+repr(children))
+        if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+            log_text_extraction(&#34;PREP-AFTER: &#34;+repr(children))
 
         for item in children:
             if is_font_number(item): # Font Definitions
@@ -1873,7 +1898,8 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
                                     end_line=item.end_line,
                                     column=item.column,
                                     end_column=item.end_column)
-                print(f&#34;UNICODE TOKEN {item}: {decoded_tok}&#34;)
+                if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+                    log_text_extraction(f&#34;UNICODE TOKEN {item}: {decoded_tok}&#34;)
                 yield decoded_tok
             # Decode a hex array
             elif is_hexarray(item):
@@ -1920,10 +1946,12 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
 </summary>
 <pre><code class="python">def iterate_on_children(self, children): # Children should be &#39;List[Union[Token,Tree]]&#39; but lark&#39;s Tree typing is defined badly.
     set_fonts = []
-    log_text_extraction(&#34;Starting to iterate on text extraction children...&#34;)
-    log_text_extraction(&#34;PREP-BEFORE: &#34;+repr(children))
+    if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+        log_text_extraction(&#34;Starting to iterate on text extraction children...&#34;)
+        log_text_extraction(&#34;PREP-BEFORE: &#34;+repr(children))
     children = self.prep_unicode(children)
-    log_text_extraction(&#34;PREP-AFTER: &#34;+repr(children))
+    if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+        log_text_extraction(&#34;PREP-AFTER: &#34;+repr(children))
 
     for item in children:
         if is_font_number(item): # Font Definitions
@@ -1944,7 +1972,8 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
                                 end_line=item.end_line,
                                 column=item.column,
                                 end_column=item.end_column)
-            print(f&#34;UNICODE TOKEN {item}: {decoded_tok}&#34;)
+            if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+                log_text_extraction(f&#34;UNICODE TOKEN {item}: {decoded_tok}&#34;)
             yield decoded_tok
         # Decode a hex array
         elif is_hexarray(item):
@@ -2023,7 +2052,8 @@ use_ASCII_alternatives_on_unicode_decode_failure: (bool) If we encounter errors 
     self.font_stack = [self.default_font]
     raw_fonttbl = get_font_table(obj.children[1])
     self.font_table = parse_font_tree(raw_fonttbl)
-    log_text_extraction(f&#34;FONT TABLE FOUND: {raw_fonttbl}&#34;)</code></pre>
+    if is_logger_on(&#34;RTFDE.text_extraction&#34;) is True:
+        log_text_extraction(f&#34;FONT TABLE FOUND: {raw_fonttbl}&#34;)</code></pre>
 </details>
 </dd>
 <dt id="RTFDE.text_extraction.TextDecoder.update_children"><code class="name flex">
