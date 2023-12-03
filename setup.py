@@ -24,6 +24,7 @@ setuptools.setup(
         "Topic :: Text Processing :: Filters",
         "Topic :: Communications :: Email :: Filters"
     ],
+
     python_requires='>=3.8',
     install_requires=['lark==1.1.5',
                       'oletools>=0.56'],
