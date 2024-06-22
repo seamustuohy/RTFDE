@@ -20,8 +20,8 @@ https://github.com/seamustuohy/RTFDE
 """
 
 __author__ = 'seamus tuohy'
-__date__ = '2023-12-03'
-__version__ = '0.1.1'
+__date__ = '2024-06-22'
+__version__ = '0.1.2'
 
 import logging
 from logging import NullHandler
