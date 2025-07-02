@@ -17,8 +17,6 @@ import re
 from collections import namedtuple
 from typing import Union, Any, List, Tuple, Dict
 
-from oletools.common import codepages
-
 from lark.lexer import Token
 from lark.tree import Tree
 
@@ -31,6 +29,63 @@ import logging
 log = logging.getLogger("RTFDE")
 
 fontdef = namedtuple("fontdef", ["fnum", "codepage", "codec", "fontdef_tree"])
+
+
+
+# Mapping from codepages to Python codecs, when 'cpXXX' does not work
+# (inspired from http://stackoverflow.com/questions/1592925/decoding-mac-os-text-in-python)
+# Copied from oletools.codepages
+CODEPAGE_TO_CODEC = {
+    37: 'cp037',
+    708: 'arabic', # not found: Arabic (ASMO 708) => arabic = iso-8859-6
+    709: 'arabic', # not found: Arabic (ASMO-449+, BCON V4) => arabic = iso-8859-6
+    710: 'arabic', # not found: Arabic - Transparent Arabic => arabic = iso-8859-6
+    870: 'latin2', # IBM EBCDIC Multilingual/ROECE (Latin 2); IBM EBCDIC Multilingual Latin 2
+    1047: 'latin1', # IBM EBCDIC Latin 1/Open System
+    1141: 'cp273', # IBM EBCDIC Germany (20273 + Euro symbol); IBM EBCDIC (Germany-Euro)
+    1200: 'utf_16_le', # Unicode UTF-16, little endian byte order (BMP of ISO 10646); available only to managed applications
+    1201: 'utf_16_be', # Unicode UTF-16, big endian byte order; available only to managed applications
+
+    10000: 'mac-roman',
+    10001: 'shiftjis',  # not found: 'mac-shift-jis',
+    10002: 'big5',      # not found: 'mac-big5',
+    10003: 'ascii',     # nothing appropriate found: 'mac-hangul',
+    10004: 'mac-arabic',
+    10005: 'hebrew',    # not found: 'mac-hebrew',
+    10006: 'mac-greek',
+    #10007: 'ascii',     # nothing appropriate found: 'mac-russian',
+    10007: 'mac_cyrillic',  # guess (from xlrd)
+    10008: 'gb2312',    # not found: 'mac-gb2312',
+    10021: 'thai',      # not found: mac-thai',
+    #10029: 'maccentraleurope',  # not found: 'mac-east europe',
+    10029: 'mac_latin2',  # guess (from xlrd)
+    10079: 'mac_iceland',  # guess (from xlrd)
+    10081: 'mac-turkish',
+
+    12000: 'utf_32_le', # Unicode UTF-32, little endian byte order
+    12001: 'utf_32_be', # Unicode UTF-32, big endian byte order
+
+    20127: 'ascii',
+
+    28591: 'latin1',
+    28592: 'iso8859_2',
+    28593: 'iso8859_3',
+    28594: 'iso8859_4',
+    28595: 'iso8859_5',
+    28596: 'iso8859_6',
+    28597: 'iso8859_7',
+    28598: 'iso8859_8',
+    28599: 'iso8859_9',
+    28603: 'iso8859_13',
+    28605: 'iso8859_15',
+
+    32768: 'mac_roman', # from xlrd
+    32769: 'cp1252', # from xlrd
+    38598: 'iso8859_8',
+
+    65000: 'utf7',
+    65001: 'utf8',
+}
 
 
 def get_font_table(tree: Tree) -> Tree:
@@ -198,9 +253,30 @@ Args:
 Returns:
     The name of the codec in the Python codec registry. Used as the name for enacoding/decoding.
 """
-    text_codec = codepages.codepage2codec(codepage_num)
+    text_codec = codepage2codec(codepage_num)
     log.debug('Found python codec corresponding to code page {0}: {1}'.format(codepage_num, text_codec))
     return text_codec
+
+
+def codepage2codec(codepage_num: int) -> str:
+    """
+    convert a codepage number to a Python codec.
+    If the corresponding codec cannot be found, returns "utf8" by default.
+
+    :param codepage: int, code page number
+    :return: str, Python codec name
+    """
+    if codepage in CODEPAGE_TO_CODEC:
+        codec = CODEPAGE_TO_CODEC[codepage]
+    else:
+        codec = 'cp%d' % codepage
+    try:
+        codecs.lookup(codec)
+    except LookupError:
+        #log.error('Codec not found for code page %d, using UTF-8 as fallback.' % codepage)
+        codec = 'utf8'
+    return codec
+
 
 def check_codepage_num(codepage_num: int) -> int:
     """Provide the codepage number back to you if it is valid.
