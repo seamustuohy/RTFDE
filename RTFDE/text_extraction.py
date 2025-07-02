@@ -266,10 +266,10 @@ def codepage2codec(codepage_num: int) -> str:
     :param codepage: int, code page number
     :return: str, Python codec name
     """
-    if codepage in CODEPAGE_TO_CODEC:
-        codec = CODEPAGE_TO_CODEC[codepage]
+    if codepage_num in CODEPAGE_TO_CODEC:
+        codec = CODEPAGE_TO_CODEC[codepage_num]
     else:
-        codec = 'cp%d' % codepage
+        codec = 'cp%d' % codepage_num
     try:
         codecs.lookup(codec)
     except LookupError:
