@@ -23,6 +23,7 @@ from lark.exceptions import UnexpectedInput
 from RTFDE.transformers import RTFCleaner, StripControlWords
 from RTFDE.transformers import StripNonVisibleRTFGroups
 from RTFDE.transformers import StripUnusedSpecialCharacters
+from RTFDE.transformers import transform_based_on_content_type
 from RTFDE.utils import encode_escaped_control_chars
 from RTFDE.utils import log_validators, log_transformations, is_logger_on
 from RTFDE.transformers import get_stripped_HTMLRTF_values, DeleteTokensFromTree, strip_binary_objects
@@ -109,6 +110,7 @@ Once you have loaded in the raw rtf this function will set the properties contai
             log.info("Binary data found and extracted from rtf file.")
         escaped_rtf = encode_escaped_control_chars(non_binary_rtf)
         if is_logger_on("RTFDE.transform_logger") is True:
+            log_transformations("Encoding Escaped Rtf")
             log_transformations(escaped_rtf)
         try:
             self.parse_rtf(escaped_rtf)
@@ -167,7 +169,7 @@ Returns:
         """Populate the html or text content based on the content type. Populates self.html and/or self.text variables."""
         self.content_type = self.get_content_type()
         if self.content_type == 'html':
-            self.html = self.content
+            self.html = transform_based_on_content_type(self.content, self.content_type)
         else:
             self.text = self.content
 
@@ -237,6 +239,7 @@ Args:
                            propagate_positions=True)
         self.full_tree = self.parser.parse(rtf)
         if is_logger_on("RTFDE.transform_logger") is True:
+            log_transformations("Parsed RTF")
             log_transformations(self.full_tree)
 
 

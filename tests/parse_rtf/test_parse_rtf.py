@@ -430,6 +430,37 @@ Ensure that:
         html = html.replace(b'\r\n', b'\n')
         self.assertEqual(html, output.html)
 
+    def test_non_breaking_spaces_are_retained(self):
+        """Correctly retain and convert non-breaking spaces
+        """
+        path =  join(DATA_BASE_DIR,
+                     "rtf_parsing",
+                     "nbs_a0.rtf")
+        if path is not None:
+            with open(path, 'rb') as fp:
+                rtf = fp.read()
+        self.check_deencapsulate_validity(rtf,
+                                          expect_error=None,
+                                          name="Retain non-breaking spaces html.")
+        output = DeEncapsulator(rtf)
+        output.deencapsulate()
+        html_count = output.html.count(b'&nbsp;')
+        # 2 additional &nbsp; added through htmltags (Which is how it should be done IMO.)
+        self.assertEqual(5, html_count)
+
+        path =  join(DATA_BASE_DIR,
+                     "rtf_parsing",
+                     "nbs_a0_txt.rtf")
+        if path is not None:
+            with open(path, 'rb') as fp:
+                rtf = fp.read()
+        self.check_deencapsulate_validity(rtf,
+                                          expect_error=None,
+                                          name="Retain non-breaking spaces txt.")
+        output = DeEncapsulator(rtf)
+        output.deencapsulate()
+        txt_count = output.text.count(b'\xc2\xa0')
+        self.assertEqual(3, txt_count)
 
     def debug_error(self, err):
         print("FOUND ERROR")

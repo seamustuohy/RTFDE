@@ -161,6 +161,53 @@ Raises:
                                   end_pos = data.end_pos)
         logger.debug(log_msg)
 
+def log_htmlrtf_state(msg: str, data: Token):
+    """Log HTMLRTF Stripping being toggled on/off if RTFDE.HTMLRTF_Stripping_logger set to debug and RTFDE.HTMLRTF_Stripping_state_logger is set to debug.
+
+Raises:
+    AttributeError: Will occur if you pass this something that is not a token.
+"""
+    logger = logging.getLogger("RTFDE.HTMLRTF_Stripping_state_logger")
+    if logger.level != logging.DEBUG:
+        return
+
+    logger = logging.getLogger("RTFDE.HTMLRTF_Stripping_logger")
+    if logger.level == logging.DEBUG:
+        if not isinstance(data, Token):
+            raise AttributeError("HTMLRTF Stripping logger only logs Tokens")
+        tok_desc = "{value}, {line}, {end_line}, {start_pos}, {end_pos}"
+        log_msg = tok_desc.format(value=data.value,
+                                  line=data.line,
+                                  end_line=data.end_line,
+                                  start_pos=data.start_pos,
+                                  end_pos = data.end_pos)
+        logger.debug(f"HTMLRTF {msg}: {log_msg}")
+
+
+def log_htmlrtf_evaluated_chars(data: Token):
+    """Log HTMLRTF Stripping being toggled on/off if RTFDE.HTMLRTF_Stripping_logger set to debug and RTFDE.HTMLRTF_Stripping_state_logger is set to debug.
+
+Raises:
+    AttributeError: Will occur if you pass this something that is not a token.
+"""
+    logger = logging.getLogger("RTFDE.HTMLRTF_Stripping_state_logger")
+    if logger.level != logging.DEBUG:
+        return
+
+    logger = logging.getLogger("RTFDE.HTMLRTF_Stripping_logger_VERBOSE")
+    if logger.level == logging.DEBUG:
+        if not isinstance(data, Token):
+            print(f"Evaluating non-token ({data}) for deletion")
+        tok_desc = "{value}, {line}, {end_line}, {start_pos}, {end_pos}"
+        # print("Evaluating token {0} at {1} -> {2} to consider deleting".format(token.value, token.start_pos, token.end_pos))
+        log_msg = tok_desc.format(value=data.value,
+                                  line=data.line,
+                                  end_line=data.end_line,
+                                  start_pos=data.start_pos,
+                                  end_pos = data.end_pos)
+        logger.debug(f"Evaluating token ({log_msg}) for deletion")
+
+
 def log_string_diff(original: bytes, revised: bytes, sep: Union[bytes,None] = None):
     """Log diff of two strings. Defaults to splitting by newlines and keeping the ends.
 

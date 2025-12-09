@@ -98,7 +98,28 @@ log = logging.getLogger("RTFDE.HTMLRTF_Stripping_logger")
 log.setLevel(logging.DEBUG)
 ```
 
-### HTMLRTF Stripping Logging
+If you want even more in-depth logging you can use the `RTFDE.HTMLRTF_Stripping_state_logger` to log the state of when HTMLRTF is turned on and off. To use this you MUST have `RTFDE.HTMLRTF_Stripping_state_logger` AND `RTFDE.HTMLRTF_Stripping_logger` set to `DEBUG`.
+
+```python
+    log = logging.getLogger("RTFDE.HTMLRTF_Stripping_state_logger")
+    log.setLevel(logging.DEBUG)
+    log = logging.getLogger("RTFDE.HTMLRTF_Stripping_logger")
+    log.setLevel(logging.DEBUG)
+```
+
+If you are a glutton for punishment you can turn on extra verbose stripping logging that shows every character using `RTFDE.HTMLRTF_Stripping_logger_VERBOSE` in addition to the two above. NOTE: The verbose logger will log a stream of evaluation & removal statements AFTER the state logger has completed. They will not be in-line with the state logger.
+
+```python
+    log = logging.getLogger("RTFDE.HTMLRTF_Stripping_state_logger")
+    log.setLevel(logging.DEBUG)
+    log = logging.getLogger("RTFDE.HTMLRTF_Stripping_logger")
+    log.setLevel(logging.DEBUG)
+    log = logging.getLogger("RTFDE.HTMLRTF_Stripping_logger_VERBOSE")
+    log.setLevel(logging.DEBUG)
+```
+
+
+### HTMLRTF Text Extraction Logging
 
 If you are having difficulty tracking down some sort of text-transformation/decoding issue then you can use the text_extraction logging to show you FAR more information about what is occuring during text extraction. WARNING: This log is a flood of information!
 

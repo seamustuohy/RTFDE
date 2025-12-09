@@ -24,7 +24,7 @@ from lark.tree import Tree
 from lark.lexer import Token
 import re
 
-from RTFDE.utils import log_htmlrtf_stripping, is_logger_on
+from RTFDE.utils import log_htmlrtf_stripping, log_htmlrtf_state, log_htmlrtf_evaluated_chars, is_logger_on
 
 import logging
 log = logging.getLogger("RTFDE")
@@ -267,6 +267,8 @@ Returns:
                 htmlrtf_stack.append(is_htmlrtf)
                 yield child
             elif htmlrtf_stack[-1] is True:
+                if is_logger_on("RTFDE.HTMLRTF_Stripping_logger") is True:
+                    log_htmlrtf_stripping(child)
                 yield child
 
 def toggle_htmlrtf(child: Union[Token,str]) -> Union[bool,None]:
@@ -279,7 +281,11 @@ Returns:
         if child.type == "HTMLRTF":
             htmlrtfstr = child.value.decode().strip()
             if (len(htmlrtfstr) > 0 and htmlrtfstr[-1] == "0"):
+                if is_logger_on("RTFDE.HTMLRTF_Stripping_state_logger") is True:
+                    log_htmlrtf_state(f"OFF", child)
                 return False
+            if is_logger_on("RTFDE.HTMLRTF_Stripping_state_logger") is True:
+                log_htmlrtf_state(f"ON", child)
             return True
     return None
 
@@ -313,16 +319,18 @@ Args:
 Returns:
         Returns all non-identified tokens. Returns Discard objects for any identified tokens.
 """
-        # print"(Evaluating token {0} at {1} to consider deleting".format(child.value, child.end_pos))
+        if is_logger_on("RTFDE.HTMLRTF_Stripping_logger_VERBOSE") is True:
+            if token is not None:
+                log_htmlrtf_evaluated_chars(token)
         if isinstance(token, Token):
             if token.start_pos in self.delete_start_pos:
-                for i in self.to_delete:
+                for en, i in enumerate(self.to_delete):
                     if (i.start_pos == token.start_pos and
                         i.end_pos == token.end_pos and
                         i.value == token.value):
                         if is_logger_on("RTFDE.HTMLRTF_Stripping_logger") is True:
-                            log_htmlrtf_stripping(i)
-                        # print(f"DELETING: {i}")
+                            log_htmlrtf_stripping(token)
+                        self.to_delete.pop(en)
                         return Discard
         return token
 
@@ -421,3 +429,10 @@ Returns:
         start_buffer = new_bytes["end_pos"]
     new_raw += raw_rtf[start_buffer:]
     return (new_raw, found_bytes)
+
+
+def transform_based_on_content_type(content, content_type):
+    if content_type == "html":
+        content = content.replace(u'\u00A0'.encode(), b'&nbsp;')
+
+    return content

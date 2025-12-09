@@ -721,12 +721,27 @@ class TextDecoder:
                 yield decoded_tok
             # Decode a hex array
             elif is_hexarray(item):
-                # print("IS Hex?? {0}".format(item))
+                _hex_start_pos = None
+                _hex_end_pos = None
+                _hex_start_line = None
+                _hex_end_line = None
+                _hex_start_column = None
+                _hex_end_column = None
                 base_bytes = None
                 for hexchild in item.children:
                     if base_bytes is None:
+                        # Set defaults for decoding tree
+                        _hex_start_pos = hexchild.start_pos
+                        _hex_end_pos = hexchild.end_pos
+                        _hex_start_line = hexchild.line
+                        _hex_end_line = hexchild.end_line
+                        _hex_start_column = hexchild.column
+                        _hex_end_column = hexchild.end_column
                         base_bytes = get_bytes_from_hex_encoded(hexchild.value)
                     else:
+                        _hex_end_pos = hexchild.end_pos
+                        _hex_end_line = hexchild.end_line
+                        _hex_end_column = hexchild.end_column
                         base_bytes += get_bytes_from_hex_encoded(hexchild.value)
                 current_fontdef = self.font_table[self.font_stack[-1]]
                 current_codec = current_fontdef.codec
@@ -734,12 +749,12 @@ class TextDecoder:
                 # We are replacing a Tree. So, need item.data to access it's info token
                 decoded_hex_tok = Token('STRING',
                                         decoded_hex,
-                                        start_pos=item.data.start_pos,
-                                        end_pos=item.data.end_pos,
-                                        line=item.data.line,
-                                        end_line=item.data.end_line,
-                                        column=item.data.column,
-                                        end_column=item.data.end_column)
+                                        start_pos=_hex_start_pos,
+                                        end_pos=_hex_end_pos,
+                                        line=_hex_start_line,
+                                        end_line=_hex_end_line,
+                                        column=_hex_start_column,
+                                        end_column=_hex_end_column)
                 yield decoded_hex_tok
             elif isinstance(item, Tree):
                 # Run this same function recursively on nested trees
