@@ -28,7 +28,7 @@ setuptools.setup(
     install_requires=['lark~=1.1.8',
                       'oletools>=0.56'],
     extras_require={'msg_parse': ['extract_msg~=0.27'],
-                    'dev': ['lxml~=4.6',
+                    'dev': ['lxml~=6.0',
                             'mypy~=1.1',
                             'pdoc3~=0.10.0',
                             'coverage~=7.2.2']}
