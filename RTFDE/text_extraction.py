@@ -705,8 +705,6 @@ class TextDecoder:
                 set_fonts.append(item.value)
                 if self.keep_fontdef is True:
                     yield item
-            elif is_unicode_char_byte_count(item):
-                bc = get_unicode_char_byte_count(item)
             elif is_unicode_encoded(item): # Unicode Chars
                 decoded = unicode_escape_to_chr(item.value).encode()
                 # Convert into STRING token
