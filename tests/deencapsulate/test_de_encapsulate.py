@@ -350,18 +350,17 @@ class TestTextDecoding(unittest.TestCase):
         self.assertEqual(correct_repr, rtf_obj.content)
 
     def test_windows_950_codec(self):
-        """Windows 950 codec's currently fail. Ensure that they still fail in tests so we can identify when the underlying libraries fix this.
+        """Windows 950 (cp950/Big5) codec should decode with replacement chars for invalid sequences.
 
         https://github.com/seamustuohy/RTFDE/issues/19
         """
         rtf_path = join(DATA_BASE_DIR, "rtf_parsing", "windows_950.rtf")
-        # Word successfully parses this, showing "Hello" followed by a space then a single character, though it's either one it doesn't know how to render or is meant to look like a box.
-        original_body = "Hello ??" # TODO: Fix once we know what the char is.
         with open(rtf_path, 'rb') as fp:
             raw_rtf = fp.read()
             rtf_obj = DeEncapsulator(raw_rtf)
-            with self.assertRaises(UnicodeDecodeError):
-                rtf_obj.deencapsulate()
+            rtf_obj.deencapsulate()
+            self.assertIsNotNone(rtf_obj.content)
+            self.assertIn(b"Hello", rtf_obj.content)
 
     def test_font_table_variation(self):
         from RTFDE.text_extraction import get_font_table,parse_font_tree

@@ -624,7 +624,7 @@ def decode_hex_char(item, codec):
     if codec is None:
         # Default to U.S. Windows default codepage
         codec = 'CP1252'
-    decoded = item.decode(codec)
+    decoded = item.decode(codec, errors='replace')
     decoded = decoded.encode()
     if is_logger_on("RTFDE.text_extraction") is True:
         log_text_extraction("char {0} decoded into {1} using codec {2}".format(item, decoded, codec))
