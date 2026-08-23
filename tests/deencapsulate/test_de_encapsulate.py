@@ -111,7 +111,7 @@ class TestBinaryData(unittest.TestCase):
         """
         # Test one bin string
         raw_rtf = self.get_small_template()
-        bin_data = secrets.token_bytes(20)
+        bin_data = bytes(range(128, 148))
         binary_string = b'This test is one string \\bin20' + bin_data + b'that is it.'
         rep_rtf = raw_rtf.replace(b"REPLACE_ME", binary_string)
         rtf_obj = self.deencapsulate_string(rep_rtf)
