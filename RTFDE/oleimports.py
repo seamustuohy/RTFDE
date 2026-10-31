@@ -39,6 +39,7 @@
 # (inspired from http://stackoverflow.com/questions/1592925/decoding-mac-os-text-in-python)
 # Copied from oletools.codepages
 
+import codecs
 
 CODEPAGE_TO_CODEC = {
     37: 'cp037',

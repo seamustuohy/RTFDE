@@ -17,7 +17,6 @@ import re
 from collections import namedtuple
 from typing import Union, Any, List, Tuple, Dict
 
-from oleimports import CODEPAGE_TO_CODEC, codepage2codec
 from lark.lexer import Token
 from lark.tree import Tree
 
@@ -25,6 +24,7 @@ from RTFDE.exceptions import MalformedRtf
 from RTFDE.utils import is_codeword_with_numeric_arg
 from RTFDE.utils import flatten_tree_to_string_array
 from RTFDE.utils import log_text_extraction, is_logger_on
+from RTFDE.oleimports import CODEPAGE_TO_CODEC, codepage2codec
 
 import logging
 log = logging.getLogger("RTFDE")
