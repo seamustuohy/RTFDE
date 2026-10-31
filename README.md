@@ -77,4 +77,8 @@ Please check the [contributing guidelines](./CONTRIBUTING.md)
 
 # License
 
-Please see the [license file](./LICENSE) for license information on RTFDE. If you have further questions related to licensing PLEASE create an issue about it on github.
+This project is primarily licensed under the [GNU Lesser General Public License V-3.0](./LICENSE). However, specific components carry different licenses:
+
+* All code in the [oleimports.py](./RTFDE/oleimports.py) file are BSD licensed copyright (c) 2018-2019 Philippe Lagadec (http://www.decalage.info).
+
+If you have further questions related to licensing PLEASE create an issue about it on github.

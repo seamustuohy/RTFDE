@@ -17,8 +17,7 @@ import re
 from collections import namedtuple
 from typing import Union, Any, List, Tuple, Dict
 
-from oletools.common import codepages
-
+from oleimports import CODEPAGE_TO_CODEC, codepage2codec
 from lark.lexer import Token
 from lark.tree import Tree
 
@@ -31,7 +30,6 @@ import logging
 log = logging.getLogger("RTFDE")
 
 fontdef = namedtuple("fontdef", ["fnum", "codepage", "codec", "fontdef_tree"])
-
 
 def get_font_table(tree: Tree) -> Tree:
     """Extract the font table group from the first 20 tokens of a .rtf document.
@@ -198,9 +196,10 @@ Args:
 Returns:
     The name of the codec in the Python codec registry. Used as the name for enacoding/decoding.
 """
-    text_codec = codepages.codepage2codec(codepage_num)
+    text_codec = codepage2codec(codepage_num)
     log.debug('Found python codec corresponding to code page {0}: {1}'.format(codepage_num, text_codec))
     return text_codec
+
 
 def check_codepage_num(codepage_num: int) -> int:
     """Provide the codepage number back to you if it is valid.
